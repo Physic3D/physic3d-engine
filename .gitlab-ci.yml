@@ -110,7 +110,7 @@ android:
   - ccache --show-stats
   script:
   - mkdir android && cd android
-  - git clone --depth 1 https://github.com/tyabus/xash3d-android-project
+  - git clone --depth 1 https://git.bariscodefx.tr/physic3d/engine/physic3d-android
   - cd xash3d-android-project
   - cp debug.keystore ~/.android/debug.keystore
   - git submodule update --init jni/src/NanoGL/nanogl xash-extras
@@ -152,7 +152,7 @@ android_64bit:
   - ccache --show-stats
   script:
   - mkdir android && cd android
-  - git clone --depth 1 https://github.com/tyabus/xash3d-android-project
+  - git clone --depth 1 https://git.bariscodefx.tr/physic3d/engine/physic3d-android
   - cd xash3d-android-project
   - cp debug.keystore ~/.android/debug.keystore
   - git submodule update --init jni/src/NanoGL/nanogl xash-extras
