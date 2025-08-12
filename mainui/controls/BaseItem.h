@@ -152,8 +152,8 @@ public:
 	inline void SetNameAndStatus( const char *name, const char *status, const char *tag = NULL )
 	{
 		szName = name;
-		szStatusText = status;
-		szTag = tag;
+		//szStatusText = status;
+		//szTag = tag;
 	}
 
 	CMenuItemsHolder* Parent() const			{ return m_pParent; }

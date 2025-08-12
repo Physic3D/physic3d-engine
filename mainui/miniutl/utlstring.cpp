@@ -10,6 +10,8 @@
 #pragma warning (disable:4514)
 #endif
 
+#pragma warning(disable:4996)
+
 #include "utlstring.h"
 #include "utlvector.h"
 #include "winlite.h"

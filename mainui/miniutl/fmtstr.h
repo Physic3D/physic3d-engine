@@ -18,6 +18,8 @@
 #pragma once
 #endif
 
+#pragma warning( disable : 4996 )
+
 #if defined(POSIX)
 // clang will error if the symbol visibility for an object changes between static libraries (and/or your main dylib)
 // so force the FmtStr templates and importantly the global scAsserted below to hidden (i.e don't escape the dll) forcefully

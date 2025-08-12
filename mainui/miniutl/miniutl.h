@@ -6,6 +6,8 @@
 #ifndef MINIUTL_H
 #define MINIUTL_H
 
+#pragma warning(disable:4996)
+
 #include <assert.h>
 #include <stdlib.h>
 #include <stddef.h>

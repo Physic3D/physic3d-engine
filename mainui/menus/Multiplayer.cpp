@@ -56,12 +56,12 @@ void CMenuMultiplayer::_Init( void )
 	banner.SetPicture( ART_BANNER );
 	AddItem( banner );
 
-	AddButton( L( "Internet game" ), NULL, PC_INET_GAME, UI_InternetGames_Menu, QMF_NOTIFY );
+	AddButton( L( "Internet game" ), L( "View list of a game internet servers and join the one of your choice" ), PC_INET_GAME, UI_InternetGames_Menu, QMF_NOTIFY );
 	// AddButton( L( "Spectate game" ), L( "Spectate internet games" ), PC_SPECTATE_GAMES, NoopCb, QMF_GRAYED | QMF_NOTIFY );
-	AddButton( L( "LAN game" ), NULL, PC_LAN_GAME, UI_LanGame_Menu, QMF_NOTIFY );
-	AddButton( L( "GameUI_GameMenu_Customize" ), NULL, PC_CUSTOMIZE, UI_PlayerSetup_Menu, QMF_NOTIFY );
-	AddButton( L( "Controls" ), NULL, PC_CONTROLS, UI_Controls_Menu, QMF_NOTIFY );
-	AddButton( L( "Done" ), NULL, PC_DONE, VoidCb( &CMenuMultiplayer::Hide ), QMF_NOTIFY );
+	AddButton( L( "LAN game" ), L( "Set up the game on the local area network" ), PC_LAN_GAME, UI_LanGame_Menu, QMF_NOTIFY );
+	AddButton( L( "GameUI_GameMenu_Customize" ), L( "Choose your player name, and select visual options for your character" ), PC_CUSTOMIZE, UI_PlayerSetup_Menu, QMF_NOTIFY );
+	AddButton( L( "Controls" ), L( "Change keyboard and mouse settings" ), PC_CONTROLS, UI_Controls_Menu, QMF_NOTIFY );
+	AddButton( L( "Done" ), L( "Go back to the Main menu" ), PC_DONE, VoidCb( &CMenuMultiplayer::Hide ), QMF_NOTIFY );
 
 	msgBox.SetMessage( L( "It is recomended to enable client movement prediction.\nPress OK to enable it now or enable it later in ^5(Multiplayer/Customize)" ) );
 	msgBox.SetPositiveButton( L( "GameUI_OK" ), PC_OK );
