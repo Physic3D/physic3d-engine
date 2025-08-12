@@ -118,6 +118,10 @@ convar_t *ui_renderworld;
 convar_t *cl_thirdperson_right;
 convar_t *cl_thirdperson_up;
 convar_t *cl_thirdperson_forward;
+
+int iIndex;
+char *szTeam;
+
 //
 // userinfo
 //

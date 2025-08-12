@@ -1165,8 +1165,8 @@ extern convar_t *cl_thirdperson_up;
 extern convar_t *cl_thirdperson_forward;
 extern float fog_rgb[3];
 extern float fog_den;
-int iIndex;
-char *szTeam;
+extern int iIndex;
+extern char *szTeam;
 
 
 #endif//CLIENT_H
