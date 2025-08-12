@@ -58,19 +58,19 @@ void CMenuOptions::_Init( void )
 
 	AddItem( background );
 	AddItem( banner );
-	AddButton( L( "Controls" ), L( "Change keyboard and mouse settings" ),
+	AddButton( L( "Controls" ), NULL,
 		PC_CONTROLS, UI_Controls_Menu, QMF_NOTIFY );
-	AddButton( L( "GameUI_Audio" ), L( "Change sound volume and quality" ),
+	AddButton( L( "GameUI_Audio" ), NULL,
 		PC_AUDIO, UI_Audio_Menu, QMF_NOTIFY );
-	AddButton( L( "GameUI_Video" ), L( "Change screen size, video mode and gamma" ),
+	AddButton( L( "GameUI_Video" ), NULL,
 		PC_VIDEO, UI_Video_Menu, QMF_NOTIFY );
-	AddButton( L( "Touch" ), L( "Change touch settings and buttons" ),
+	AddButton( L( "Touch" ), NULL,
 		PC_TOUCH, UI_Touch_Menu, QMF_NOTIFY );
-	AddButton( L( "GameUI_Joystick" ), L( "Change gamepad axis and button settings" ),
+	AddButton( L( "GameUI_Joystick" ), NULL,
 		PC_GAMEPAD, UI_GamePad_Menu, QMF_NOTIFY );
-	AddButton( L( "Update" ), L( "Check for updates" ),
+	AddButton( L( "Update" ), NULL,
 		PC_UPDATE, msgBox.MakeOpenEvent(), QMF_NOTIFY );
-	AddButton( L( "Done" ), L( "Go back to the Main menu" ),
+	AddButton( L( "Done" ), NULL,
 		PC_DONE, VoidCb( &CMenuOptions::Hide ), QMF_NOTIFY );
 }
 

@@ -1,4 +1,4 @@
-/*
+ /*
 Copyright (C) 1997-2001 Id Software, Inc.
 
 This program is free software; you can redistribute it and/or
@@ -51,6 +51,8 @@ private:
 
 	void QuitDialog( void *pExtra = NULL );
 	void DisconnectDialogCb();
+	void HazardCourseDialogCb();
+	void HazardCourseCb();
 
 	CMenuPicButton	console;
 	class CMenuMainBanner : public CMenuBannerBitmap
@@ -61,14 +63,25 @@ private:
 
 	CMenuPicButton	resumeGame;
 	CMenuPicButton	disconnect;
+	CMenuPicButton	newGame;
+	CMenuPicButton	hazardCourse;
 	CMenuPicButton	configuration;
+	CMenuPicButton	saveRestore;
 	CMenuPicButton	multiPlayer;
 	CMenuPicButton	customGame;
 	CMenuPicButton	quit;
 
+	// buttons on top right. Maybe should be drawn if fullscreen == 1?
+	#if !(defined(__ANDROID__) || defined(__SAILFISH__))
+	CMenuBitmap	minimizeBtn;
+	#endif
+
+	CMenuBitmap	quitButton;
+
 	// quit dialog
 	CMenuYesNoMessageBox dialog;
 
+	bool bTrainMap;
 	bool bCustomGame;
 };
 
@@ -114,6 +127,13 @@ void CMenuMain::DisconnectDialogCb()
 	dialog.Show();
 }
 
+void CMenuMain::HazardCourseDialogCb()
+{
+	dialog.onPositive = VoidCb( &CMenuMain::HazardCourseCb );;
+	dialog.SetMessage( L( "StringsList_234" ) );
+	dialog.Show();
+}
+
 /*
 =================
 CMenuMain::Key
@@ -137,14 +157,40 @@ bool CMenuMain::KeyDown( int key )
 	return CMenuFramework::KeyDown( key );
 }
 
+/*
+=================
+UI_Main_HazardCourse
+=================
+*/
+void CMenuMain::HazardCourseCb()
+{
+	if( EngFuncs::GetCvarFloat( "host_serverstate" ) && EngFuncs::GetCvarFloat( "maxplayers" ) > 1 )
+		EngFuncs::HostEndGame( L( "end of the game" ) );
+
+	EngFuncs::CvarSetValue( "skill", 1.0f );
+	EngFuncs::CvarSetValue( "deathmatch", 0.0f );
+	EngFuncs::CvarSetValue( "teamplay", 0.0f );
+	EngFuncs::CvarSetValue( "pausable", 1.0f ); // singleplayer is always allowing pause
+	EngFuncs::CvarSetValue( "coop", 0.0f );
+	EngFuncs::CvarSetValue( "maxplayers", 1.0f ); // singleplayer
+
+	EngFuncs::PlayBackgroundTrack( NULL, NULL );
+
+	EngFuncs::ClientCmd( FALSE, "hazardcourse\n" );
+}
+
 void CMenuMain::_Init( void )
 {
+	if( gMenu.m_gameinfo.trainmap[0] && stricmp( gMenu.m_gameinfo.trainmap, gMenu.m_gameinfo.startmap ) != 0 )
+		bTrainMap = true;
+	else bTrainMap = false;
+
 	if( EngFuncs::GetCvarFloat( "host_allow_changegame" ))
 		bCustomGame = true;
 	else bCustomGame = false;
 
 	// console
-	console.SetNameAndStatus( L( "GameUI_Console" ), L( "Show console" ) );
+	console.SetNameAndStatus( L( "GameUI_Console" ), NULL );
 	console.iFlags |= QMF_NOTIFY;
 	console.SetPicture( PC_CONSOLE );
 	SET_EVENT_MULTI( console.onReleased,
@@ -153,35 +199,82 @@ void CMenuMain::_Init( void )
 		EngFuncs::KEY_SetDest( KEY_CONSOLE );
 	});
 
-	resumeGame.SetNameAndStatus( L( "GameUI_GameMenu_ResumeGame" ), L( "StringsList_188" ) );
+	resumeGame.SetNameAndStatus( L( "GameUI_GameMenu_ResumeGame" ), NULL );
 	resumeGame.SetPicture( PC_RESUME_GAME );
 	resumeGame.iFlags |= QMF_NOTIFY;
 	resumeGame.onReleased = UI_CloseMenu;
 
-	disconnect.SetNameAndStatus( L( "GameUI_GameMenu_Disconnect" ), L( "Disconnect from server" ) );
+	disconnect.SetNameAndStatus( L( "GameUI_GameMenu_Disconnect" ), NULL );
 	disconnect.SetPicture( PC_DISCONNECT );
 	disconnect.iFlags |= QMF_NOTIFY;
 	disconnect.onReleased = VoidCb( &CMenuMain::DisconnectDialogCb );
 
-	multiPlayer.SetNameAndStatus( L( "GameUI_Multiplayer" ), L( "StringsList_198" ) );
+	newGame.SetNameAndStatus( L( "GameUI_NewGame" ), NULL );
+	newGame.SetPicture( PC_NEW_GAME );
+	newGame.iFlags |= QMF_NOTIFY;
+	newGame.onReleased = UI_NewGame_Menu;
+
+	hazardCourse.SetNameAndStatus( L( "GameUI_TrainingRoom" ), NULL );
+	hazardCourse.SetPicture( PC_HAZARD_COURSE );
+	hazardCourse.iFlags |= QMF_NOTIFY;
+	hazardCourse.onReleasedClActive = VoidCb( &CMenuMain::HazardCourseDialogCb );
+	hazardCourse.onReleased = VoidCb( &CMenuMain::HazardCourseCb );
+
+	multiPlayer.SetNameAndStatus( L( "GameUI_Multiplayer" ), NULL );
 	multiPlayer.SetPicture( PC_MULTIPLAYER );
 	multiPlayer.iFlags |= QMF_NOTIFY;
 	multiPlayer.onReleased = UI_MultiPlayer_Menu;
 
-	configuration.SetNameAndStatus( L( "GameUI_Options" ), L( "StringsList_193" ) );
+	configuration.SetNameAndStatus( L( "GameUI_Options" ), NULL );
 	configuration.SetPicture( PC_CONFIG );
 	configuration.iFlags |= QMF_NOTIFY;
 	configuration.onReleased = UI_Options_Menu;
 
-	customGame.SetNameAndStatus( L( "GameUI_ChangeGame" ), L( "StringsList_530" ) );
+	saveRestore.iFlags |= QMF_NOTIFY;
+	saveRestore.onReleasedClActive = UI_SaveLoad_Menu;
+	saveRestore.onReleased = UI_LoadGame_Menu;
+
+	customGame.SetNameAndStatus( L( "GameUI_ChangeGame" ), NULL );
 	customGame.SetPicture( PC_CUSTOM_GAME );
 	customGame.iFlags |= QMF_NOTIFY;
 	customGame.onReleased = UI_CustomGame_Menu;
 
-	quit.SetNameAndStatus( L( "GameUI_GameMenu_Quit" ), L( "StringsList_236" ) );
+	quit.SetNameAndStatus( L( "GameUI_GameMenu_Quit" ), NULL );
 	quit.SetPicture( PC_QUIT );
 	quit.iFlags |= QMF_NOTIFY;
 	quit.onReleased = MenuCb( &CMenuMain::QuitDialog );
+
+	quitButton.SetPicture( ART_CLOSEBTN_N, ART_CLOSEBTN_F, ART_CLOSEBTN_D );
+	quitButton.iFlags = QMF_MOUSEONLY;
+	quitButton.eFocusAnimation = QM_HIGHLIGHTIFFOCUS;
+	quitButton.onReleased = MenuCb( &CMenuMain::QuitDialog );
+
+	#if !(defined(__ANDROID__) || defined(__SAILFISH__))
+	minimizeBtn.SetPicture( ART_MINIMIZE_N, ART_MINIMIZE_F, ART_MINIMIZE_D );
+	minimizeBtn.iFlags = QMF_MOUSEONLY;
+	minimizeBtn.eFocusAnimation = QM_HIGHLIGHTIFFOCUS;
+	minimizeBtn.onReleased.SetCommand( FALSE, "minimize\n" );
+	#endif
+
+	if ( gMenu.m_gameinfo.gamemode == GAME_MULTIPLAYER_ONLY || gMenu.m_gameinfo.startmap[0] == 0 )
+		newGame.SetGrayed( true );
+
+	if ( gMenu.m_gameinfo.gamemode == GAME_SINGLEPLAYER_ONLY )
+		multiPlayer.SetGrayed( true );
+
+	if ( gMenu.m_gameinfo.gamemode == GAME_MULTIPLAYER_ONLY )
+	{
+		saveRestore.SetGrayed( true );
+		hazardCourse.SetGrayed( true );
+	}
+
+	// server.dll needs for reading savefiles or startup newgame
+	if( !EngFuncs::CheckGameDll( ))
+	{
+		saveRestore.SetGrayed( true );
+		hazardCourse.SetGrayed( true );
+		newGame.SetGrayed( true );
+	}
 
 	dialog.Link( this );
 
@@ -193,7 +286,12 @@ void CMenuMain::_Init( void )
 
 	AddItem( disconnect );
 	AddItem( resumeGame );
+	AddItem( newGame );
 
+	if ( bTrainMap )
+		AddItem( hazardCourse );
+
+	AddItem( saveRestore );
 	AddItem( configuration );
 	AddItem( multiPlayer );
 
@@ -201,6 +299,12 @@ void CMenuMain::_Init( void )
 		AddItem( customGame );
 
 	AddItem( quit );
+
+#if !(defined(__ANDROID__) || defined(__SAILFISH__))
+	AddItem( minimizeBtn );
+#endif
+
+	AddItem( quitButton );
 }
 
 /*
@@ -223,36 +327,41 @@ void CMenuMain::_VidInit( void )
 
 	if( EngFuncs::GetCvarFloat( "developer" ) )
 	{
-		if ( CL_IsActive( ) && bCustomGame )
-		{
-			console.pos.y = 300;
-		}
-		else if ( ( CL_IsActive( ) && !bCustomGame ) )
-		{
-			console.pos.y = 350;
-		}
-		else if ((!CL_IsActive() && bCustomGame))
-		{
-			console.pos.y = 400;
-		}
-		else if (!CL_IsActive() && !bCustomGame)
-		{
-			console.pos.y = 450;
-		}
+		console.pos.y = CL_IsActive() ? 130 : 230;
 	}
 
 	CMenuPicButton::ClearButtonStack();
 
-	console.pos.x = 24;
-	resumeGame.SetCoord( 24, bCustomGame ? 350 : 400 );
-	disconnect.SetCoord( 24, bCustomGame ? 400 : 450 );
+	console.pos.x = 72;
+	resumeGame.SetCoord( 72, 230 );
+	disconnect.SetCoord( 72, 180 );
+	newGame.SetCoord( 72, 280 );
+	hazardCourse.SetCoord( 72, 330 );
 
-	configuration.SetCoord( 24, bCustomGame ? 450 : 500 );
-	multiPlayer.SetCoord( 24, bCustomGame ? 500 : 550 );
+	if( CL_IsActive( ))
+	{
+		saveRestore.SetNameAndStatus( L( "Save\\Load Game" ), NULL );
+		saveRestore.SetPicture( PC_SAVE_LOAD_GAME );
+	}
+	else
+	{
+		saveRestore.SetNameAndStatus( L( "GameUI_LoadGame" ), NULL );
+		saveRestore.SetPicture( PC_LOAD_GAME );
+	}
 
-	customGame.SetCoord( 24, 550 );
+	saveRestore.SetCoord( 72, bTrainMap ? 380 : 330 );
+	configuration.SetCoord( 72, bTrainMap ? 430 : 380 );
+	multiPlayer.SetCoord( 72, bTrainMap ? 480 : 430 );
 
-	quit.SetCoord( 24, 600 );
+	customGame.SetCoord( 72, bTrainMap ? 530 : 480 );
+
+	quit.SetCoord( 72, (bCustomGame) ? (bTrainMap ? 580 : 530) : (bTrainMap ? 530 : 480) );
+
+#if !(defined(__ANDROID__) || defined(__SAILFISH__))
+	minimizeBtn.SetRect( uiStatic.width - 72, 13, 32, 32 );
+#endif
+
+	quitButton.SetRect( uiStatic.width - 36, 13, 32, 32 );
 }
 
 /*

@@ -91,8 +91,6 @@ void CMenuFramework::Init()
 	pos.y = uiStatic.yOffset;
 	size.w = uiStatic.width;
 	size.h = 768;
-	banner.SetCoord( 24, 24 );
-	banner.SetSize( 256, 64 );
 }
 
 void CMenuFramework::VidInit()
@@ -118,7 +116,7 @@ CMenuPicButton * CMenuFramework::AddButton(const char *szName, const char *szSta
 	btn->SetPicture( buttonPicId );
 	btn->iFlags |= iFlags;
 	btn->onReleased = onReleased;
-	btn->SetCoord( 24, 400 + m_iBtnsNum * 50 );
+	btn->SetCoord( 72, 230 + m_iBtnsNum * 50 );
 	AddItem( btn );
 
 	m_apBtns[m_iBtnsNum++] = btn;
@@ -140,7 +138,7 @@ CMenuPicButton * CMenuFramework::AddButton(const char *szName, const char *szSta
 	btn->SetPicture( szButtonPath );
 	btn->iFlags |= iFlags;
 	btn->onReleased = onReleased;
-	btn->SetCoord( 24, 400 + m_iBtnsNum * 50 );
+	btn->SetCoord( 72, 230 + m_iBtnsNum * 50 );
 	AddItem( btn );
 
 	m_apBtns[m_iBtnsNum++] = btn;

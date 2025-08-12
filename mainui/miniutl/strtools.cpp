@@ -6,8 +6,6 @@
 #include <unistd.h>
 #endif
 
-#pragma warning(disable:4996)
-
 #include "miniutl.h"
 
 static char* AllocString( const char *pStr, int nMaxChars )

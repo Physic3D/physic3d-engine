@@ -155,7 +155,11 @@ template <> inline bool CDefOps<char *>::LessFunc( char * const &lhs, char * con
 template <typename RBTREE_T>
 void SetDefLessFunc( RBTREE_T &RBTree )
 {
+#ifdef _MSC_VER
+	RBTree.SetLessFunc( DefLessFunc( RBTREE_T::KeyType_t ) );
+#else
         RBTree.SetLessFunc( DefLessFunc( typename RBTREE_T::KeyType_t ) );
+#endif
 }
 
 // inline implementation of a function usable by CDefLess to compare two parameters in-order

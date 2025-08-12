@@ -219,11 +219,6 @@ namespace UI
 
 namespace Key
 {
-#ifndef K_A_BUTTON
-#define K_A_BUTTON K_AUX1
-#define K_B_BUTTON K_AUX2
-#endif // K_A_BUTTON
-
 inline bool IsEscape( int key )
 {
 	switch( key )
