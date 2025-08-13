@@ -1,6 +1,8 @@
-### Physic3D Engine <img align="right" width="128" height="128" src="https://github.com/byoreo/icons/blob/main/physic3d.png" alt="XASH" /> [![Windows Build Status](https://ci.appveyor.com/api/projects/status/github/byoreo/physic3d-go9xc?svg=true)](https://ci.appveyor.com/project/byoreo/physic3d-go9xc) 
-
+### Physic3D Engine
 *Xash3D but we added some customizations. (Old Engine)*
+
+![GitHub Repo stars](https://img.shields.io/github/stars/Physic3d/physic3d-engine)
+![Gitlab Pipeline Status](https://img.shields.io/gitlab/pipeline-status/Physic3d%2Fengine%2Fphysic3d-engine?gitlab_url=https%3A%2F%2Fgit.bariscodefx.tr&branch=master)
 
 ### [ Developers ]
 
