@@ -3,6 +3,7 @@
 
 ![GitHub Repo stars](https://img.shields.io/github/stars/Physic3d/physic3d-engine)
 ![Gitlab Pipeline Status](https://img.shields.io/gitlab/pipeline-status/Physic3d%2Fengine%2Fphysic3d-engine?gitlab_url=https%3A%2F%2Fgit.bariscodefx.tr&branch=master)
+[![Discord](https://img.shields.io/badge/Discord-Join-7289da?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/x7dn4JMCnK)
 
 ### [ Developers ]
 
