@@ -16,6 +16,20 @@
 
 - [berkch.](https://github.com/qberkdc)
 
+### [ Development Environment ]
+
+**Nix Development Shell** - For a reproducible development environment with GCC, G++, and all dependencies:
+
+```bash
+# Using classic Nix
+nix-shell
+
+# Or using Nix Flakes
+nix develop
+```
+
+See [NIX_ENVIRONMENT.md](NIX_ENVIRONMENT.md) for detailed instructions.
+
 ### [ Some Commands ]
 ```py
 // Custom Crosshair //
