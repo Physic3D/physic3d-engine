@@ -5,7 +5,7 @@ pkgs.mkShell {
   
   buildInputs = with pkgs; [
     # Core build tools
-    gcc
+    gcc           # Includes both gcc and g++
     cmake
     gnumake
     pkg-config
