@@ -314,3 +314,6 @@ CMakeSettings.json
 
 # rpmbuild
 RPMS/
+
+# nix env
+.direnv/

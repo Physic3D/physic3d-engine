@@ -20,8 +20,12 @@
 # SOFTWARE.
 #
 
-cmake_minimum_required(VERSION 3.0.0)
+cmake_minimum_required(VERSION 3.5.1)
 project(XASH_LAUNCHER C)
+
+# Set C standard to C11 to avoid C23 keyword conflicts (false/true are keywords in C23)
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD_REQUIRED ON)
 
 set(XASH_LAUNCHER xash3d)
 fwgs_fix_default_msvc_settings()

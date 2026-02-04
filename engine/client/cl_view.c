@@ -24,8 +24,6 @@ GNU General Public License for more details.
 
 #include "touch.h" // IN_TouchDraw( )
 #include "joyinput.h" // Joy_DrawOnScreenKeyboard( )
-
-qboolean m_iThirdPerson;
 /*
 ===============
 V_SetupRefDef
@@ -441,7 +439,7 @@ static void V_AddLag_HL2( vec3_t origin, vec3_t front )
 	delta_front[1] = front[1] - last_front[1];
 	delta_front[2] = front[2] - last_front[2];
 
-	VectorMA_KopaFish( delta_front, viewmodel_lag_speed->value * cl.refdef.frametime, last_front );// Xashdaki VectorMA Hata veriyor Sadece Aldýgým yerdeki VectorMA'yý kullanýyorum
+	VectorMA_KopaFish( delta_front, viewmodel_lag_speed->value * cl.refdef.frametime, last_front );// Xashdaki VectorMA Hata veriyor Sadece Aldï¿½gï¿½m yerdeki VectorMA'yï¿½ kullanï¿½yorum
 	VectorMA_2( delta_front, -1 * viewmodel_lag_scale->value, origin );
 }
 

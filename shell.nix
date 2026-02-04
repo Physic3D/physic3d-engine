@@ -17,6 +17,8 @@ pkgs.mkShell {
     libGL
     alsa-lib
     zlib
+    fontconfig
+    freetype
     
     # Additional useful tools
     git
