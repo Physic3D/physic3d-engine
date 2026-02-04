@@ -23,6 +23,10 @@
 cmake_minimum_required(VERSION 3.0.0)
 project(LOADER C)
 
+# Set C standard to C11 to avoid C23 keyword conflicts
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+
 set(LOADER_LIBRARY loader)
 
 file(GLOB_RECURSE LOADER_SOURCES *.c)

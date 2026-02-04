@@ -20,6 +20,23 @@ GNU General Public License for more details.
 
 /*
 =================================================================
+	Wrapper functions for libmpg function pointers
+=================================================================
+*/
+static long mp3_read_wrapper( void *handle, void *buf, size_t count )
+{
+	file_t *file = (file_t *)handle;
+	return (long)FS_Read( file, buf, count );
+}
+
+static long mp3_seek_wrapper( void *handle, long offset, int whence )
+{
+	file_t *file = (file_t *)handle;
+	return (long)FS_Seek( file, (fs_offset_t)offset, whence );
+}
+
+/*
+=================================================================
 
 	MPEG decompression
 
@@ -141,7 +158,7 @@ stream_t *Stream_OpenMPG( const char *filename )
 	if( ret ) MsgDev( D_ERROR, "%s\n", get_error( mpeg ));
 #endif
 	// trying to open stream and read header
-	if( !open_mpeg_stream( mpeg, file, FS_Read, FS_Seek, &sc ))
+	if( !open_mpeg_stream( mpeg, file, mp3_read_wrapper, mp3_seek_wrapper, &sc ))
 	{
 		MsgDev( D_ERROR, "Stream_OpenMPG: failed to load (%s): %s\n", filename, get_error( mpeg ));
 		close_decoder( mpeg );
@@ -180,11 +197,14 @@ int Stream_ReadMPG( stream_t *stream, int needBytes, void *buffer )
 	{
 		byte	*data;
 		long	outsize;
+		size_t	outsize_temp;
 
 		if( !stream->buffsize )
 		{
-			if( read_mpeg_stream( mpg, stream->temp, &stream->pos ) != MP3_OK )
+			outsize_temp = (size_t)stream->pos;
+			if( read_mpeg_stream( mpg, stream->temp, &outsize_temp ) != MP3_OK )
 				break; // there was end of the stream
+			stream->pos = (int)outsize_temp;
 		}
 
 		// check remaining size

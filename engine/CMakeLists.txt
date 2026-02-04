@@ -19,8 +19,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 #
-cmake_minimum_required(VERSION 3.0.0)
+cmake_minimum_required(VERSION 3.5.1)
 project(XASH_ENGINE C)
+
+# Set C standard to C11 to avoid C23 keyword conflicts (false/true are keywords in C23)
+# and to avoid conflicts with C23 standard functions like rsqrt
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD_REQUIRED ON)
 
 set(XASH_ENGINE xash) # Lib name
 
