@@ -16,6 +16,34 @@
 
 - [berkch.](https://github.com/qberkdc)
 
+### [ Features ]
+
+Physic3D Engine is a customized fork of Xash3D with the following enhancements:
+
+#### 🎯 **Visual Enhancements**
+- **Custom Crosshair System** - Fully customizable crosshair with color, size, gap, thickness, and dynamic movement options
+- **Viewmodel Effects** - Viewmodel lag with multiple styles, scale, and speed controls
+- **Glow Effects** - Player, viewmodel, and worldmodel glow with customizable colors, render modes, and intensity
+- **Thirdperson Camera** - Adjustable thirdperson view with forward, right, and up offset controls
+- **Fog Support** - Enhanced fog rendering for atmospheric effects
+
+#### 🎮 **Gameplay Features**
+- **Weapon Inspect** - Inspect your weapon with `do_inspect` command
+- **Team-based Glow** - Glow effects that respect team colors (added Oct 2024)
+
+#### 🌐 **Network & Server**
+- **TSource Query Support** - Improved server query system using TSource protocol (added Aug 2024)
+- **Fast Reconnect** - Retry command and fast reconnect functionality for better connection handling (added Aug 2024)
+- **Android Server Support** - Enhanced server response for Android clients
+
+#### 🛠️ **Development & Build**
+- **Nix Development Environment** - Reproducible development environment with all dependencies (added Feb 2024)
+- **C11 Standard Support** - Updated to C11 standard for better compatibility
+- **Root User Warnings** - Safety warnings when running as root user (added Dec 2024)
+
+#### 📱 **Platform Support**
+- **Android Build** - Full Android support with dedicated builds
+
 ### [ Development Environment ]
 
 **Nix Development Shell** - For a reproducible development environment with GCC, G++, and all dependencies:
