@@ -12,10 +12,6 @@
 - [hasandramali](https://github.com/hasandramali)
 - [bariscodefx](https://github.com/bariscodefxy)
 
-### [ Beta Testers ]
-
-- [berkch.](https://github.com/qberkdc)
-
 ### [ Features ]
 
 Physic3D Engine is a customized fork of Xash3D with the following enhancements:
@@ -119,6 +115,3 @@ cl_thirdperson_right
 cl_thirdperson_up
 
 ```
-
-### [ For Android ]
-[Click Here To Download](https://github.com/Physic3D/physic3d-android/releases/download/1/physic3d.apk)
