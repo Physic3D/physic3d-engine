@@ -53,9 +53,6 @@ cmake_dependent_option(XASH_NONSTANDARD_LOAD "Enable own DLL loader in Windows."
 cmake_dependent_option(XASH_USE_SELECT "Enable reading console commands from stdin." ON "NOT WIN32" OFF)
 cmake_dependent_option(XASH_LIBDL "Enable libdl use. POSIX only." ON "NOT WIN32" OFF)
 
-# Disable for Windows and 64Bit
-cmake_dependent_option(XASH_DLL_LOADER "Enable DLL loading on x86 Linux/*nix." OFF "NOT WIN32 AND NOT XASH_64BIT" OFF)
-
 option(XASH_GLES   "Enable if Xash3D is running over GL to GLES translator." OFF)
 option(XASH_NANOGL "Use NanoGL(GLES1). Implicitly enables XASH_GLES." OFF)
 option(XASH_WES    "Use gl-wes-v2(GLES2). Implicitly enables XASH_GLES." OFF)
@@ -105,8 +102,8 @@ endif()
 if(NOT XASH_64BIT AND CMAKE_SIZEOF_VOID_P EQUAL 8)
 	message(FATAL_ERROR "You're building 64 bit Xash3D! Note that there is almost no games compiled for 64-bit. Please, set CMake to build for 32 system. If you still want 64bit build, pass -DXASH_64BIT=1 to CMake")
 endif()
-if(NOT XASH_LIBDL AND NOT XASH_DLL_LOADER AND NOT XASH_NONSTANDARD_LOAD)
-	message(FATAL_ERROR "You must enable XASH_LIBDL, XASH_DLL_LOADER or both. Otherwise engine is useless.")
+if(NOT XASH_LIBDL AND NOT XASH_NONSTANDARD_LOAD)
+	message(FATAL_ERROR "You must enable XASH_LIBDL or XASH_NONSTANDARD_LOAD. Otherwise engine is useless.")
 endif()
 
 if(XASH_64BIT)
@@ -131,16 +128,8 @@ endif()
 
 fwgs_conditional_subproject(XASH_MAINUI mainui)
 fwgs_conditional_subproject("NOT XASH_64BIT AND XASH_VGUI" vgui_support)
-fwgs_conditional_subproject("NOT XASH_64BIT AND XASH_DLL_LOADER" loader)
 fwgs_conditional_subproject("NOT XASH_SINGLE_BINARY" game_launch)
 add_subdirectory(engine)
-
-if(NOT (WIN32 OR XASH_NO_INSTALL_RUNSCRIPT))
-	install(FILES "scripts/xash3d.sh"
-		DESTINATION "${BIN_INSTALL_DIR}"
-	    RENAME "xash3d"
-		PERMISSIONS OWNER_READ OWNER_EXECUTE OWNER_WRITE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
-endif()
 
 if(WIN32)
 	if(XASH_SINGLE_BINARY)

@@ -188,20 +188,6 @@ if(XASH_SAILFISH)
 	add_definitions(-D__SAILFISH__)
 endif()
 
-if(XASH_DLL_LOADER)
-	add_definitions(-DDLL_LOADER)
-
-	include_directories(../loader)
-
-	# See target_link_vgui_hack
-
-	# Not needed anymore, loader is static always
-	# add_custom_command(TARGET ${XASH_ENGINE} PRE_LINK COMMAND
-	#    ${CMAKE_COMMAND} -E copy $<TARGET_FILE:loader> $<TARGET_FILE_DIR:${XASH_ENGINE}>)
-
-	target_link_libraries(${XASH_ENGINE} loader)
-endif()
-
 if(XASH_LIBDL)
 	target_link_libraries(${XASH_ENGINE} ${CMAKE_DL_LIBS})
 else()
