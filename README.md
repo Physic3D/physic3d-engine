@@ -1,4 +1,7 @@
-### [ Some Commands ]
+### Physic3D 🎀 <img align="right" width="120" src="https://raw.githubusercontent.com/Physic3D/.github/master/profile/physic3d.png" alt="Physic3D logo" />
+A customized fork of the Xash3D engine with additional features, performance improvements, and various enhancements by our team!
+
+### [ Commands ]
 ```py
 // Custom Crosshair //
 
