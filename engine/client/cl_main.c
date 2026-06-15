@@ -2614,17 +2614,17 @@ void CL_InitLocal( void )
 	cl_glow_viewmodel_green     = Cvar_Get( "cl_glow_viewmodel_green", "31", 0, "Viewmodel green Value" );
 	cl_glow_viewmodel_renderamt = Cvar_Get( "cl_glow_viewmodel_renderamt", "11", 0, "Viewmodel renderamt Value" );
 
-	cl_glow_worldmodel           = Cvar_Get( "cl_glow_worldmodel", "0", 0, "beni bloklama alp lets go" );
-	cl_glow_worldmodel_red       = Cvar_Get( "cl_glow_worldmodel_red", "51", 0, "bloklama amnakodum ya" );
-	cl_glow_worldmodel_green     = Cvar_Get( "cl_glow_worldmodel_green", "131", 0, "soyledim bide ya evrimmis " );
-	cl_glow_worldmodel_blue      = Cvar_Get( "cl_glow_worldmodel_blue", "11", 0, "nasil evrimmis ya" );
-	cl_glow_worldmodel_renderamt = Cvar_Get( "cl_glow_worldmodel_renderamt", "51", 0, "AMMMMMMINAKE" );
-	cl_glow_worldmodel_height    = Cvar_Get( "cl_glow_worldmodel_height", "30", 1, "OOOOOOF" );
-	cl_glow_worldmodel_spin      = Cvar_Get( "cl_glow_worldmodel_spin", "45", 1, "worldmodel spin abi test123" );
+	cl_glow_worldmodel           = Cvar_Get( "cl_glow_worldmodel", "0", 0, "Enable worldmodel glow (1=static, 2=spin)" );
+	cl_glow_worldmodel_red       = Cvar_Get( "cl_glow_worldmodel_red", "51", 0, "Worldmodel glow red" );
+	cl_glow_worldmodel_green     = Cvar_Get( "cl_glow_worldmodel_green", "131", 0, "Worldmodel glow green" );
+	cl_glow_worldmodel_blue      = Cvar_Get( "cl_glow_worldmodel_blue", "11", 0, "Worldmodel glow blue" );
+	cl_glow_worldmodel_renderamt = Cvar_Get( "cl_glow_worldmodel_renderamt", "51", 0, "Worldmodel glow render amount" );
+	cl_glow_worldmodel_height    = Cvar_Get( "cl_glow_worldmodel_height", "30", 1, "Worldmodel glow height offset" );
+	cl_glow_worldmodel_spin      = Cvar_Get( "cl_glow_worldmodel_spin", "45", 1, "Worldmodel glow spin rate" );
 
-	viewmodel_lag_style = Cvar_Get( "viewmodel_lag_style", "1", 1, "idk" );
-	viewmodel_lag_scale = Cvar_Get( "viewmodel_lag_scale", "1", 1, "idk" );
-	viewmodel_lag_speed = Cvar_Get( "viewmodel_lag_speed", "2", 1, "idk" );
+	viewmodel_lag_style = Cvar_Get( "viewmodel_lag_style", "1", 1, "Viewmodel lag style (1=HL2, 2=CSS)" );
+	viewmodel_lag_scale = Cvar_Get( "viewmodel_lag_scale", "1", 1, "Viewmodel lag scale" );
+	viewmodel_lag_speed = Cvar_Get( "viewmodel_lag_speed", "2", 1, "Viewmodel lag lerp speed" );
 
 	xhair_alpha              = Cvar_Get( "xhair_alpha", "1", 1, "xhair" );
 	xhair_color_b            = Cvar_Get( "xhair_color_b", "31", 1, "xhair" );
@@ -2641,9 +2641,9 @@ void CL_InitLocal( void )
 	xhair_t                  = Cvar_Get( "xhair_t", "0", 1, "xhair" );
 	xhair_thick              = Cvar_Get( "xhair_thick", "1", 1, "xhair" );
 
-	cl_thirdperson_right   = Cvar_Get( "cl_thirdperson_right", "0", 1, "senin ananu cotunden s" );
-	cl_thirdperson_up      = Cvar_Get( "cl_thirdperson_up", "31", 1, "ORHAN *kv müziði*" );
-	cl_thirdperson_forward = Cvar_Get( "cl_thirdperson_forward", "62", 1, "aynen aynen" );
+	cl_thirdperson_right   = Cvar_Get( "cl_thirdperson_right", "0", 1, "Thirdperson camera right offset" );
+	cl_thirdperson_up      = Cvar_Get( "cl_thirdperson_up", "31", 1, "Thirdperson camera up offset" );
+	cl_thirdperson_forward = Cvar_Get( "cl_thirdperson_forward", "62", 1, "Thirdperson camera forward offset" );
 	// userinfo
 	Cvar_Get( "password", "", CVAR_USERINFO, "player password" );
 	// cvar is not registered as userinfo as it not needed usually
@@ -2689,7 +2689,7 @@ void CL_InitLocal( void )
 	Cvar_Get( "direct", "1", 0, "direct lighting level (legacy, unused)" );
 	Cvar_Get( "voice_serverdebug", "0", 0, "debug voice (legacy, unused)" );
 
-	Cmd_AddCommand( "do_inspect", CL_Client_Inspect, "yok" );
+	Cmd_AddCommand( "do_inspect", CL_Client_Inspect, "inspect your weapon" );
 	Cmd_AddCommand( "cl_thirdperson", CL_ThirdPerson_f, "ThirdPerson ON/OFF" );
 
 	// server commands
