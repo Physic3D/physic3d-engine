@@ -48,6 +48,12 @@ endif()
 
 project(XASH3D)
 
+if(WIN32)
+	option(XASH_DOWNLOAD_DEPENDENCIES "Download dependencies automatically, if supported" ON)
+else()
+	option(XASH_DOWNLOAD_DEPENDENCIES "Download dependencies automatically, if supported" OFF)
+endif()
+
 include(${CMAKE_SOURCE_DIR}/cmake_fwgs.cmake)
 include(CMakeDependentOption)
 include(CPack)
@@ -95,11 +101,6 @@ endif()
 option(XASH_USE_STB_SPRINTF "Use stb_sprintf implementation for sprintf" ON)
 option(XASH_NO_INSTALL_RUNSCRIPT "Don't install xash3d.sh" OFF)
 option(XASH_NO_INSTALL_VGUI_BIN "Don't bundle proprietary VGUI" OFF)
-if(WIN32) # Autodownload for lazy developers using Windows
-	option(XASH_DOWNLOAD_DEPENDENCIES "Download dependencies automatically, if supported" ON)
-else()
-	option(XASH_DOWNLOAD_DEPENDENCIES "Download dependencies automatically, if supported" OFF)
-endif()
 
 # Installing
 if(WIN32)
