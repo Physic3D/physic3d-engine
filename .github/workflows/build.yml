@@ -1,0 +1,51 @@
+name: Build Engine
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+        include:
+          - os: windows-latest
+            cmake_args: -G "Ninja"
+          - os: ubuntu-latest
+            cmake_args: ""
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Install dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libsdl2-dev libfontconfig-dev libfreetype-dev
+
+      - name: Configure CMake
+        run: |
+          cmake -B build ${{ matrix.cmake_args }}
+
+      - name: Build
+        run: |
+          cmake --build build --parallel
+
+      - name: Upload artifacts (Windows)
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: xash3d-windows
+          path: build/*.dll
+
+      - name: Upload artifacts (Linux)
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: xash3d-linux
+          path: build/*.so
