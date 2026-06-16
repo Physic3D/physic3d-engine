@@ -239,8 +239,9 @@ macro(fwgs_fix_default_msvc_settings)
 			CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO)
 			string(REPLACE "/MD" "/MT" ${flag_var} "${${flag_var}}")
 		endforeach()
-		# /MP is a compiler flag for cl.exe only; keep it away from rc.exe.
-		add_compile_options($<$<COMPILE_LANGUAGE:C>:/MP> $<$<COMPILE_LANGUAGE:CXX>:/MP>)
+		# /MP is a compiler flag for cl.exe only; keep it out of resource compilation.
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MP")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
 	endif()
 endmacro()
 
