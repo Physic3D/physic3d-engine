@@ -292,7 +292,7 @@ search_fs:
 				if( anyformat || !Q_stricmp( ext, format->ext ))
 				{
 					Q_sprintf( path, format->formatstring, loadname, cmap->type[i].suf, format->ext );
-					image.hint = cmap->type[i].hint; // side hint
+					image.hint = (image_hint_t)cmap->type[i].hint; // side hint
 
 					f = FS_LoadFile( path, &filesize, false );
 					if( f && filesize > 0 )

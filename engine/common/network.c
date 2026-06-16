@@ -14,6 +14,7 @@ GNU General Public License for more details.
 */
 
 #ifdef _WIN32
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
 // Winsock2
 #include <ws2tcpip.h>
 #else
@@ -40,8 +41,6 @@ GNU General Public License for more details.
 #define HAVE_GETADDRINFO
 
 #ifdef _WIN32
-
-#define _WINSOCK_DEPRECATED_NO_WARNINGS
 
 #define pHtons htons
 #define pConnect connect

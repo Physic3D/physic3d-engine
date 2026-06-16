@@ -15,6 +15,9 @@ GNU General Public License for more details.
 
 #include "common.h"
 #include <fcntl.h>
+#ifdef _WIN32
+#include <io.h>
+#endif
 #ifndef _WIN32
 #include <dirent.h>
 #endif

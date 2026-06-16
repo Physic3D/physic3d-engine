@@ -217,7 +217,7 @@ void NetSplit_SendLong( netsrc_t sock, size_t length, void *data, netadr_t to, u
 	packet.id = LittleLong(id);
 	packet.length = LittleLong(length);
 	packet.part = LittleLong(part);
-	packet.count = ( length - 1 ) / part + 1;
+	packet.count = (byte)(( length - 1 ) / part + 1);
 
 	//MsgDev( D_NOTE, "NetSplit_SendLong: packet to %s, count %d, length %d\n", NET_AdrToString( to ), (int)packet.count, (int)packet.length );
 

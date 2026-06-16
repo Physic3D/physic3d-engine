@@ -961,7 +961,6 @@ void Host_InitCommon( int argc, const char** argv, const char *progname, qboolea
 {
 	char		dev_level[4];
 	char		*baseDir;
-	int		retval_stdin, retval_stderr, retval_stdout;
 
 	// some commands may turn engine into infinite loop,
 	// e.g. xash.exe +game xash -game xash

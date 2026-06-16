@@ -44,7 +44,7 @@ SDLash_KeyEvent
 static void SDLash_KeyEvent( SDL_KeyboardEvent key, int down )
 {
 	int keynum = key.keysym.scancode;
-	qboolean numLock = SDL_GetModState() & KMOD_NUM;
+	qboolean numLock = (qboolean)(SDL_GetModState() & KMOD_NUM);
 
 	if( SDL_IsTextInputActive() && down )
 	{

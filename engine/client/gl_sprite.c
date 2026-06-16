@@ -265,7 +265,7 @@ void Mod_LoadSpriteModel( model_t *mod, byte *buffer, qboolean *loaded, uint32_t
 	for( i = 0; i < psprite->numframes; i++ )
 	{
 		frametype_t frametype = *buffer;
-		psprite->frames[i].type = LittleLong(frametype);
+		psprite->frames[i].type = (spriteframetype_t)LittleLong(frametype);
 
 		switch( frametype )
 		{
@@ -512,7 +512,7 @@ mspriteframe_t *R_GetSpriteFrame( const model_t *pModel, int frame, float yaw )
 		}
 		pspriteframe = pspritegroup->frames[i];
 	}
-	else if( psprite->frames[frame].type == FRAME_ANGLED ) //-V556
+	else if( psprite->frames[frame].type == SPR_ANGLED )
 	{
 		int	angleframe = (int)(Q_rint(( RI.refdef.viewangles[1] - yaw + 45.0f ) / 360 * 8) - 4) & 7;
 
@@ -560,11 +560,11 @@ float R_GetSpriteFrameInterpolant( cl_entity_t *ent, mspriteframe_t **oldframe, 
 		frame = psprite->numframes - 1;
 	}
 
-	if( psprite->frames[frame].type == FRAME_SINGLE ) //-V556
+	if( psprite->frames[frame].type == SPR_SINGLE )
 	{
 		if( m_fDoInterp )
 		{
-			if( ent->latched.prevblending[0] >= psprite->numframes || psprite->frames[ent->latched.prevblending[0]].type != FRAME_SINGLE ) //-V556
+			if( ent->latched.prevblending[0] >= psprite->numframes || psprite->frames[ent->latched.prevblending[0]].type != SPR_SINGLE )
 			{
 				// this can be happens when rendering switched between single and angled frames
 				// or change model on replace delta-entity
@@ -609,7 +609,7 @@ float R_GetSpriteFrameInterpolant( cl_entity_t *ent, mspriteframe_t **oldframe, 
 		if( oldframe ) *oldframe = psprite->frames[ent->latched.prevblending[0]].frameptr;
 		if( curframe ) *curframe = psprite->frames[frame].frameptr;
 	}
-	else if( psprite->frames[frame].type == FRAME_GROUP )  //-V556
+	else if( psprite->frames[frame].type == SPR_GROUP )
 	{
 		pspritegroup = (mspritegroup_t *)psprite->frames[frame].frameptr;
 		pintervals = pspritegroup->intervals;
@@ -642,7 +642,7 @@ float R_GetSpriteFrameInterpolant( cl_entity_t *ent, mspriteframe_t **oldframe, 
 		if( oldframe ) *oldframe = pspritegroup->frames[j];
 		if( curframe ) *curframe = pspritegroup->frames[i];
 	}
-	else if( psprite->frames[frame].type == FRAME_ANGLED ) //-V556
+	else if( psprite->frames[frame].type == SPR_ANGLED )
 	{
 		// e.g. doom-style sprite monsters
 		float	yaw = ent->angles[YAW];
@@ -650,7 +650,7 @@ float R_GetSpriteFrameInterpolant( cl_entity_t *ent, mspriteframe_t **oldframe, 
 
 		if( m_fDoInterp )
 		{
-			if( ent->latched.prevblending[0] >= psprite->numframes || psprite->frames[ent->latched.prevblending[0]].type != FRAME_ANGLED ) //-V556
+			if( ent->latched.prevblending[0] >= psprite->numframes || psprite->frames[ent->latched.prevblending[0]].type != SPR_ANGLED )
 			{
 				// this can be happens when rendering switched between single and angled frames
 				// or change model on replace delta-entity

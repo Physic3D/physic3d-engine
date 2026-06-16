@@ -698,7 +698,6 @@ char *SV_ReadEntityScript( const char *filename, int *flags )
 	byte		buf[MAX_SYSPATH]; // 1 kb
 	size_t		ft1, ft2;
 	file_t		*f;
-	int i;
 
 	*flags = 0;
 

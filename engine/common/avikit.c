@@ -309,8 +309,7 @@ byte *AVI_GetVideoFrame( movie_state_t *Avi, long frame )
 {
 #ifdef USE_VFW
 	LPBITMAPINFOHEADER	frame_info;
-	byte		*frame_raw, *tmp;
-	int		i;
+	byte		*frame_raw;
 
 	ASSERT( Avi != NULL );
 

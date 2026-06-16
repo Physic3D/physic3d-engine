@@ -609,7 +609,6 @@ set EF_BRIGHTFIELD effect
 */
 void GAME_EXPORT CL_EntityParticles( cl_entity_t *ent )
 {
-	float		angle;
 	float		sr, sp, sy, cr, cp, cy;
 	vec3_t		forward;	
 	particle_t	*p;
@@ -628,7 +627,7 @@ void GAME_EXPORT CL_EntityParticles( cl_entity_t *ent )
 			&sy, &sp, &sr,
 			&cy, &cp, &cr);
 #else
-		angle = cl.time * cl_avelocities[i][0];
+		float angle = cl.time * cl_avelocities[i][0];
 		SinCos( angle, &sy, &cy );
 		angle = cl.time * cl_avelocities[i][1];
 		SinCos( angle, &sp, &cp );

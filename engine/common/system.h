@@ -135,6 +135,7 @@ void Wcon_CreateConsole( void );
 void Wcon_DestroyConsole( void );
 void Wcon_DisableInput( void );
 void Wcon_Clear( void );
+void Wcon_RegisterHotkeys( void );
 char *Wcon_Input( void );
 
 // text messages
