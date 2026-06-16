@@ -988,6 +988,8 @@ void Host_InitCommon( int argc, const char** argv, const char *progname, qboolea
 		}
 		else
 		{
+			int retval_stdin, retval_stdout, retval_stderr;
+
 			// don't be closed by parent
 			if( setsid() < 0 )
 			{
