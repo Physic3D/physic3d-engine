@@ -3074,7 +3074,7 @@ pfnGetMousePos
 static void GAME_EXPORT pfnGetMousePos( POINT *ppt )
 {
 #ifdef XASH_SDL
-	SDL_GetMouseState(&ppt->x, &ppt->y);
+	SDL_GetMouseState((int *)&ppt->x, (int *)&ppt->y);
 #else
 	ppt->x = ppt->y = 0;
 #endif

@@ -631,7 +631,7 @@ void IN_MouseMove( void )
 
 	// find mouse movement
 #ifdef XASH_SDL
-	SDL_GetMouseState( &current_pos.x, &current_pos.y );
+	SDL_GetMouseState( (int *)&current_pos.x, (int *)&current_pos.y );
 #endif
 
 	VGui_MouseMove( current_pos.x, current_pos.y );
