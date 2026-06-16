@@ -23,16 +23,16 @@ GNU General Public License for more details.
 	Wrapper functions for libmpg function pointers
 =================================================================
 */
-static long mp3_read_wrapper( void *handle, void *buf, size_t count )
+static mpg_ssize_t mp3_read_wrapper( void *handle, void *buf, size_t count )
 {
 	file_t *file = (file_t *)handle;
-	return (long)FS_Read( file, buf, count );
+	return (mpg_ssize_t)FS_Read( file, buf, count );
 }
 
-static long mp3_seek_wrapper( void *handle, long offset, int whence )
+static mpg_off_t mp3_seek_wrapper( void *handle, mpg_off_t offset, int whence )
 {
 	file_t *file = (file_t *)handle;
-	return (long)FS_Seek( file, (fs_offset_t)offset, whence );
+	return (mpg_off_t)FS_Seek( file, (fs_offset_t)offset, whence );
 }
 
 /*
