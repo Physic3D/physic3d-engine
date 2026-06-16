@@ -127,7 +127,7 @@ if(MSVC)
 	add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE)
 endif()
 
-if(WIN32 AND NOT XASH_64BIT)
+if(WIN32)
 	add_definitions( -DDBGHELP -DXASH_W32CON) # dbghelp crashhandler
 	if(MINGW)
 		target_link_libraries(${XASH_ENGINE} -luser32 -lkernel32 -lgdi32 -lws2_32 -ldbghelp -lpsapi)
