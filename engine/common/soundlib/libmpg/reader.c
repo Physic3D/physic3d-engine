@@ -856,7 +856,7 @@ int open_feed( mpg123_handle_t *fr )
 static int default_init( mpg123_handle_t *fr )
 {
 	fr->rdat.fdread = plain_read;
-	fr->rdat.read = fr->rdat.r_read  != NULL ? fr->rdat.r_read  : read;
+	fr->rdat.read = fr->rdat.r_read  != NULL ? fr->rdat.r_read  : (mpg_ssize_t (*)(int, void*, size_t))read;
 	fr->rdat.lseek = fr->rdat.r_lseek != NULL ? fr->rdat.r_lseek : lseek;
 	fr->rdat.filelen = get_fileinfo( fr );
 	fr->rdat.filepos = 0;
