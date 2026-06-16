@@ -16,6 +16,8 @@ GNU General Public License for more details.
 #ifndef LIBMPG_H
 #define LIBMPG_H
 
+#include "mpg123.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -35,8 +37,8 @@ typedef struct
 } wavinfo_t;
 
 // custom stdio
-typedef long (*pfread)( void *handle, void *buf, size_t count );
-typedef long (*pfseek)( void *handle, long offset, int whence );
+typedef mpg_ssize_t (*pfread)( void *handle, void *buf, size_t count );
+typedef mpg_off_t (*pfseek)( void *handle, mpg_off_t offset, int whence );
 
 extern void *create_decoder( int *error );
 extern int feed_mpeg_header( void *mpg, const char *data, long bufsize, long streamsize, wavinfo_t *sc );
