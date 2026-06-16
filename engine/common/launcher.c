@@ -30,7 +30,7 @@ int g_iArgc;
 
 void Host_Shutdown( void );
 void *Com_LoadLibrary(char *, int );
-int Host_Main( int szArgc, char **szArgv, const char *szGameDir, int chg, void *callback );
+int Host_Main( int szArgc, char **szArgv, const char *szGameDir, int chg, void (*callback)( const char * ) );
 
 char **g_pszArgv;
 
