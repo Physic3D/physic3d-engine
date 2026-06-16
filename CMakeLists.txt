@@ -100,7 +100,8 @@ endif()
 
 
 if(NOT XASH_64BIT AND CMAKE_SIZEOF_VOID_P EQUAL 8)
-	message(FATAL_ERROR "You're building 64 bit Xash3D! Note that there is almost no games compiled for 64-bit. Please, set CMake to build for 32 system. If you still want 64bit build, pass -DXASH_64BIT=1 to CMake")
+	message(STATUS "64-bit build detected, enabling XASH_64BIT")
+	set(XASH_64BIT ON)
 endif()
 if(NOT XASH_LIBDL AND NOT XASH_NONSTANDARD_LOAD)
 	message(FATAL_ERROR "You must enable XASH_LIBDL or XASH_NONSTANDARD_LOAD. Otherwise engine is useless.")
