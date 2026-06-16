@@ -289,7 +289,17 @@ void Evdev_OpenDevice ( const char *path )
 void Evdev_OpenDevice_f( void )
 {
 	if( Cmd_Argc() < 2 )
+	{
 		Msg( "Usage: evdev_opendevice <path>\n" );
+		return;
+	}
+
+	// restrict to /dev/input/ to prevent arbitrary file open
+	if( Q_strncmp( Cmd_Argv( 1 ), "/dev/input/", 11 ))
+	{
+		Msg( "Only /dev/input/ devices are allowed\n" );
+		return;
+	}
 
 	Evdev_OpenDevice( Cmd_Argv( 1 ) );
 }

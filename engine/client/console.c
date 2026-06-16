@@ -1330,11 +1330,11 @@ void Key_Console( int key )
 		// scroll down
 		Con_Bottom();
 
-		// check for backlash
+		// check for backslash prefix, then filter
 		if( con.input.buffer[0] == '\\' || con.input.buffer[0] == '/' )
-			Cbuf_AddText( con.input.buffer + 1 ); // skip backslash
-		else Cbuf_AddText( con.input.buffer ); // valid command
-		Cbuf_AddText( "\n" );
+			Cbuf_AddFilterText( con.input.buffer + 1 ); // skip backslash and filter
+		else Cbuf_AddFilterText( con.input.buffer ); // filter and execute
+		Cbuf_AddFilterText( "\n" );
 
 		// echo to console
 		Msg( ">%s\n", con.input.buffer );

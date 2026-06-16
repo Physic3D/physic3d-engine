@@ -304,15 +304,36 @@ CL_EnvShot_f
 cubemap view
 ================== 
 */
+static void CL_SanitizeFilename( const char *src, char *dst, size_t dstsize )
+{
+	size_t i, j;
+	for( i = 0, j = 0; src[i] && j < dstsize - 1; i++ )
+	{
+		// strip path traversal and separator characters
+		if( src[i] == '/' || src[i] == '\\' || src[i] == ':' || src[i] == '.' || src[i] == '~' )
+			continue;
+		dst[j++] = src[i];
+	}
+	dst[j] = '\0';
+}
+
 void CL_EnvShot_f( void )
 {
+	string	sanitized;
+
 	if( Cmd_Argc() < 2 )
 	{
 		Msg( "Usage: envshot <shotname>\n" );
 		return;
 	}
 
-	Q_sprintf( cls.shotname, "gfx/env/%s", Cmd_Argv( 1 ));
+	CL_SanitizeFilename( Cmd_Argv( 1 ), sanitized, sizeof( sanitized ));
+	if( sanitized[0] == '\0' )
+	{
+		Msg( "Invalid shot name\n" );
+		return;
+	}
+	Q_sprintf( cls.shotname, "gfx/env/%s", sanitized );
 	cls.scrshot_action = scrshot_envshot;	// build new frame for envshot
 	cls.envshot_vieworg = NULL; // no custom view
 	cls.envshot_viewsize = 0;
@@ -327,13 +348,21 @@ skybox view
 */
 void CL_SkyShot_f( void )
 {
+	string	sanitized;
+
 	if( Cmd_Argc() < 2 )
 	{
 		Msg( "Usage: skyshot <shotname>\n" );
 		return;
 	}
 
-	Q_sprintf( cls.shotname, "gfx/env/%s", Cmd_Argv( 1 ));
+	CL_SanitizeFilename( Cmd_Argv( 1 ), sanitized, sizeof( sanitized ));
+	if( sanitized[0] == '\0' )
+	{
+		Msg( "Invalid shot name\n" );
+		return;
+	}
+	Q_sprintf( cls.shotname, "gfx/env/%s", sanitized );
 	cls.scrshot_action = scrshot_skyshot;	// build new frame for skyshot
 	cls.envshot_vieworg = NULL; // no custom view
 	cls.envshot_viewsize = 0;
@@ -389,13 +418,21 @@ mini-pic in loadgame menu
 */ 
 void CL_SaveShot_f( void )
 {
+	string	sanitized;
+
 	if( Cmd_Argc() < 2 )
 	{
 		Msg( "Usage: saveshot <savename>\n" );
 		return;
 	}
 
-	Q_sprintf( cls.shotname, "save/%s.bmp", Cmd_Argv( 1 ));
+	CL_SanitizeFilename( Cmd_Argv( 1 ), sanitized, sizeof( sanitized ));
+	if( sanitized[0] == '\0' )
+	{
+		Msg( "Invalid save name\n" );
+		return;
+	}
+	Q_sprintf( cls.shotname, "save/%s.bmp", sanitized );
 	cls.scrshot_action = scrshot_savegame;	// build new frame for saveshot
 }
 
@@ -408,13 +445,21 @@ mini-pic in playdemo menu
 */ 
 void CL_DemoShot_f( void )
 {
+	string	sanitized;
+
 	if( Cmd_Argc() < 2 )
 	{
 		Msg( "Usage: demoshot <demoname>\n" );
 		return;
 	}
 
-	Q_sprintf( cls.shotname, "demos/%s.bmp", Cmd_Argv( 1 ));
+	CL_SanitizeFilename( Cmd_Argv( 1 ), sanitized, sizeof( sanitized ));
+	if( sanitized[0] == '\0' )
+	{
+		Msg( "Invalid demo name\n" );
+		return;
+	}
+	Q_sprintf( cls.shotname, "demos/%s.bmp", sanitized );
 	cls.scrshot_action = scrshot_demoshot; // build new frame for demoshot
 }
 
