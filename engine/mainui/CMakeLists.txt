@@ -23,8 +23,6 @@
 cmake_minimum_required(VERSION 3.5.1)
 project (MAINUI)
 
-include(FWGSLib)
-
 # By default we require C++11 support.
 set(CMAKE_CXX_STANDARD 11)
 

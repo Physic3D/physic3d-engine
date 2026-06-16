@@ -21,34 +21,20 @@
 #
 
 option(FWGSLIB_DEBUG "Print debug messages for FWGSLib" OFF)
-option(XASH_FORCE_PIE "Force enable -fpie/-fPIC" OFF) # may be required by some systems, although not recommended for i386
+option(XASH_FORCE_PIE "Force enable -fpie/-fPIC" OFF)
 
-# /*
-# ================
-# fwgs_debug
-# ================
-# */
 macro(fwgs_debug)
 	if(FWGSLIB_DEBUG)
 		message(${ARGV})
 	endif()
 endmacro()
 
-# /*
-# ================
-# fwgs_install
-#
-# Common installation function for FWGS projects
-# When using VS it tries to simulate VS behaviour for default installing
-# Otherwise *nix-style
-# ================
-# */
 macro(fwgs_install tgt)
 	if(NOT MSVC)
 		install(TARGETS ${tgt} DESTINATION ${LIB_INSTALL_DIR}/${LIB_INSTALL_SUBDIR}
 			PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
 			    GROUP_READ GROUP_EXECUTE
-				WORLD_READ WORLD_EXECUTE) # chmod 755
+				WORLD_READ WORLD_EXECUTE)
 	else()
 		install(TARGETS ${tgt}
 			CONFIGURATIONS Debug
@@ -64,13 +50,6 @@ macro(fwgs_install tgt)
 	endif()
 endmacro()
 
-# /*
-# ================
-# fwgs_conditional_subproject
-#
-# Default properties for target
-# ================
-# */
 macro(fwgs_conditional_subproject cond subproject)
 	set(TEMP 1)
 	foreach(d ${cond})
@@ -85,13 +64,6 @@ macro(fwgs_conditional_subproject cond subproject)
 	endif()
 endmacro()
 
-# /*
-# ================
-# fwgs_set_default_properties
-#
-# Default properties for target
-# ================
-# */
 macro(fwgs_set_default_properties tgt)
 	if( XASH_FORCE_PIE OR (APPLE AND CMAKE_OSX_ARCHITECTURES) OR NOT (ARCH STREQUAL "i386"))
 		message(STATUS "Enabled PIE for ${tgt}")
@@ -106,24 +78,10 @@ macro(fwgs_set_default_properties tgt)
 	endif()
 endmacro()
 
-# /*
-# ===============
-# fwgs_string_option
-#
-# like option(), but for string
-# ===============
-# */
 macro(fwgs_string_option name description value)
 	set(${name} ${value} CACHE STRING ${description})
 endmacro()
 
-# /*
-# ================
-# cond_list_append
-#
-# Append to list by condition check
-# ================
-# */
 macro(cond_list_append arg1 arg2 arg3)
 	set(TEMP 1)
 	foreach(d ${arg1})
@@ -133,11 +91,10 @@ macro(cond_list_append arg1 arg2 arg3)
 			set(TEMP 0)
 		endif()
     endforeach()
-
 	if(TEMP)
 		list(APPEND ${arg2} ${${arg3}})
 	endif()
-endmacro(cond_list_append)
+endmacro()
 
 macro(fwgs_unpack_file file path)
 	message(STATUS "Unpacking ${file} to ${CMAKE_BINARY_DIR}/${path}")
@@ -145,20 +102,6 @@ macro(fwgs_unpack_file file path)
 	execute_process(COMMAND ${CMAKE_COMMAND} -E tar xzf ${file}
 		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/${path})
 endmacro()
-
-# HACKHACK: as you can see, other compilers and OSes
-# can easily link to vgui library, no matter how it was placed
-# On Linux just target_link_libraries will give you a wrong
-# binary, which have ABSOLUTE PATH to vgui.so!
-# Stupid Linux linkers just check for a path and this may give
-# a TWO SAME libraries in memory, which obviously goes to crash engine
-
-# EXAMPLE(without hack):
-# $ LD_LIBRARY_PATH=$(pwd) ldd libvgui_support.so
-#       /home/user/projects/hlsdk/linux/vgui.so => /home/user/projects/hlsdk/linux/vgui.so (addr)
-# With hack:
-# $ LD_LIBRARY_PATH=$(pwd) ldd libvgui_support.so
-#       vgui.so => $(pwd)/vgui.so
 
 macro(target_link_vgui_hack arg1)
 	if(WIN32)
@@ -172,78 +115,50 @@ macro(target_link_vgui_hack arg1)
 	endif()
 endmacro()
 
-# /*
-# ================
-# fwgs_link_package
-#
-# Downloads(if enabled), finds and links library
-# ================
-# */
 macro(fwgs_library_dependency tgt pkgname)
 	if(XASH_DOWNLOAD_DEPENDENCIES AND ${ARGC} GREATER 2)
 		set(FORCE_DOWNLOAD FALSE)
 		set(FORCE_UNPACK FALSE)
-
-		# Disabled, due to bugs
-		# find_package(${pkgname}) # First try to find it in system!
-		if(NOT ${${pkgname}_FOUND}) # Not found anything, download it
+		if(NOT ${${pkgname}_FOUND})
 			set(FORCE_DOWNLOAD TRUE)
 			set(FORCE_UNPACK TRUE)
 		else()
-			# I see what you did there, CMake Cache!
 			if(NOT EXISTS "${${pkgname}_LIBRARY}")
-				# Check if we unpacked
 				if(NOT EXISTS "${CMAKE_BINARY_DIR}/${pkgname}")
 					set(FORCE_UNPACK TRUE)
-
-					# Check if we need re-download
 					if(NOT EXISTS "${CMAKE_BINARY_DIR}/${ARGV3}")
 						set(FORCE_DOWNLOAD TRUE)
 					endif()
 				endif()
 			endif()
 		endif()
-
 		if(FORCE_DOWNLOAD)
-			# Download
 			message(STATUS "Downloading ${pkgname} dependency for ${tgt} from ${ARGV2} to ${ARGV3}")
 			file(DOWNLOAD "${ARGV2}" "${CMAKE_BINARY_DIR}/${ARGV3}")
-			set(FORCE_UNPACK TRUE) # Update directory contents
+			set(FORCE_UNPACK TRUE)
 		endif()
-
 		if(FORCE_UNPACK)
 			fwgs_unpack_file("${CMAKE_BINARY_DIR}/${ARGV3}" "${pkgname}")
 		endif()
-
 		if(FORCE_DOWNLOAD OR FORCE_UNPACK)
-			set(${ARGV4} ${CMAKE_BINARY_DIR}/${pkgname}/${ARGV5}) # Pass subdirectory, like VGUI/vgui-dev-master or SDL2/SDL2-2.0.x
-			find_package(${pkgname} REQUIRED) # Now try it hard
+			set(${ARGV4} ${CMAKE_BINARY_DIR}/${pkgname}/${ARGV5})
+			find_package(${pkgname} REQUIRED)
 		endif()
 	else()
-		find_package(${pkgname} REQUIRED) # Find in system
+		find_package(${pkgname} REQUIRED)
 	endif()
-
 	include_directories(${${pkgname}_INCLUDE_DIR})
-	if(${pkgname} STREQUAL VGUI) #HACKHACK: VGUI link
+	if(${pkgname} STREQUAL VGUI)
 		target_link_vgui_hack(${tgt})
 	else()
 		target_link_libraries(${tgt} ${${pkgname}_LIBRARY})
 	endif()
 endmacro()
 
-# /*
-# ================
-# fwgs_add_compile_options
-#
-# add_compile_options, but better with language specification
-# ================
-# */
 macro(fwgs_add_compile_options lang)
 	set(FLAGS ${ARGV})
-	list(REMOVE_AT FLAGS 0) # Get rid of language
-
+	list(REMOVE_AT FLAGS 0)
 	string(REPLACE ";" " " FLAGS_STR "${FLAGS}")
-
 	if(${lang} STREQUAL "C")
 		fwgs_debug(STATUS "Adding ${FLAGS_STR} for both C/CXX")
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${FLAGS_STR}")
@@ -257,47 +172,19 @@ macro(fwgs_add_compile_options lang)
 	endif()
 endmacro()
 
-# /*
-# ================
-# fwgs_fix_default_msvc_settings
-#
-# Tweaks CMake's default compiler/linker settings to suit Google Test's needs.
-#
-# This must be a macro(), as inside a function string() can only
-# update variables in the function scope.
-# ================
-# */
 macro(fwgs_fix_default_msvc_settings)
 	if (MSVC)
-		# For MSVC, CMake sets certain flags to defaults we want to override.
-		# This replacement code is taken from sample in the CMake Wiki at
-		# http://www.cmake.org/Wiki/CMake_FAQ#Dynamic_Replace.
 		foreach (flag_var
 			CMAKE_C_FLAGS CMAKE_C_FLAGS_DEBUG CMAKE_C_FLAGS_RELEASE
 			CMAKE_C_FLAGS_MINSIZEREL CMAKE_C_FLAGS_RELWITHDEBINFO
         		CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE
 			CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO)
-	        # When Google Test is built as a shared library, it should also use
-	        # shared runtime libraries.  Otherwise, it may end up with multiple
-	        # copies of runtime library data in different modules, resulting in
-	        # hard-to-find crashes. When it is built as a static library, it is
-	        # preferable to use CRT as static libraries, as we don't have to rely
-	        # on CRT DLLs being available. CMake always defaults to using shared
-	        # CRT libraries, so we override that default here.
 			string(REPLACE "/MD" "/MT" ${flag_var} "${${flag_var}}")
 		endforeach()
-		# Build with Multiple Processes (/MP)
 		add_definitions("/MP")
 	endif()
 endmacro()
 
-# /*
-# ==============
-# xash_link_sdl2
-#
-# Download and link SDL2, if supported
-# ==============
-# */
 macro(xash_link_sdl2 tgt)
         if(WIN32)
                 set(SDL2_VER "2.0.14")
@@ -313,18 +200,12 @@ macro(xash_link_sdl2 tgt)
                         set(SDL2_DEVELPKG "mingw.tar.gz")
                         set(SDL2_ARCHIVE "SDL2.tar.gz")
                 endif()
-
                 set(SDL2_DOWNLOAD_URL "http://libsdl.org/release/SDL2-devel-${SDL2_VER}-${SDL2_DEVELPKG}")
-
                 fwgs_library_dependency(${tgt} SDL2 ${SDL2_DOWNLOAD_URL} ${SDL2_ARCHIVE} SDL2_PATH ${SDL2_SUBDIR})
         else()
-                # SDL2 doesn't provide dev packages for nonWin32 targets
                 fwgs_library_dependency(${tgt} SDL2)
         endif()
 endmacro()
-
-# Code below is taken from https://github.com/axr/solar-cmake/blob/master/TargetArch.cmake
-# Modified by a1batross
 
 set(archdetect_c_code "
 #if defined(__arm__) || defined(__TARGET_ARCH_ARM)
@@ -368,23 +249,8 @@ set(archdetect_c_code "
 #error cmake_ARCH unknown
 ")
 
-# Set ppc_support to TRUE before including this file or ppc and ppc64
-# will be treated as invalid architectures since they are no longer supported by Apple
-
 function(target_architecture output_var)
 	if(APPLE AND CMAKE_OSX_ARCHITECTURES)
-		# On OS X we use CMAKE_OSX_ARCHITECTURES *if* it was set
-		# First let's normalize the order of the values
-
-		# Note that it's not possible to compile PowerPC applications if you are using
-		# the OS X SDK version 10.6 or later - you'll need 10.4/10.5 for that, so we
-		# disable it by default
-		# See this page for more information:
-		# http://stackoverflow.com/questions/5333490/how-can-we-restore-ppc-ppc64-as-well-as-full-10-4-10-5-sdk-support-to-xcode-4
-
-		# Architecture defaults to i386 or ppc on OS X 10.5 and earlier, depending on the CPU type detected at runtime.
-		# On OS X 10.6+ the default is x86_64 if the CPU supports it, i386 otherwise.
-
 		foreach(osx_arch ${CMAKE_OSX_ARCHITECTURES})
 			if("${osx_arch}" STREQUAL "ppc" AND ppc_support)
 				set(osx_arch_ppc TRUE)
@@ -398,36 +264,21 @@ function(target_architecture output_var)
 				message(FATAL_ERROR "Invalid OS X arch name: ${osx_arch}")
 			endif()
 		endforeach()
-
-		# Now add all the architectures in our normalized order
 		if(osx_arch_ppc)
 			list(APPEND ARCH ppc)
 		endif()
-
 		if(osx_arch_i386)
 			list(APPEND ARCH i386)
 		endif()
-
 		if(osx_arch_x86_64)
 			list(APPEND ARCH x86_64)
 		endif()
-
 		if(osx_arch_ppc64)
 			list(APPEND ARCH ppc64)
 		endif()
 	else()
 		file(WRITE "${CMAKE_BINARY_DIR}/arch.c" "${archdetect_c_code}")
-
 		enable_language(C)
-
-		# Detect the architecture in a rather creative way...
-		# This compiles a small C program which is a series of ifdefs that selects a
-		# particular #error preprocessor directive whose message string contains the
-		# target architecture. The program will always fail to compile (both because
-		# file is not a valid C program, and obviously because of the presence of the
-		# #error preprocessor directives... but by exploiting the preprocessor in this
-		# way, we can detect the correct target architecture even when cross-compiling,
-		# since the program itself never needs to be run (only the compiler/preprocessor)
 		try_run(
 			run_result_unused
 			compile_result_unused
@@ -436,24 +287,180 @@ function(target_architecture output_var)
 			COMPILE_OUTPUT_VARIABLE ARCH
 			CMAKE_FLAGS CMAKE_OSX_ARCHITECTURES=${CMAKE_OSX_ARCHITECTURES}
 			)
-
-		# Parse the architecture name from the compiler output
 		string(REGEX MATCH "cmake_ARCH ([a-zA-Z0-9_]+)" ARCH "${ARCH}")
-
-		# Get rid of the value marker leaving just the architecture name
 		string(REPLACE "cmake_ARCH " "" ARCH "${ARCH}")
-
-		# If we are compiling with an unknown architecture this variable should
-		# already be set to "unknown" but in the case that it's empty (i.e. due
-		# to a typo in the code), then set it to unknown
 		if (NOT ARCH)
 			set(ARCH unknown)
 		endif()
 	endif()
-
 	message(STATUS "Target architecture: ${ARCH}")
 	set(${output_var} "${ARCH}" PARENT_SCOPE)
 endfunction()
 
-# Set ARCH global variable
 target_architecture(ARCH)
+
+# FindLibunwind -- inlined Find module
+if(NOT LIBUNWIND_FOUND)
+	find_path(LIBUNWIND_INCLUDE_DIR libunwind.h
+	  /usr/include
+	  /usr/local/include
+	)
+	find_library(LIBUNWIND_LIBRARIES NAMES unwind )
+	if(NOT LIBUNWIND_LIBRARIES STREQUAL "LIBUNWIND_LIBRARIES-NOTFOUND")
+	  if (CMAKE_COMPILER_IS_GNUCC)
+	    set(LIBUNWIND_LIBRARIES "gcc_eh;${LIBUNWIND_LIBRARIES}")
+	  endif()
+	endif()
+	message(STATUS "looking for liblzma")
+	find_library(LIBLZMA_LIBRARIES lzma )
+	if(NOT LIBLZMA_LIBRARIES STREQUAL "LIBLZMA_LIBRARIES-NOTFOUND")
+	  message(STATUS "liblzma found")
+	  set(LIBUNWIND_LIBRARIES "${LIBUNWIND_LIBRARIES};${LIBLZMA_LIBRARIES}")
+	endif()
+	include(FindPackageHandleStandardArgs)
+	find_package_handle_standard_args(Libunwind "Could not find libunwind" LIBUNWIND_INCLUDE_DIR LIBUNWIND_LIBRARIES)
+	mark_as_advanced(LIBUNWIND_INCLUDE_DIR LIBUNWIND_LIBRARIES)
+endif()
+
+# FindSDL2 -- inlined Find module
+if(WIN32 AND (NOT SDL2_PATH AND NOT XASH_DOWNLOAD_DEPENDENCIES))
+	message(FATAL_ERROR "To find SDL2 correctly, you need to pass SDL2_PATH variable to CMake")
+endif()
+
+if(NOT SDL2_FOUND)
+	set(SDL2_SEARCH_PATHS
+		${SDL2_PATH}
+		${CMAKE_LIBRARY_PATH}
+		~/Library/Frameworks
+		/Library/Frameworks
+		/usr/local
+		/usr
+	)
+
+	find_path(SDL2_INCLUDE_DIR SDL.h
+		PATH_SUFFIXES include/SDL2 include
+		PATHS ${SDL2_SEARCH_PATHS}
+	)
+
+	if(XASH_64BIT)
+		find_library(SDL2_LIBRARY_TEMP
+		NAMES SDL2 SDL2.dll
+		PATH_SUFFIXES
+		    lib
+			lib/x86_64-linux-gnu
+			lib/x64
+		PATHS ${SDL2_SEARCH_PATHS}
+		)
+	else()
+	find_library(SDL2_LIBRARY_TEMP
+		NAMES SDL2 SDL2.dll
+		PATH_SUFFIXES
+		    lib
+			lib/i386-linux-gnu
+			lib/x86
+		PATHS ${SDL2_SEARCH_PATHS}
+	)
+	endif()
+
+	if(NOT SDL2_LIBRARY_TEMP AND NOT WIN32)
+		execute_process(COMMAND sdl2-config --libs
+			RESULT_VARIABLE SDL2_CONFIG_RETVAL
+			OUTPUT_VARIABLE SDL2_LIBRARY_TEMP
+			OUTPUT_STRIP_TRAILING_WHITESPACE)
+		if(SDL2_CONFIG_RETVAL)
+			message(SEND_ERROR "sdl2-config --libs returned code ${SDL2_CONFIG_RETVAL}. Check that sdl2-config is working.")
+		endif()
+	endif()
+
+	if(SDL2_BUILDING_EXECUTABLE)
+		if(NOT ${SDL2_INCLUDE_DIR} MATCHES ".framework")
+			if(XASH_64BIT)
+				find_library(SDL2MAIN_LIBRARY
+					NAMES SDL2main libSDL2main.a
+					PATH_SUFFIXES
+						lib
+						lib/x86_64-linux-gnu
+						lib/x64
+					PATHS ${SDL2_SEARCH_PATHS})
+			else()
+				find_library(SDL2MAIN_LIBRARY
+					NAMES SDL2main libSDL2main.a
+					PATH_SUFFIXES
+						lib
+						lib/i386-linux-gnu
+						lib/x86
+					PATHS ${SDL2_SEARCH_PATHS})
+			endif()
+		endif()
+	endif()
+
+	if(NOT APPLE)
+		find_package(Threads)
+	endif()
+
+	if(MINGW)
+		set(MINGW32_LIBRARY mingw32 CACHE STRING "mwindows for MinGW")
+	endif()
+
+	if(SDL2_LIBRARY_TEMP)
+		if(SDL2_BUILDING_EXECUTABLE AND SDL2MAIN_LIBRARY)
+			set(SDL2_LIBRARY_TEMP ${SDL2MAIN_LIBRARY} ${SDL2_LIBRARY_TEMP})
+		endif()
+		if(APPLE)
+			set(SDL2_LIBRARY_TEMP ${SDL2_LIBRARY_TEMP} "-framework Cocoa")
+		endif()
+		if(NOT APPLE)
+			set(SDL2_LIBRARY_TEMP ${SDL2_LIBRARY_TEMP} ${CMAKE_THREAD_LIBS_INIT})
+		endif()
+		if(MINGW)
+			set(SDL2_LIBRARY_TEMP ${MINGW32_LIBRARY} ${SDL2_LIBRARY_TEMP})
+		endif()
+		set(SDL2_LIBRARY ${SDL2_LIBRARY_TEMP} CACHE STRING "Where the SDL2 Library can be found")
+		set(SDL2_LIBRARY_TEMP "${SDL2_LIBRARY_TEMP}" CACHE INTERNAL "")
+	endif()
+
+	include(FindPackageHandleStandardArgs)
+	find_package_handle_standard_args(SDL2 REQUIRED_VARS SDL2_LIBRARY SDL2_INCLUDE_DIR)
+endif()
+
+# FindVGUI -- inlined Find module
+if(NOT HL_SDK_DIR AND NOT XASH_DOWNLOAD_DEPENDENCIES)
+	message( FATAL_ERROR "Pass a HL_SDK_DIR variable to CMake to be able use VGUI" )
+endif()
+
+if(NOT VGUI_FOUND)
+	set(VGUI_SEARCH_PATHS ${HL_SDK_DIR})
+
+	find_path(VGUI_INCLUDE_DIR
+		VGUI.h
+		HINTS $ENV{VGUIDIR}
+		PATH_SUFFIXES
+		    utils/vgui/include/
+			include/
+		PATHS ${VGUI_SEARCH_PATHS}
+	)
+
+	if(APPLE)
+		set(LIBNAMES vgui.dylib)
+	else()
+		set(LIBNAMES vgui vgui.so)
+	endif()
+
+	find_library(VGUI_LIBRARY
+		NAMES ${LIBNAMES}
+		HINTS $ENV{VGUIDIR}
+		PATH_SUFFIXES
+			games/lib/xash3d
+			lib/xash3d
+			xash3d/
+			utils/vgui/lib/win32_vc6
+			linux/
+			linux/release
+			lib/win32_vc6
+			lib/
+		PATHS ${VGUI_SEARCH_PATHS}
+	)
+
+	include(FindPackageHandleStandardArgs)
+	find_package_handle_standard_args(VGUI REQUIRED_VARS VGUI_LIBRARY VGUI_INCLUDE_DIR)
+endif()

@@ -22,19 +22,33 @@
 
 cmake_minimum_required(VERSION 3.5.1)
 
-# Install custom module path
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
-
 # Must be specified before to check if we are targeting 64 bit
 option(XASH_64BIT "Enable experimental 64-bit build. Note that you must also provide 64-bit game binaries" OFF) # Enable 64-bit build of Xash3D FWGS Engine.
 
-if(NOT XASH_64BIT)
-	include(VSForceXPToolchain) # Force XP toolchain for Visual Studio
+# Windows XP compatible platform toolset. Must be set before project(),
+# otherwise change of CMAKE_*_TOOLSET will take no effect.
+if(WIN32 AND NOT XASH_64BIT)
+	if ("${CMAKE_GENERATOR}" MATCHES "Visual Studio ([0-9]+)")
+		if(${CMAKE_MATCH_1} LESS 11)
+			# Nothing. Older VS does support XP by default.
+		elseif(${CMAKE_MATCH_1} EQUAL 11)
+			set(CMAKE_GENERATOR_TOOLSET "v110_xp" CACHE STRING "CMAKE_GENERATOR_TOOLSET" FORCE)
+			set(CMAK_VS_PLATFORM_TOOLSET "v110_xp" CACHE STRING "CMAKE_VS_PLATFORM_TOOLSET" FORCE)
+		elseif (${CMAKE_MATCH_1} EQUAL 12)
+			set(CMAKE_GENERATOR_TOOLSET "v120_xp" CACHE STRING "CMAKE_GENERATOR_TOOLSET" FORCE)
+			set(CMAKE_VS_PLATFORM_TOOLSET "v120_xp" CACHE STRING "CMAKE_VS_PLATFORM_TOOLSET" FORCE)
+		elseif (${CMAKE_MATCH_1} EQUAL 14)
+			set(CMAKE_GENERATOR_TOOLSET "v140_xp" CACHE STRING "CMAKE_GENERATOR_TOOLSET" FORCE)
+			set(CMAKE_VS_PLATFORM_TOOLSET "v140_xp" CACHE STRING "CMAKE_VS_PLATFORM_TOOLSET" FORCE)
+		else()
+			message(WARNING "WARNING: You maybe building without Windows XP compatibility. See which toolchain version Visual Studio provides, and say cmake to use it: cmake -G \"Visual Studio XX\" -T \"vXXX_xp\"")
+		endif()
+	endif()
 endif()
 
 project(XASH3D)
 
-include(FWGSLib)
+include(${CMAKE_SOURCE_DIR}/cmake_fwgs.cmake)
 include(CMakeDependentOption)
 include(CPack)
 
