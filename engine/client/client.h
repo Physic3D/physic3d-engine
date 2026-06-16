@@ -1118,7 +1118,6 @@ extern convar_t *cl_glow_worldmodel_red;
 extern convar_t *cl_glow_worldmodel_green;
 extern convar_t *cl_glow_worldmodel;
 extern convar_t *cl_glow_worldmodel_renderamt;
-extern convar_t *cl_glow_worldmodel;
 extern convar_t *cl_glow_worldmodel_height;
 extern convar_t *cl_glow_worldmodel_spin;
 extern convar_t *cl_glow_player;

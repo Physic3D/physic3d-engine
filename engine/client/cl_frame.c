@@ -532,45 +532,30 @@ qboolean CL_AddVisibleEntity( cl_entity_t *ent, int entityType )
 {
 	if( !ent || !ent->model )
 		return false;
-	// vs2022 test commit kirwe asd qwe 31
-	if ( ent && !ent->player && cl_glow_worldmodel->value == 2 )
+	// worldmodel glow: match w_ prefix in filename only
+	if ( ent && !ent->player && cl_glow_worldmodel->value != 0 )
 	{
-
-		if ( Q_strstr( ent->model->name, "w_" ) )
-		{	
-			
-			
-			ent->curstate.renderamt     = cl_glow_worldmodel_renderamt->value;
-			ent->curstate.rendercolor.r = cl_glow_worldmodel_red->value;
-			ent->curstate.rendercolor.g = cl_glow_worldmodel_green->value;	
-			ent->curstate.rendercolor.b = cl_glow_worldmodel_blue->value;
-			ent->origin[2] += cl_glow_worldmodel_height->value;
-			ent->angles[0] -= 90;
-			ent->angles[1] += cl_glow_worldmodel_spin->value * cl.time;
-			ent->angles[2] += 30;
-
-			ent->curstate.movetype = MOVETYPE_NOCLIP;
-			ent->curstate.solid    = SOLID_TRIGGER;
-			ent->curstate.renderfx = kRenderFxGlowShell;
-		}
-	}
-		
-	if ( ent && !ent->player && cl_glow_worldmodel->value == 1)
-	{
-		if ( Q_strstr( ent->model->name, "w_" ) )
+		const char *name = ent->model->name;
+		const char *slash = Q_strrchr( name, '/' );
+		const char *bslash = Q_strrchr( name, '\\' );
+		const char *base = max( slash, bslash );
+		if( !base ) base = name; else base++;
+		if( base[0] == 'w' && base[1] == '_' )
 		{
-
 			ent->curstate.renderamt     = cl_glow_worldmodel_renderamt->value;
 			ent->curstate.rendercolor.r = cl_glow_worldmodel_red->value;
 			ent->curstate.rendercolor.g = cl_glow_worldmodel_green->value;
 			ent->curstate.rendercolor.b = cl_glow_worldmodel_blue->value;
-
-			ent->curstate.movetype = MOVETYPE_NOCLIP;
-			ent->curstate.solid    = SOLID_TRIGGER;
 			ent->curstate.renderfx = kRenderFxGlowShell;
+
+			if( cl_glow_worldmodel->value == 2 )
+			{
+				ent->origin[2] += cl_glow_worldmodel_height->value;
+				ent->angles[0] -= 90;
+				ent->angles[1] += cl_glow_worldmodel_spin->value * cl.time;
+				ent->angles[2] += 30;
+			}
 		}
-
-
 	}
 
 	if( entityType == ET_TEMPENTITY )

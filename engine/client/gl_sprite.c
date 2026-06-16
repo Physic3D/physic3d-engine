@@ -26,10 +26,10 @@ GNU General Public License for more details.
 
 // it's a Valve default value for LoadMapSprite (probably must be power of two)
 #define MAPSPRITE_SIZE	128
-#define GLARE_FALLOFF	19000.0f
 
 convar_t		*r_sprite_lerping;
 convar_t		*r_sprite_lighting;
+convar_t		*r_glare_falloff;
 char		group_suffix[8];
 static vec3_t	sprite_mins, sprite_maxs;
 static float	sprite_radius;
@@ -45,6 +45,7 @@ void R_SpriteInit( void )
 {
 	r_sprite_lerping = Cvar_Get( "r_sprite_lerping", "0", CVAR_ARCHIVE, "enables sprite animation lerping" );
 	r_sprite_lighting = Cvar_Get( "r_sprite_lighting", "0", CVAR_ARCHIVE, "enables sprite lighting (blood etc)" );
+	r_glare_falloff = Cvar_Get( "r_glare_falloff", "19000", CVAR_ARCHIVE, "glow sprite brightness falloff (inverse-square constant)" );
 }
 
 /*
@@ -794,7 +795,7 @@ static float R_SpriteGlowBlend( vec3_t origin, int rendermode, int renderfx, int
 
 	*pscale = 0.0f; // variable sized glow
 
-	brightness = GLARE_FALLOFF / ( dist * dist );
+	brightness = r_glare_falloff->value / ( dist * dist );
 	brightness = bound( 0.01f, brightness, 1.0f );
 
 	if( rendermode != kRenderWorldGlow )

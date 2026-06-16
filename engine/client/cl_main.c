@@ -93,7 +93,6 @@ convar_t *cl_glow_worldmodel_red;
 convar_t *cl_glow_worldmodel_green;
 convar_t *cl_glow_worldmodel;
 convar_t *cl_glow_worldmodel_renderamt;
-convar_t *cl_glow_worldmodel;
 convar_t *cl_glow_worldmodel_height;
 convar_t *cl_glow_worldmodel_spin;
 convar_t *viewmodel_lag_style;
