@@ -217,7 +217,7 @@ qboolean AVI_ACMConvertAudio( movie_state_t *Avi )
 	}
 
 	// get the size of the output buffer for streaming the compressed audio
-	if( pacmStreamSize( Avi->cpa_conversion_stream, Avi->cpa_blockalign, &dest_length, ACM_STREAMSIZEF_SOURCE ) != MMSYSERR_NOERROR )
+	if( pacmStreamSize( Avi->cpa_conversion_stream, Avi->cpa_blockalign, (LPDWORD)&dest_length, ACM_STREAMSIZEF_SOURCE ) != MMSYSERR_NOERROR )
 	{
 		if( !Avi->quiet ) MsgDev( D_ERROR, "Couldn't get ACM conversion stream size.\n" );
 		pacmStreamClose( Avi->cpa_conversion_stream, 0 );
