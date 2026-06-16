@@ -127,9 +127,9 @@ if(XASH_NANOGL OR XASH_WES)
 	set(XASH_GLES ON)
 endif()
 
-fwgs_conditional_subproject(XASH_MAINUI mainui)
-fwgs_conditional_subproject("NOT XASH_64BIT AND XASH_VGUI" vgui_support)
-fwgs_conditional_subproject("NOT XASH_SINGLE_BINARY" game_launch)
+fwgs_conditional_subproject(XASH_MAINUI engine/mainui)
+fwgs_conditional_subproject("NOT XASH_64BIT AND XASH_VGUI" engine/vgui_support)
+fwgs_conditional_subproject("NOT XASH_SINGLE_BINARY" engine/game_launch)
 add_subdirectory(engine)
 
 if(WIN32)

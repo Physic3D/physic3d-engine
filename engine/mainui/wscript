@@ -76,8 +76,8 @@ def build(bld):
 		'controls/',
 		'menus/',
 		'model/',
-		'../common',
-		'../engine',
+		'../public',
+		'..',
 		'../pm_shared'
 	]
 

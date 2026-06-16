@@ -11,8 +11,8 @@ LOCAL_CFLAGS = -fsigned-char -DVGUI_TOUCH_SCROLL -DNO_STL -DXASH_GLES -DINTERNAL
 LOCAL_CPPFLAGS = -frtti -fno-exceptions -Wno-write-strings -Wno-invalid-offsetof -std=gnu++98
 
 LOCAL_C_INCLUDES := \
-	$(LOCAL_PATH)/../common \
-	$(LOCAL_PATH)/../engine \
+	$(LOCAL_PATH)/../public \
+	$(LOCAL_PATH)/.. \
 	$(HLSDK_PATH)/utils/vgui/include \
 	$(VGUI_DIR)/include 
 

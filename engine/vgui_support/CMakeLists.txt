@@ -53,7 +53,7 @@ else()
 	execute_process(COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_BINARY_DIR}/u_cant_touch_this.cpp)
 	set(VGUI_SUPPORT_SOURCES ${CMAKE_BINARY_DIR}/u_cant_touch_this.cpp)
 endif()
-include_directories( . ../common ../engine ../engine/common ../engine/client ../engine/client/vgui )
+include_directories( . ../public .. ../common ../client ../client/vgui )
 
 add_library(${VGUI_SUPPORT} SHARED ${VGUI_SUPPORT_SOURCES})
 

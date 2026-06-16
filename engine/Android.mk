@@ -32,8 +32,8 @@ LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/platform/posix		    \
 	$(LOCAL_PATH)/common/soundlib		    \
 	$(LOCAL_PATH)/common/soundlib/libmpg        \
-	$(LOCAL_PATH)/../common		            \
-	$(LOCAL_PATH)/../pm_shared		    \
+	$(LOCAL_PATH)/public		            \
+	$(LOCAL_PATH)/pm_shared		    \
 	$(LOCAL_PATH)/../			    \
 	$(LOCAL_PATH)/../utils/vgui/include	    \
 	$(HLSDK_PATH)/cl_dll/
