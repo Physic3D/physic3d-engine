@@ -291,7 +291,6 @@ bool CMenuTable::KeyUp( int key )
 bool CMenuTable::KeyDown( int key )
 {
 	const char *sound = 0;
-	int i;
 	bool noscroll = false;
 
 	switch( key )

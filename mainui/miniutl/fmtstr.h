@@ -81,7 +81,7 @@ public:
 	explicit CNumStr( double f )	{ SetDouble( f ); }
 	explicit CNumStr( float f )		{ SetFloat( f ); }
 
-#define NUMSTR_FAST_DIGIT( digit )					{ m_nLength = 1; m_szBuf[0] = '0' + ( digit ); m_szBuf[1] = 0; return m_szBuf; }
+#define NUMSTR_FAST_DIGIT( digit )					{ m_nLength = 1; m_szBuf[0] = (char)('0' + ( digit )); m_szBuf[1] = 0; return m_szBuf; }
 #define NUMSTR_CHECK_FAST( val, utype )				if ( (utype)val < 10 ) NUMSTR_FAST_DIGIT( (utype)val )
 
 	inline const char* SetBool( bool b )			{ NUMSTR_FAST_DIGIT( b & 1 ); }

@@ -460,15 +460,15 @@ inline void *CUtlBuffer::ReservePut( int nBytes )
 			{									\
 				if( sizeof(_type) == 2 )		\
 				{								\
-					_val = LittleWord( (uint16)*(_type *)PeekGet() ); \
+					_val = (_type)LittleWord( (uint16)*(_type *)PeekGet() ); \
 				}								\
 				else if ( sizeof(_type) == 4 )	\
 				{								\
-					_val = LittleDWord( (uint32)*(_type *)PeekGet() ); \
+					_val = (_type)LittleDWord( (uint32)*(_type *)PeekGet() ); \
 				}								\
 				else if ( sizeof(_type) == 8 )	\
 				{								\
-					_val = LittleQWord( (uint64)*(_type *)PeekGet() );	\
+					_val = (_type)LittleQWord( (uint64)*(_type *)PeekGet() );	\
 				}								\
 				else							\
 				{								\
@@ -479,15 +479,15 @@ inline void *CUtlBuffer::ReservePut( int nBytes )
 			{									\
 				if( sizeof(_type) == 2 )		\
 				{								\
-					_val = BigWord( (uint16)*(_type *)PeekGet() ); \
+					_val = (_type)BigWord( (uint16)*(_type *)PeekGet() ); \
 				}								\
 				else if ( sizeof(_type) == 4 )	\
 				{								\
-					_val = BigDWord( (uint32)*(_type *)PeekGet() ); \
+					_val = (_type)BigDWord( (uint32)*(_type *)PeekGet() ); \
 				}								\
 				else if ( sizeof(_type) == 8 )	\
 				{								\
-					_val = BigQWord( (uint64)*(_type *)PeekGet() );	\
+					_val = (_type)BigQWord( (uint64)*(_type *)PeekGet() );	\
 				}								\
 				else							\
 				{								\

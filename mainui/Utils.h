@@ -195,7 +195,13 @@ inline size_t Q_strncpy( char *dst, const char *src, size_t size )
 	return ( s - src - 1 ); // count does not include NULL
 }
 
+#ifdef ARRAYSIZE
+#undef ARRAYSIZE
+#endif
 #define ARRAYSIZE( x ) ( sizeof( x ) / sizeof( x[0] ) )
+#ifdef _MSC_VER
+#pragma warning(disable : 4005)	// winnt.h may redefine ARRAYSIZE later
+#endif
 
 #ifdef register
 #undef register
