@@ -23,6 +23,10 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libsdl2-dev libfontconfig-dev libfreetype-dev libunwind-dev
 
+      - name: Setup MSVC environment
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+
       - name: Configure CMake (Linux)
         if: runner.os == 'Linux'
         env:
