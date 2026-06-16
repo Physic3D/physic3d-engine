@@ -23,20 +23,29 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libsdl2-dev libfontconfig-dev libfreetype-dev libunwind-dev
 
-      - name: Setup Ninja (Windows)
-        if: runner.os == 'Windows'
-        run: |
-          choco install ninja -y --no-progress
-
-      - name: Configure CMake
+      - name: Configure CMake (Linux)
+        if: runner.os == 'Linux'
         env:
           CMAKE_POLICY_VERSION_MINIMUM: 3.5
         run: |
           cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 
-      - name: Build
+      - name: Configure CMake (Windows)
+        if: runner.os == 'Windows'
+        env:
+          CMAKE_POLICY_VERSION_MINIMUM: 3.5
+        run: |
+          cmake -B build -G "Visual Studio 17 2022" -A Win32
+
+      - name: Build (Linux)
+        if: runner.os == 'Linux'
         run: |
           cmake --build build --parallel
+
+      - name: Build (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          cmake --build build --config Release --parallel
 
       - name: Upload artifacts (Windows)
         if: runner.os == 'Windows'
