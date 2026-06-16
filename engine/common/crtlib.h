@@ -127,7 +127,7 @@ void Cvar_Unlink( void );
 void Cbuf_Init( void );
 void Cbuf_Clear( void );
 void Cbuf_AddText( const char *text );
-void Cbuf_AddFilterText( const char *text );
+void Cbuf_AddFilterText( const char *text, qboolean blockUnknown );
 void Cbuf_InsertText( const char *text );
 void Cbuf_Execute (void);
 int Cmd_Argc( void );

@@ -1589,7 +1589,7 @@ void CL_ParseStuffText( sizebuf_t *msg )
 			}
 		}
 	}
-	Cbuf_AddFilterText( s );
+	Cbuf_AddFilterText( s, true ); // block unknown commands from server
 }
 
 int CL_ParseFog( const char *pszName, int iSize, void *pbuf )

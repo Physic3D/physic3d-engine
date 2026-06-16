@@ -1332,9 +1332,9 @@ void Key_Console( int key )
 
 		// check for backslash prefix, then filter
 		if( con.input.buffer[0] == '\\' || con.input.buffer[0] == '/' )
-			Cbuf_AddFilterText( con.input.buffer + 1 ); // skip backslash and filter
-		else Cbuf_AddFilterText( con.input.buffer ); // filter and execute
-		Cbuf_AddFilterText( "\n" );
+			Cbuf_AddFilterText( con.input.buffer + 1, false ); // allow forwarding unknown cmds
+		else Cbuf_AddFilterText( con.input.buffer, false ); // allow forwarding unknown cmds
+		Cbuf_AddFilterText( "\n", false );
 
 		// echo to console
 		Msg( ">%s\n", con.input.buffer );

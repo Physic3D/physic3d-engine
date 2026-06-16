@@ -130,7 +130,7 @@ Cbuf_AddFilterText
 Remove restricted commands from buffer and just add other
 =================
 */
-void Cbuf_AddFilterText( const char *text )
+void Cbuf_AddFilterText( const char *text, qboolean blockUnknown )
 {
 	static int aliasDepth = 0;
 	qboolean quotes = false;
@@ -145,7 +145,7 @@ void Cbuf_AddFilterText( const char *text )
 		return;
 	}
 
-	while( *text ) // stufftext should end by newline
+	while( *text )
 	{
 		if( i >= MAX_CMD_LINE - 2 )
 		{
@@ -204,7 +204,7 @@ void Cbuf_AddFilterText( const char *text )
 					// recursively expose and validate an alias
 					MsgDev( D_NOTE, "AddFilterText(alias): %s => %s", a->name, a->value );
 					aliasDepth++;
-					Cbuf_AddFilterText( a->value );
+					Cbuf_AddFilterText( a->value, blockUnknown );
 					aliasDepth--;
 				}
 				else if( cmd )
@@ -231,10 +231,16 @@ void Cbuf_AddFilterText( const char *text )
 						MsgDev( D_NOTE, "AddFilterText(cvar, restricted): %s", line );
 					}
 				}
+				else if( blockUnknown )
+				{
+					// block unknown commands (used for server-sent stufftext)
+					MsgDev( D_NOTE, "AddFilterText(unknown, blocked): %s", line );
+				}
 				else
 				{
-					// unknown commands are not allowed
-					MsgDev( D_NOTE, "AddFilterText(unknown, blocked): %s", line );
+					// allow unknown commands (used for console input - they'll be forwarded to server)
+					MsgDev( D_NOTE, "AddFilterText(unknown, forwarded): %s", line );
+					Cbuf_AddText( line );
 				}
 			}
 						
