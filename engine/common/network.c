@@ -1094,7 +1094,7 @@ static int NET_IPSocket( const char *netInterface, int port )
 {
 	int		net_socket;
 	struct sockaddr_in	addr;
-	dword		_true = 1;
+	unsigned long		_true = 1;
 
 	Q_memset( &addr, 0, sizeof( struct sockaddr_in ) );
 
@@ -1678,7 +1678,7 @@ void HTTP_Run( void )
 
 	if( curfile->state < HTTP_SOCKET ) // Socket is not created
 	{
-		dword mode;
+		unsigned long mode;
 
 		curfile->socket = pSocket( AF_INET, SOCK_STREAM, IPPROTO_TCP );
 
