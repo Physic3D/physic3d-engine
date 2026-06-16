@@ -115,6 +115,47 @@ macro(target_link_vgui_hack arg1)
 	endif()
 endmacro()
 
+function(_fwgs_find_sdl2_after_download)
+	find_path(SDL2_INCLUDE_DIR SDL.h
+		PATHS ${SDL2_PATH}
+		PATH_SUFFIXES include/SDL2 include
+		NO_DEFAULT_PATH)
+	if(MSVC)
+		if(XASH_64BIT)
+			set(_lib_suffix lib/x64)
+		else()
+			set(_lib_suffix lib/x86)
+		endif()
+	elseif(MINGW)
+		set(_lib_suffix lib)
+	endif()
+	find_library(SDL2_LIBRARY NAMES SDL2 SDL2.dll
+		PATHS ${SDL2_PATH}
+		PATH_SUFFIXES ${_lib_suffix}
+		NO_DEFAULT_PATH)
+	if(SDL2_INCLUDE_DIR AND SDL2_LIBRARY)
+		set(SDL2_FOUND TRUE CACHE BOOL "" FORCE)
+	endif()
+	set(SDL2_INCLUDE_DIR ${SDL2_INCLUDE_DIR} CACHE STRING "" FORCE)
+	set(SDL2_LIBRARY ${SDL2_LIBRARY} CACHE STRING "" FORCE)
+endfunction()
+
+function(_fwgs_find_vgui_after_download)
+	find_path(VGUI_INCLUDE_DIR VGUI.h
+		PATHS ${HL_SDK_DIR}
+		PATH_SUFFIXES utils/vgui/include include
+		NO_DEFAULT_PATH)
+	find_library(VGUI_LIBRARY NAMES vgui vgui.so
+		PATHS ${HL_SDK_DIR}
+		PATH_SUFFIXES utils/vgui/lib/win32_vc6 lib/win32_vc6 lib
+		NO_DEFAULT_PATH)
+	if(VGUI_INCLUDE_DIR AND VGUI_LIBRARY)
+		set(VGUI_FOUND TRUE CACHE BOOL "" FORCE)
+	endif()
+	set(VGUI_INCLUDE_DIR ${VGUI_INCLUDE_DIR} CACHE STRING "" FORCE)
+	set(VGUI_LIBRARY ${VGUI_LIBRARY} CACHE STRING "" FORCE)
+endfunction()
+
 macro(fwgs_library_dependency tgt pkgname)
 	if(XASH_DOWNLOAD_DEPENDENCIES AND ${ARGC} GREATER 2)
 		set(FORCE_DOWNLOAD FALSE)
@@ -142,10 +183,27 @@ macro(fwgs_library_dependency tgt pkgname)
 		endif()
 		if(FORCE_DOWNLOAD OR FORCE_UNPACK)
 			set(${ARGV4} ${CMAKE_BINARY_DIR}/${pkgname}/${ARGV5})
-			find_package(${pkgname} REQUIRED)
+			if(${pkgname} STREQUAL "SDL2")
+				_fwgs_find_sdl2_after_download()
+			elseif(${pkgname} STREQUAL "VGUI")
+				_fwgs_find_vgui_after_download()
+			else()
+				find_package(${pkgname} REQUIRED)
+			endif()
 		endif()
 	else()
-		find_package(${pkgname} REQUIRED)
+		if(${pkgname} STREQUAL "VGUI")
+			_fwgs_find_vgui()
+			if(NOT VGUI_FOUND)
+				message(FATAL_ERROR "VGUI not found. Set HL_SDK_DIR or enable XASH_DOWNLOAD_DEPENDENCIES.")
+			endif()
+		elseif(${pkgname} STREQUAL "SDL2")
+			if(NOT SDL2_FOUND)
+				message(FATAL_ERROR "SDL2 not found. Set SDL2_PATH or install SDL2 development package.")
+			endif()
+		else()
+			find_package(${pkgname} REQUIRED)
+		endif()
 	endif()
 	include_directories(${${pkgname}_INCLUDE_DIR})
 	if(${pkgname} STREQUAL VGUI)
@@ -423,44 +481,41 @@ if(NOT SDL2_FOUND)
 	find_package_handle_standard_args(SDL2 REQUIRED_VARS SDL2_LIBRARY SDL2_INCLUDE_DIR)
 endif()
 
-# FindVGUI -- inlined Find module
-if(NOT HL_SDK_DIR AND NOT XASH_DOWNLOAD_DEPENDENCIES)
-	message( FATAL_ERROR "Pass a HL_SDK_DIR variable to CMake to be able use VGUI" )
-endif()
-
-if(NOT VGUI_FOUND)
-	set(VGUI_SEARCH_PATHS ${HL_SDK_DIR})
-
-	find_path(VGUI_INCLUDE_DIR
-		VGUI.h
-		HINTS $ENV{VGUIDIR}
-		PATH_SUFFIXES
-		    utils/vgui/include/
-			include/
-		PATHS ${VGUI_SEARCH_PATHS}
-	)
-
-	if(APPLE)
-		set(LIBNAMES vgui.dylib)
-	else()
-		set(LIBNAMES vgui vgui.so)
+# FindVGUI -- inlined Find module (lazy, called only from fwgs_library_dependency)
+function(_fwgs_find_vgui)
+	if(NOT HL_SDK_DIR AND NOT XASH_DOWNLOAD_DEPENDENCIES)
+		message(FATAL_ERROR "Pass a HL_SDK_DIR variable to CMake to be able use VGUI")
 	endif()
-
-	find_library(VGUI_LIBRARY
-		NAMES ${LIBNAMES}
-		HINTS $ENV{VGUIDIR}
-		PATH_SUFFIXES
-			games/lib/xash3d
-			lib/xash3d
-			xash3d/
-			utils/vgui/lib/win32_vc6
-			linux/
-			linux/release
-			lib/win32_vc6
-			lib/
-		PATHS ${VGUI_SEARCH_PATHS}
-	)
-
-	include(FindPackageHandleStandardArgs)
-	find_package_handle_standard_args(VGUI REQUIRED_VARS VGUI_LIBRARY VGUI_INCLUDE_DIR)
-endif()
+	if(NOT VGUI_FOUND)
+		set(VGUI_SEARCH_PATHS ${HL_SDK_DIR})
+		find_path(VGUI_INCLUDE_DIR
+			VGUI.h
+			HINTS $ENV{VGUIDIR}
+			PATH_SUFFIXES
+			    utils/vgui/include/
+				include/
+			PATHS ${VGUI_SEARCH_PATHS}
+		)
+		if(APPLE)
+			set(LIBNAMES vgui.dylib)
+		else()
+			set(LIBNAMES vgui vgui.so)
+		endif()
+		find_library(VGUI_LIBRARY
+			NAMES ${LIBNAMES}
+			HINTS $ENV{VGUIDIR}
+			PATH_SUFFIXES
+				games/lib/xash3d
+				lib/xash3d
+				xash3d/
+				utils/vgui/lib/win32_vc6
+				linux/
+				linux/release
+				lib/win32_vc6
+				lib/
+			PATHS ${VGUI_SEARCH_PATHS}
+		)
+		include(FindPackageHandleStandardArgs)
+		find_package_handle_standard_args(VGUI REQUIRED_VARS VGUI_LIBRARY VGUI_INCLUDE_DIR)
+	endif()
+endfunction()

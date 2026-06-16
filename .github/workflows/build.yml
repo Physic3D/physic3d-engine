@@ -8,11 +8,6 @@ jobs:
     strategy:
       matrix:
         os: [windows-latest, ubuntu-latest]
-        include:
-          - os: windows-latest
-            cmake_args: -G "Ninja"
-          - os: ubuntu-latest
-            cmake_args: ""
 
     runs-on: ${{ matrix.os }}
 
@@ -26,11 +21,18 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libsdl2-dev libfontconfig-dev libfreetype-dev
+          sudo apt-get install -y libsdl2-dev libfontconfig-dev libfreetype-dev libunwind-dev
+
+      - name: Setup Ninja (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          choco install ninja -y --no-progress
 
       - name: Configure CMake
+        env:
+          CMAKE_POLICY_VERSION_MINIMUM: 3.5
         run: |
-          cmake -B build ${{ matrix.cmake_args }} -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+          cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 
       - name: Build
         run: |
@@ -41,7 +43,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: xash3d-windows
-          path: build/*.dll
+          path: |
+            build/*.dll
+            build/*.exe
 
       - name: Upload artifacts (Linux)
         if: runner.os == 'Linux'
