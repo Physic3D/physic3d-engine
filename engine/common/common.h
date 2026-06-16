@@ -981,7 +981,6 @@ struct pmtrace_s;
 #define INPUT_DEVICE_VR (1<<3)
 
 void IN_EngineAppendMove( float frametime, usercmd_t *cmd, qboolean active );
-//void IN_JoyAppendMove( usercmd_t *cmd, float forwardmove, float sidemove );
 void IN_LockInputCvars( void );
 
 // shared calls
