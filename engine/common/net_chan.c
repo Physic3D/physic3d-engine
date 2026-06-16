@@ -159,7 +159,7 @@ qboolean NetSplit_GetLong( netsplit_t *ns, netadr_t *from, byte *data, size_t *l
 	p->recieved_v[packet->index >> 5] |= 1 << ( packet->index & 31 );
 
 	// prevent overflow
-	if( packet->part * packet->index > NET_MAX_PAYLOAD )
+	if( (uint64_t)packet->part * packet->index > NET_MAX_PAYLOAD )
 	{
 		MsgDev( D_WARN, "NetSplit_GetLong: packet out fo bounds from %s (part %d index %d)\n", NET_AdrToString( *from ), packet->part, packet->index );
 		return false;
@@ -1118,9 +1118,9 @@ qboolean Netchan_CopyFileFragments( netchan_t *chan, sizebuf_t *msg )
 		Netchan_FlushIncoming( chan, FRAG_FILE_STREAM );
 		return false;
 	}
-	else if( Q_strstr( filename, ".." ))
+	else if( Q_strstr( filename, ".." ) || filename[0] == '/' || filename[0] == '\\' || Q_strstr( filename, ":\\" ) || Q_strstr( filename, ":/" ))
 	{
-		MsgDev( D_ERROR, "File fragment received with relative path, ignoring\n" );
+		MsgDev( D_ERROR, "File fragment received with invalid path, ignoring\n" );
 
 		// clear out bufs
 		Netchan_FlushIncoming( chan, FRAG_FILE_STREAM );

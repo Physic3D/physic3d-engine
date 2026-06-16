@@ -84,6 +84,7 @@ extern "C" {
 #endif
 
 #define MAX_STRING		256	// generic string
+#define MAX_TOKEN		4096	// max token length for COM_ParseFile
 #define MAX_INFO_STRING	256	// infostrings are transmitted across network
 #define MAX_SYSPATH		PATH_MAX	// system filepath
 #define MAX_MODS		512	// environment games that engine can keep visible

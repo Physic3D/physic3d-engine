@@ -403,10 +403,22 @@ convar_t *Cvar_Set2( const char *var_name, const char *value, qboolean force )
 	if( !Q_strcmp( value, var->string ))
 		return var;
 
-	// any latched values not allowed for game cvars
-	if( dll_variable ) force = true;
-
-	if( !force )
+	// allow game cvars to skip latch behavior but still enforce protection flags
+	if( dll_variable )
+	{
+		// skip latch/init checks for game DLL variables, but enforce security flags
+		if( var->flags & ( CVAR_READ_ONLY|CVAR_GLCONFIG ))
+		{
+			MsgDev( D_INFO, "%s is read only.\n", var_name );
+			return var;
+		}
+		if( var->flags & CVAR_PROTECTED )
+		{
+			MsgDev( D_INFO, "%s is protected.\n", var_name );
+			return var;
+		}
+	}
+	else
 	{
 		if( var->flags & ( CVAR_READ_ONLY|CVAR_GLCONFIG ))
 		{
@@ -461,14 +473,6 @@ convar_t *Cvar_Set2( const char *var_name, const char *value, qboolean force )
 		{
 			MsgDev( D_INFO, "%s is cheat protected.\n", var_name );
 			return var;
-		}
-	}
-	else
-	{
-		if( !dll_variable && var->latched_string )
-		{
-			Mem_Free( var->latched_string );
-			var->latched_string = NULL;
 		}
 	}
 
@@ -579,6 +583,9 @@ void Cvar_FullSet( const char *var_name, const char *value, int flags )
 		Cvar_Get( var_name, value, flags, "" );
 		return;
 	}
+
+	// preserve protection flags even when new flags are provided
+	flags |= var->flags & ( CVAR_READ_ONLY|CVAR_PROTECTED );
 
 	// use this check to prevent acessing of non-existing fields
 	// for cvar_t: latched_string, description, etc.

@@ -1489,15 +1489,13 @@ void Key_EnumCmds_f( void )
 {
 	file_t	*f;
 
-	FS_AllowDirectPaths( true );
-	if( FS_FileExists( "../help.txt", false ))
+	if( FS_FileExists( "help.txt", false ))
 	{
 		Msg( "help.txt already exist\n" );
-		FS_AllowDirectPaths( false );
 		return;
 	}
 
-	f = FS_Open( "../help.txt", "w", false );
+	f = FS_Open( "help.txt", "w", false );
 	if( f )
 	{
 		FS_Printf( f, "//\t\thelp.txt - xash commands and console variables\n");
@@ -1511,7 +1509,6 @@ void Key_EnumCmds_f( void )
 		Msg( "help.txt created\n" );
 	}
 	else MsgDev( D_ERROR, "Couldn't write help.txt.\n");
-	FS_AllowDirectPaths( false );
 }
 
 
@@ -1522,10 +1519,16 @@ void Com_EscapeCommand( char *newCommand, const char *oldCommand, int len )
 
 	while( (c = *oldCommand++) && len > 1 )
 	{
-		if( c == '"' )
+		if( c == '"' || c == ';' || c == '\\' )
 		{
 			*newCommand++ = '\\';
 			len--;
+		}
+
+		if( c == '\n' || c == '\r' )
+		{
+			// strip newlines entirely
+			continue;
 		}
 
 		if( scripting && c == '$')

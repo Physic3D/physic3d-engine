@@ -285,8 +285,5 @@ void NET_InitMasters()
 	Cmd_AddRestrictedCommand( "clearmasters", NET_ClearMasters_f, "clear masterserver list" );
 	Cmd_AddCommand( "listmasters", NET_ListMasters_f, "list masterservers" );
 
-	// keep main master always there
-	NET_AddMaster( DEFAULT_PRIMARY_MASTER, false );
-	NET_AddMaster( FWGS_PRIMARY_MASTER, false );
 	NET_LoadMasters( );
 }

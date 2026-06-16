@@ -1996,25 +1996,14 @@ void CL_ConnectionlessPacket( netadr_t from, sizebuf_t *msg )
 	}
 	else if ( !Q_strcmp( c, "updatemsg" ) )
 	{
-		// got an update message from master server
-		// show update dialog from menu
-		netadr_t adr;
-		qboolean preferStore = true;
-
-		if ( !Q_strcmp( Cmd_Argv( 1 ), "nostore" ) )
-			preferStore = false;
-
-		if ( NET_StringToAdr( DEFAULT_PRIMARY_MASTER, &adr ) )
-		{
-			if ( NET_CompareAdr( from, adr ) )
-			{
-				// update from masterserver
-				Cbuf_AddText( va( "menu_updatedialog %s\n", preferStore ? "store" : "nostore" ) );
-			}
-		}
+		// deprecated: update from master server is not supported
+		MsgDev( D_WARN, "ignored updatemsg from %s\n", NET_AdrToString( from ) );
 	}
 	else if ( !Q_strcmp( c, "ping" ) )
 	{
+		if ( !CL_IsFromConnectingServer( from ) && !NET_IsLocalAddress( from ) )
+			return;
+
 		// ping from somewhere
 		Netchan_OutOfBandPrint( NS_CLIENT, from, "ack" );
 	}
@@ -2030,6 +2019,9 @@ void CL_ConnectionlessPacket( netadr_t from, sizebuf_t *msg )
 	}
 	else if ( !Q_strcmp( c, "echo" ) )
 	{
+		if ( !CL_IsFromConnectingServer( from ) )
+			return;
+
 		// echo request from server
 		Netchan_OutOfBandPrint( NS_CLIENT, from, "%s", Cmd_Argv( 1 ) );
 	}

@@ -1059,12 +1059,61 @@ void SV_Ping( netadr_t from )
 Rcon_Validate
 ================
 */
-qboolean Rcon_Validate( void )
+static int rcon_fail_count[MAX_CHALLENGES];
+static double rcon_fail_time[MAX_CHALLENGES];
+static netadr_t rcon_fail_adr[MAX_CHALLENGES];
+static int rcon_fail_index;
+
+qboolean Rcon_Validate( const netadr_t *from )
 {
+	int i;
+	double now = Sys_DoubleTime();
+
 	if( !Q_strlen( rcon_password->string ) )
 		return false;
+
+	// rate limit: max 3 failed attempts per 10 seconds per IP
+	for( i = 0; i < MAX_CHALLENGES; i++ )
+	{
+		if( NET_CompareAdr( rcon_fail_adr[i], *from ))
+		{
+			if( now - rcon_fail_time[i] < 10.0 )
+			{
+				if( rcon_fail_count[i] >= 3 )
+				{
+					MsgDev( D_WARN, "Rcon rate limit exceeded from %s\n", NET_AdrToString( *from ));
+					return false;
+				}
+			}
+			else
+			{
+				rcon_fail_count[i] = 0;
+				rcon_fail_time[i] = now;
+			}
+			break;
+		}
+	}
+
 	if( Q_strcmp( Cmd_Argv( 1 ), rcon_password->string ) )
+	{
+		// track failed attempt
+		if( i == MAX_CHALLENGES )
+		{
+			rcon_fail_adr[rcon_fail_index % MAX_CHALLENGES] = *from;
+			rcon_fail_count[rcon_fail_index % MAX_CHALLENGES] = 0;
+			rcon_fail_time[rcon_fail_index % MAX_CHALLENGES] = now;
+			i = rcon_fail_index % MAX_CHALLENGES;
+			rcon_fail_index++;
+		}
+		rcon_fail_count[i]++;
+		rcon_fail_time[i] = now;
 		return false;
+	}
+
+	// success: reset fail count
+	if( i < MAX_CHALLENGES )
+		rcon_fail_count[i] = 0;
+
 	return true;
 }
 
@@ -1086,7 +1135,7 @@ void SV_RemoteCommand( netadr_t from, sizebuf_t *msg )
 	MsgDev( D_INFO, "Rcon from %s:\n%s\n", NET_AdrToString( from ), BF_GetData( msg ) + 4 );
 	SV_BeginRedirect( from, RD_PACKET, outputbuf, sizeof( outputbuf ), SV_FlushRedirect );
 
-	if( Rcon_Validate( ) )
+	if( Rcon_Validate( &from ) )
 	{
 		remaining[0] = 0;
 		for( i = 2; i < Cmd_Argc(); i++ )
@@ -3532,6 +3581,52 @@ Clients that are in the game can still send
 connectionless packets.
 =================
 */
+// per-IP rate limiting for connectionless packets
+#define CONLESS_RATE_LIMIT 10    // max packets per second per IP
+#define CONLESS_RATE_MAX_IPS 64
+
+static struct {
+	netadr_t adr;
+	double time;
+	int count;
+} conless_rate[CONLESS_RATE_MAX_IPS];
+static int conless_rate_idx;
+
+static qboolean SV_ConnectionlessRateLimit( netadr_t from )
+{
+	int i, oldest = 0;
+	double oldest_time = Sys_DoubleTime();
+	double now = Sys_DoubleTime();
+
+	for( i = 0; i < CONLESS_RATE_MAX_IPS; i++ )
+	{
+		if( NET_CompareAdr( conless_rate[i].adr, from ))
+		{
+			if( now - conless_rate[i].time > 1.0 )
+			{
+				conless_rate[i].time = now;
+				conless_rate[i].count = 1;
+				return false;
+			}
+			conless_rate[i].count++;
+			conless_rate[i].time = now;
+			if( conless_rate[i].count > CONLESS_RATE_LIMIT )
+				return true;
+			return false;
+		}
+		if( conless_rate[i].time < oldest_time )
+		{
+			oldest_time = conless_rate[i].time;
+			oldest = i;
+		}
+	}
+
+	conless_rate[oldest].adr = from;
+	conless_rate[oldest].time = now;
+	conless_rate[oldest].count = 1;
+	return false;
+}
+
 void SV_ConnectionlessPacket( netadr_t from, sizebuf_t *msg )
 {
 	char	*args;
@@ -3540,6 +3635,10 @@ void SV_ConnectionlessPacket( netadr_t from, sizebuf_t *msg )
 
 	// prevent flooding from banned address
 	if( SV_CheckIP( &from ) )
+		return;
+
+	// per-IP rate limiting for connectionless packets
+	if( SV_ConnectionlessRateLimit( from ))
 		return;
 
 	BF_Clear( msg );
@@ -3566,13 +3665,8 @@ void SV_ConnectionlessPacket( netadr_t from, sizebuf_t *msg )
 	else if( !Q_strcmp( c, "T" "Source" ) ) SV_TSourceEngineQuery( from );
 	else if( !Q_strcmp( c, "c" ) )
 	{
-		if( sv_nat->value )
-		{
-			netadr_t to;
-
-			if( NET_StringToAdr( Cmd_Argv( 1 ), &to ) && !NET_IsLanAddress( to ) )
-				SV_Info( to, PROTOCOL_VERSION );
-		}
+		// NAT reverse relay disabled for security (SSRF/amplification)
+		MsgDev( D_WARN, "NAT relay request from %s ignored\n", NET_AdrToString( from ) );
 	}
 	else if( !Q_strcmp( c, "i" ) )
 	{

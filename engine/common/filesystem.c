@@ -1110,34 +1110,23 @@ int FS_CheckNastyPath( const char *path, qboolean isgamedir )
 	// all: never allow an empty path, as for gamedir it would access the parent directory and a non-gamedir path it is just useless
 	if( !path[0] ) return 2;
 
-	// Mac: don't allow Mac-only filenames - : is a directory separator
-	// instead of /, but we rely on / working already, so there's no reason to
-	// support a Mac-only path
-	// Amiga and Windows: : tries to go to root of drive
-	if( Q_strstr( path, ":" ) && !fs_ext_path ) return 1; // non-portable attempt to go to root of drive
+	// Windows and UNIXes: never allow absolute paths (leading / or \)
+	if( path[0] == '/' || path[0] == '\\' ) return 2;
+
+	// Windows: : tries to go to root of drive, Mac: : is a directory separator
+	if( Q_strstr( path, ":" ) && !fs_ext_path ) return 1;
 
 	// Amiga: // is parent directory
-	if( Q_strstr( path, "//" )  && !fs_ext_path ) return 1; // non-portable attempt to go to parent directory
+	if( Q_strstr( path, "//" )  && !fs_ext_path ) return 1;
 
 	// all: don't allow going to parent directory (../ or /../)
-	if( Q_strstr( path, ".." ) && !fs_ext_path ) return 2; // attempt to go outside the game directory
-
-	// Windows and UNIXes: don't allow absolute paths
-	if( path[0] == '/' && !fs_ext_path ) return 2; // attempt to go outside the game directory
-#if 0
-	// all: don't allow . characters before the last slash (it should only be used in filenames, not path elements),
-	// this catches all imaginable cases of ./, ../, .../, etc
-	if( Q_strchr( path, '.' ) && !fs_ext_path )
-	{
-		if( isgamedir ) return 2; // gamedir is entirely path elements, so simply forbid . entirely
-		if( Q_strchr( path, '.' ) < Q_strrchr( path, '/' )) return 2; // possible attempt to go outside the game directory
-	}
-#endif
-	// all: forbid trailing slash on gamedir
-	if( isgamedir && !fs_ext_path && path[Q_strlen( path )-1] == '/' ) return 2;
+	if( Q_strstr( path, ".." ) && !fs_ext_path ) return 2;
 
 	// all: forbid leading dot on any filename for any reason
-	if( Q_strstr( path, "/." ) && !fs_ext_path ) return 2; // attempt to go outside the game directory
+	if( Q_strstr( path, "/." ) && !fs_ext_path ) return 2;
+
+	// all: forbid trailing slash on gamedir
+	if( isgamedir && !fs_ext_path && path[Q_strlen( path )-1] == '/' ) return 2;
 
 	// after all these checks we're pretty sure it's a / separated filename
 	// and won't do much if any harm
@@ -3176,6 +3165,9 @@ qboolean FS_Rename( const char *oldname, const char *newname )
 	if( !oldname || !newname || !*oldname || !*newname )
 		return false;
 
+	if( FS_CheckNastyPath( oldname, false ) || FS_CheckNastyPath( newname, false ))
+		return false;
+
 	Q_snprintf( oldpath, sizeof( oldpath ), "%s%s", fs_gamedir, oldname );
 	Q_snprintf( newpath, sizeof( newpath ), "%s%s", fs_gamedir, newname );
 
@@ -3200,6 +3192,9 @@ qboolean FS_Delete( const char *path )
 	qboolean	iRet;
 
 	if( !path || !*path )
+		return false;
+
+	if( FS_CheckNastyPath( path, false ))
 		return false;
 
 	Q_snprintf( real_path, sizeof( real_path ), "%s%s", fs_gamedir, path );

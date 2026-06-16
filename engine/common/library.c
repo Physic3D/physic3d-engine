@@ -333,7 +333,7 @@ void *Com_LoadLibrary( const char *dllname, int build_ordinals_table )
 	if ( !hInst )
 		return NULL;
 
-	strcpy( fullPath, hInst->fullPath );
+	Q_strncpy( fullPath, hInst->fullPath, sizeof( fullPath ) );
 	Mem_Free( hInst );
 
 	return LoadLibraryA( fullPath );

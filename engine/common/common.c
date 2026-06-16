@@ -75,7 +75,8 @@ skipwhite:
 
 			if( c == '\\' && *data == '"' )
 			{
-				token[len++] = *data++;
+				if( len < MAX_TOKEN - 1 ) token[len++] = *data;
+				data++;
 				continue;
 			}
 
@@ -84,7 +85,7 @@ skipwhite:
 				token[len] = 0;
 				return data;
 			}
-			token[len] = c;
+			if( len < MAX_TOKEN - 1 ) token[len] = c;
 			len++;
 		}
 	}
@@ -101,7 +102,7 @@ skipwhite:
 	// parse a regular word
 	do
 	{
-		token[len] = c;
+		if( len < MAX_TOKEN - 1 ) token[len] = c;
 		data++;
 		len++;
 		c = ((byte)*data);
@@ -110,7 +111,8 @@ skipwhite:
 			break;
 	} while( c > 32 );
 
-	token[len] = 0;
+	if( len < MAX_TOKEN ) token[len] = 0;
+	else token[MAX_TOKEN - 1] = 0;
 
 	return data;
 }

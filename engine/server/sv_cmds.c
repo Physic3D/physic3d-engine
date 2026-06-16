@@ -578,15 +578,26 @@ SV_DeleteSave_f
 */
 void SV_DeleteSave_f( void )
 {
+	const char *savename;
+
 	if( Cmd_Argc() != 2 )
 	{
 		Msg( "Usage: killsave <name>\n" );
 		return;
 	}
 
+	savename = Cmd_Argv( 1 );
+
+	// validate save name - only allow safe characters
+	if( Q_strstr( savename, ".." ) || Q_strstr( savename, "/" ) || Q_strstr( savename, "\\" ) || Q_strstr( savename, ":" ))
+	{
+		Msg( "Invalid save name\n" );
+		return;
+	}
+
 	// delete save and saveshot
-	FS_Delete( va( "save/%s.sav", Cmd_Argv( 1 )));
-	FS_Delete( va( "save/%s.bmp", Cmd_Argv( 1 )));
+	FS_Delete( va( "save/%s.sav", savename ));
+	FS_Delete( va( "save/%s.bmp", savename ));
 }
 
 /*

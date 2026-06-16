@@ -124,8 +124,8 @@ Default build-depended cvar and constant values
 #endif // XASH_GL_STATIC
 #endif // XASH_NANOGL || XASH_WES
 
-#define DEFAULT_PRIMARY_MASTER "ms.tyabus.co.uk:27010"
-#define FWGS_PRIMARY_MASTER "mentality.rip:27010"
+#define DEFAULT_PRIMARY_MASTER ""
+#define FWGS_PRIMARY_MASTER ""
 // Set ForceSimulating to 1 by default for dedicated, because AMXModX timers require this
 // TODO: enable simulating for any server?
 #ifdef XASH_DEDICATED

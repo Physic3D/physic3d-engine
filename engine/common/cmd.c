@@ -233,9 +233,8 @@ void Cbuf_AddFilterText( const char *text )
 				}
 				else
 				{
-					// add server forwards
-					MsgDev( D_NOTE, "AddFilterText(forwards, allowed): %s", line );
-					Cbuf_AddText( line );
+					// unknown commands are not allowed
+					MsgDev( D_NOTE, "AddFilterText(unknown, blocked): %s", line );
 				}
 			}
 						
