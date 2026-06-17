@@ -1415,7 +1415,7 @@ STBSP__PUBLICDEF int STB_SPRINTF_DECORATE( vsnprintf )( char * buf, size_t count
       int l;
 
       c.buf = buf;
-      c.count = count;
+      c.count = (int)count;
       c.length = 0;
 
       STB_SPRINTF_DECORATE( vsprintfcb )( stbsp__clamp_callback, &c, stbsp__clamp_callback(0,&c,0), fmt, va );
@@ -1423,7 +1423,7 @@ STBSP__PUBLICDEF int STB_SPRINTF_DECORATE( vsnprintf )( char * buf, size_t count
       // zero-terminate
       l = (int)( c.buf - buf );
       if ( l >= count ) // should never be greater, only equal (or less) than count
-         l = count - 1;
+         l = (int)count - 1;
       buf[l] = 0;
    }
 

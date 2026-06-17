@@ -215,7 +215,7 @@ void NetSplit_SendLong( netsrc_t sock, size_t length, void *data, netadr_t to, u
 
 	packet.signature = LittleLong(0xFFFFFFFE);
 	packet.id = LittleLong(id);
-	packet.length = LittleLong(length);
+	packet.length = LittleLong((uint32_t)length);
 	packet.part = LittleLong(part);
 	packet.count = (byte)(( length - 1 ) / part + 1);
 
@@ -226,7 +226,7 @@ void NetSplit_SendLong( netsrc_t sock, size_t length, void *data, netadr_t to, u
 		uint32_t size = part;
 
 		if( size > length )
-			size = length;
+			size = (uint32_t)length;
 
 		length -= size;
 

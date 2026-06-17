@@ -638,7 +638,7 @@ qboolean Q_StripUnprintableAndSpace(char *pch)
 {
 	bool bStrippedAny;
 	bool bStrippedWhitespace;
-	int cch = strlen(pch);
+	int cch = (int)strlen(pch);
 	int cubDest = (cch + 1) * sizeof(uchar16);
 	uchar16 *pwch_alloced = (uchar16 *)malloc(cubDest);
 	bStrippedAny = false;

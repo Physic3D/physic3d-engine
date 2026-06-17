@@ -65,7 +65,7 @@ qboolean Sound_LoadMPG( const char *name, const byte *buffer, size_t filesize )
 #endif
 
 	// trying to read header
-	if( !feed_mpeg_header( mpeg, buffer, FRAME_SIZE, filesize, &sc ))
+	if( !feed_mpeg_header( mpeg, buffer, FRAME_SIZE, (long)filesize, &sc ))
 	{
 		MsgDev( D_ERROR, "Sound_LoadMPG: failed to load (%s): %s\n", name, get_error( mpeg ));
 		close_decoder( mpeg );
@@ -102,7 +102,7 @@ qboolean Sound_LoadMPG( const char *name, const byte *buffer, size_t filesize )
 
 			// if there are no bytes remainig so we can decompress the new frame
 			if( pos + FRAME_SIZE > filesize )
-				bufsize = ( filesize - pos );
+				bufsize = (int)( filesize - pos );
 			else bufsize = FRAME_SIZE;
 			pos += bufsize;
 
@@ -111,14 +111,14 @@ qboolean Sound_LoadMPG( const char *name, const byte *buffer, size_t filesize )
 		}
 
 		if( bytesWrite + outsize > sound.size )
-			size = ( sound.size - bytesWrite );
-		else size = outsize;
+			size = (int)( sound.size - bytesWrite );
+		else size = (int)outsize;
 
 		memcpy( &sound.wav[bytesWrite], out, size );
 		bytesWrite += outsize;
 	}
 
-	sound.samples = bytesWrite / ( sound.width * sound.channels );
+	sound.samples = (uint32_t)( bytesWrite / ( sound.width * sound.channels ) );
 	close_decoder( mpeg );
 
 	return true;

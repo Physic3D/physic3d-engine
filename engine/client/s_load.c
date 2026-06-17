@@ -52,7 +52,7 @@ void S_SoundList_f( void )
 		sc = sfx->cache;
 		if( sc )
 		{
-			totalSize += sc->size;
+			totalSize += (int)sc->size;
 
 			if( sc->loopStart >= 0 ) Msg( "L" );
 			else Msg( " " );

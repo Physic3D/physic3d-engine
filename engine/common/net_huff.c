@@ -548,7 +548,7 @@ void Huff_CompressData( byte *data, size_t *length )
 	int	outLen;
 	int	i, inLen;
 
-	inLen = *length;
+	inLen = (int)*length;
 	if( inLen <= 0 || inLen >= NET_MAX_PAYLOAD )
 	{
 		MsgDev( D_ERROR, "Huff_CompressData: overflow\n");
@@ -645,7 +645,7 @@ void Huff_DecompressData( byte *data, size_t *length )
 	tree_t	tree;
 	byte	buffer[NET_MAX_PAYLOAD];
 	int	outLen;
-	int	inLen = *length;
+	int	inLen = (int)*length;
 	int	ch, i, j;
 
 	if( inLen <= 0 ) return;

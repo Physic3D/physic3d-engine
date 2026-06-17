@@ -358,7 +358,7 @@ void DLY_CheckNewStereoDelayVal( )
 		if( dly->delaysamples != samples )
 		{
 			dly->xfade = 128;
-			dly->idelayoutputxf = dly->idelayinput - samples;
+			dly->idelayoutputxf = (int)(dly->idelayinput - samples);
 			if( dly->idelayoutputxf < 0 )
 				dly->idelayoutputxf += dly->cdelaysamplesmax;
 		}
@@ -399,8 +399,8 @@ void DLY_DoStereoDelay( int count )
 			// set up new crossfade, if not crossfading, not modulating, but going to
 			if( !dly->xfade && !dly->modcur && dly->mod )
 			{
-				dly->idelayoutputxf = dly->idelayoutput +
-						((Com_RandomLong( 0, 255 ) * dly->delaysamples ) >> 9 );
+			dly->idelayoutputxf = (int)(dly->idelayoutput +
+					((Com_RandomLong( 0, 255 ) * dly->delaysamples ) >> 9 ));
 
 				dly->xfade = 128;
 			}
@@ -557,7 +557,7 @@ void RVB_SetUpDly( int pos, float delay, int kmod )
 	// set up crossfade, if delay has changed
 	if( rgsxdly[pos].delaysamples != samples )
 	{
-		rgsxdly[pos].idelayoutputxf = rgsxdly[pos].idelayinput - samples;
+		rgsxdly[pos].idelayoutputxf = (int)(rgsxdly[pos].idelayinput - samples);
 		if( rgsxdly[pos].idelayoutputxf < 0 )
 			rgsxdly[pos].idelayoutputxf += rgsxdly[pos].cdelaysamplesmax;
 		rgsxdly[pos].xfade = 32;
@@ -628,7 +628,7 @@ int RVB_DoReverbForOneDly( dly_t *dly, const int vlr, const portable_samplepair_
 		// modulate delay rate
 		if( !dly->mod )
 		{
-			dly->idelayoutputxf = dly->idelayoutput + ((Com_RandomLong( 0, 255 ) * delay) >> 9 );
+			dly->idelayoutputxf = (int)(dly->idelayoutput + ((Com_RandomLong( 0, 255 ) * delay) >> 9 ));
 
 			if( dly->idelayoutputxf >= dly->cdelaysamplesmax )
 				dly->idelayoutputxf -= dly->cdelaysamplesmax;

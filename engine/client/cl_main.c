@@ -2115,7 +2115,7 @@ void CL_ReadNetMessage( void )
 			if ( !NetSplit_GetLong( &cls.netchan.netsplit, &net_from, net_message_buffer, &curSize, cls.splitcompress ) )
 				continue;
 
-		BF_Init( &net_message, "ServerData", net_message_buffer, curSize );
+		BF_Init( &net_message, "ServerData", net_message_buffer, (int)curSize );
 
 		// check for connectionless packet (0xffffffff) first
 		if ( BF_GetMaxBytes( &net_message ) >= 4 && *(int *)net_message.pData == -1 )

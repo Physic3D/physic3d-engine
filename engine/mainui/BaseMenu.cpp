@@ -499,7 +499,7 @@ int UI_DrawString( HFont font, int x, int y, int w, int h,
 
 const char *COM_ExtractExtension( const char *s )
 {
-	int len = strlen( s );
+	int len = (int)strlen( s );
 
 	for( int i = len; i >= 0; i-- )
 		if( s[i] == '.' )

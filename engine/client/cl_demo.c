@@ -768,7 +768,7 @@ qboolean CL_DemoReadMessage( byte *buffer, size_t *length )
 			FS_Read( cls.demofile, userbuf, size );
 
 			if( clgame.hInstance )
-				clgame.dllFuncs.pfnDemo_ReadBuffer( size, userbuf );
+				clgame.dllFuncs.pfnDemo_ReadBuffer( (int)size, userbuf );
 			Mem_Free( userbuf );
 			userbuf = NULL;
 			break;

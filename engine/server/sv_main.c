@@ -364,7 +364,7 @@ void SV_ReadPackets( void )
 	{
 		if( !svs.initialized )
 		{
-			BF_Init( &net_message, "ClientPacket", net_message_buffer, curSize );
+			BF_Init( &net_message, "ClientPacket", net_message_buffer, (int)curSize );
 
 			// check for rcon here
 			if( BF_GetMaxBytes( &net_message ) >= 4 && *(int *)net_message.pData == -1 )
@@ -415,7 +415,7 @@ void SV_ReadPackets( void )
 			if( !NetSplit_GetLong( &cl->netchan.netsplit, &net_from, net_message_buffer, &curSize, false ) )
 				continue;
 		}
-		BF_Init( &net_message, "ClientPacket", net_message_buffer, curSize );
+		BF_Init( &net_message, "ClientPacket", net_message_buffer, (int)curSize );
 
 		// check for connectionless packet (0xffffffff) first
 		if( BF_GetMaxBytes( &net_message ) >= 4 && *(int *)net_message.pData == -1 )

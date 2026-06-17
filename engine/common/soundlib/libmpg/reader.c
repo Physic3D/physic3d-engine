@@ -35,7 +35,7 @@ static buffy_t* buffy_new( size_t size, size_t minsize )
 	if( newbuf == NULL )
 		return NULL;
 
-	newbuf->realsize = size > minsize ? size : minsize;
+	newbuf->realsize = (mpg_ssize_t)(size > minsize ? size : minsize);
 	newbuf->data = malloc( newbuf->realsize );
 
 	if( newbuf->data == NULL )

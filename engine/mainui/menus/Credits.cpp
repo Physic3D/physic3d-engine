@@ -203,7 +203,7 @@ void CMenuCredits::_Init( void )
 
 	// run credits
 	uiCredits.startTime = (gpGlobals->time * 1000) + 500; // make half-seconds delay
-	uiCredits.showTime = bound( 1000, strlen( uiCredits.credits[uiCredits.numLines - 1]) * 1000, 10000 );
+	uiCredits.showTime = bound( 1000, (int)strlen( uiCredits.credits[uiCredits.numLines - 1]) * 1000, 10000 );
 	uiCredits.fadeTime = 0; // will be determined later
 	uiCredits.active = true;
 }

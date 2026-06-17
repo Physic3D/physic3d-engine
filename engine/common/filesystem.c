@@ -3694,7 +3694,7 @@ static qboolean W_ReadLumpTable( wfile_t *wad )
 	numlumps = wad->numlumps;
 	wad->numlumps = 0;	// reset it
 
-	if( read( wad->handle, srclumps, lat_size ) != lat_size )
+	if( read( wad->handle, srclumps, (unsigned int)lat_size ) != lat_size )
 	{
 		MsgDev( D_ERROR, "W_ReadLumpTable: %s has corrupted lump allocation table\n", wad->filename );
 		Mem_Free( srclumps );
@@ -3872,7 +3872,7 @@ wfile_t *W_Open( const char *filename, const char *mode )
 		{
 			size_t	lat_size = wad->numlumps * sizeof( dlumpinfo_t );
 
-			if( read( wad->handle, wad->lumps, lat_size ) != lat_size )
+			if( read( wad->handle, wad->lumps, (unsigned int)lat_size ) != lat_size )
 			{
 				MsgDev( D_ERROR, "W_ReadLumpTable: %s has corrupted lump allocation table\n", wad->filename );
 				W_Close( wad );

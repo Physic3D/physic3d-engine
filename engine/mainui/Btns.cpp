@@ -99,7 +99,7 @@ void UI_LoadBmpButtons( void )
 		if( pInfoHdr->biClrUsed == 0 )
 		{
 			pInfoHdr->biClrUsed = 256;
-			palette_sz = (1 << pInfoHdr->biBitCount) * sizeof( RGBQUAD );
+			palette_sz = ((size_t)1 << pInfoHdr->biBitCount) * sizeof( RGBQUAD );
 		}
 		else palette_sz = pInfoHdr->biClrUsed * sizeof( RGBQUAD );
 	}

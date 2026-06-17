@@ -293,7 +293,7 @@ static const delta_field_t ent_fields[] =
 };
 
 #define D( x, y ) \
-	{ x, y, NUM_FIELDS( y ), 0, NULL, 0, "", 0, false }
+	{ x, y, (int)NUM_FIELDS( y ), 0, NULL, 0, "", 0, false }
 static delta_info_t dt_info[] =
 {
 D( "event_t", ev_fields ),

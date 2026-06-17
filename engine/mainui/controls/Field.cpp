@@ -55,7 +55,7 @@ void CMenuField::VidInit( void )
 {
 	BaseClass::VidInit();
 
-	iCursor = strlen( szBuffer );
+	iCursor = (int)strlen( szBuffer );
 	iScroll = g_FontMgr.CutText( font, szBuffer, m_scChSize, iRealWidth, true );
 
 	iRealWidth = m_scSize.w - UI_OUTLINE_WIDTH * 2;
@@ -114,7 +114,7 @@ void CMenuField::Paste( void )
 	if( !str ) return;
 
 	// send as if typed, so insert / overstrike works properly
-	pasteLen = strlen( str );
+	pasteLen = (int)strlen( str );
 	for( i = 0; i < pasteLen; i++ )
 		Char( str[i] );
 }
@@ -148,7 +148,7 @@ bool CMenuField::KeyDown( int key )
 	}
 	else
 	{
-		int len = strlen( szBuffer );
+		int len = (int)strlen( szBuffer );
 		switch( key )
 		{
 		case K_INS:
@@ -294,7 +294,7 @@ void CMenuField::Char( int key )
 		changed = true;
 	}
 
-	len = strlen( szBuffer );
+	len = (int)strlen( szBuffer );
 
 	if( key == 'a' - 'a' + 1 )
 	{
@@ -412,7 +412,7 @@ void CMenuField::Draw( void )
 	else cursor_char[0] = '_';
 
 	drawLen = g_FontMgr.CutText( font, szBuffer + iScroll, m_scChSize, m_scSize.w, false );
-	len = strlen( szBuffer ) + 1;
+	len = (int)strlen( szBuffer ) + 1;
 
 	// guarantee that cursor will be visible
 	if( len <= drawLen )

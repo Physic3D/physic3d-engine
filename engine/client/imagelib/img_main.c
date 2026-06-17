@@ -206,7 +206,7 @@ qboolean FS_AddSideToPack( const char *name, int adjust_flags )
 	Q_memcpy( image.cubemap + image.ptr, image.rgba, image.size ); // add new side
 
 	Mem_Free( image.rgba );	// release source buffer
-	image.ptr += image.size; 	// move to next
+	image.ptr += (uint32_t)image.size; 	// move to next
 	image.num_sides++;		// bump sides count
 
 	return true;
@@ -321,7 +321,7 @@ search_fs:
 
 				// Mem_Alloc already filled memblock with 0x00, no need to do it again
 				image.cubemap = Mem_Realloc( host.imagepool, image.cubemap, image.ptr + image.size );
-				image.ptr += image.size; // move to next
+				image.ptr += (uint32_t)image.size; // move to next
 				image.num_sides++; // merge counter
 			}
 		}

@@ -412,7 +412,7 @@ int Stream_ReadWAV( stream_t *stream, int bytes, void *buffer )
 
 	if( !stream->file ) return 0;	// invalid file
 
-	remaining = stream->size - stream->pos;
+	remaining = (int)( stream->size - stream->pos );
 	if( remaining <= 0 ) return 0;
 	if( bytes > remaining ) bytes = remaining;
 

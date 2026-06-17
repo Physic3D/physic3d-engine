@@ -116,7 +116,7 @@ qboolean Image_LoadBMP( const char *name, const byte *buffer, size_t filesize )
 		if( bhdr.colors == 0 )
 		{
 			bhdr.colors = 256;
-			cbPalBytes = (1 << bhdr.bitsPerPixel) * sizeof( RGBQUAD );
+			cbPalBytes = (int)((1ULL << bhdr.bitsPerPixel) * sizeof( RGBQUAD ));
 		}
 		else cbPalBytes = bhdr.colors * sizeof( RGBQUAD );
 

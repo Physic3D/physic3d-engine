@@ -672,7 +672,7 @@ qboolean HPAK_GetDataPointer( const char *filename, resource_t *pResource, byte 
 				*buffer = tmpbuf;
 			}
 
-			if( size ) *size = queue->size;
+			if( size ) *size = (int)queue->size;
 
 			return true;
 		}

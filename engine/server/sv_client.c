@@ -736,7 +736,7 @@ void Rcon_Print( const char *pMsg )
 {
 	if( host.rd.target && host.rd.lines && host.rd.flush )
 	{
-		int len = Q_strncat( host.rd.buffer, pMsg, host.rd.buffersize );
+		int len = (int)Q_strncat( host.rd.buffer, pMsg, host.rd.buffersize );
 
 		if( len && host.rd.buffer[len-1] == '\n' )
 		{

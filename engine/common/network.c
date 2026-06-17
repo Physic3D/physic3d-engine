@@ -710,7 +710,7 @@ static void NET_SendLoopPacket( netsrc_t sock, size_t length, const void *data, 
 	loop->send++;
 
 	Q_memcpy( loop->msgs[i].data, data, length );
-	loop->msgs[i].datalen = length;
+	loop->msgs[i].datalen = (int)length;
 }
 
 static void NET_ClearLoopback( void )
@@ -795,7 +795,7 @@ static void NET_AddToLagged( netsrc_t sock, packetlag_t *list, packetlag_t *pack
 	pStart = (byte *)Z_Malloc( length );
 	memcpy( pStart, data, length );
 	packet->data = pStart;
-	packet->size = length;
+	packet->size = (int)length;
 	packet->receivedtime = timestamp;
 	memcpy( &packet->from, from, sizeof( netadr_t ));
 }
@@ -1053,7 +1053,7 @@ void NET_SendPacket( netsrc_t sock, size_t length, const void *data, netadr_t to
 
 	NET_NetadrToSockadr( &to, &addr );
 
-	ret = pSendTo( net_socket, data, length, 0, &addr, sizeof( addr ));
+	ret = pSendTo( net_socket, data, (int)length, 0, &addr, sizeof( addr ));
 
 #ifdef _WIN32
 	if (ret == SOCKET_ERROR)

@@ -449,7 +449,7 @@ rgbdata_t *Image_Quantize( rgbdata_t *pic )
 	// allocate 8-bit buffer
 	image.tempbuffer = Mem_Realloc( host.imagepool, image.tempbuffer, image.size );
 
-	initnet( pic->buffer, pic->size, 10 );
+	initnet( pic->buffer, (int)pic->size, 10 );
 	learn();
 	unbiasnet();
 

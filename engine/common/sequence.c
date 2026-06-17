@@ -1249,7 +1249,7 @@ qboolean Sequence_ParseSentenceLine( void )
 	Q_strcpy( groupName, fullgroup );
 
 	len = Sequence_GetLine( data, sizeof( data ) );
-	lastCharacterPos = len - 1;
+	lastCharacterPos = (int)(len - 1);
 
 	if( data[lastCharacterPos] == '\n' || data[lastCharacterPos] == '\r' )
 		data[lastCharacterPos] = 0;

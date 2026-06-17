@@ -221,7 +221,7 @@ uint32_t Image_DXTCalcSize( const char *name, dds_t *hdr, size_t filesize )
 		return false;
 	}
 
-	return buffsize;
+	return (uint32_t)buffsize;
 }
 
 void Image_DXTAdjustVolume( dds_t *hdr )
@@ -229,7 +229,7 @@ void Image_DXTAdjustVolume( dds_t *hdr )
 	if( hdr->dwDepth <= 1 )
 		return;
 
-	hdr->dwLinearSize = Image_DXTGetLinearSize( image.type, hdr->dwWidth, hdr->dwHeight, hdr->dwDepth );
+	hdr->dwLinearSize = (uint32_t)Image_DXTGetLinearSize( image.type, hdr->dwWidth, hdr->dwHeight, hdr->dwDepth );
 	hdr->dwFlags |= DDS_LINEARSIZE;
 }
 

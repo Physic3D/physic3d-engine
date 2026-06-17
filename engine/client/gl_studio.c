@@ -4026,12 +4026,12 @@ void Mod_LoadStudioModel( model_t *mod, const void *buffer, qboolean *loaded )
 			phdr->numtextures = thdr->numtextures;
 			phdr->numskinref = thdr->numskinref;
 			phdr->textureindex = phdr->length;
-			phdr->skinindex = phdr->textureindex + size1;
+			phdr->skinindex = (int)(phdr->textureindex + size1);
 
 			in = (byte *)thdr + thdr->textureindex;
 			out = (byte *)phdr + phdr->textureindex;
 			Q_memcpy( out, in, size1 + size2 );	// copy textures + skinrefs
-			phdr->length += size1 + size2;
+			phdr->length += (int)(size1 + size2);
 			Mem_Free( buffer2 ); // release T.mdl
 		}
 	}

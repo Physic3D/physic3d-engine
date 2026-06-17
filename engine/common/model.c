@@ -149,11 +149,11 @@ void Mod_PrintBSPFileSizes_f( void )
 	totalmemory += Mod_ArrayUsage( "surfedges",	w->numsurfedges,	MAX_MAP_SURFEDGES,		sizeof( dsurfedge_t ));
 	totalmemory += Mod_ArrayUsage( "edges",		w->numedges,	MAX_MAP_EDGES,		sizeof( dedge_t ));
 
-	totalmemory += Mod_GlobUsage( "texdata",	world.texdatasize,	MAX_MAP_MIPTEX );
-	totalmemory += Mod_GlobUsage( "lightdata",	world.litdatasize,	MAX_MAP_LIGHTING );
-	totalmemory += Mod_GlobUsage( "deluxemap",	world.vecdatasize,	MAX_MAP_LIGHTING );
-	totalmemory += Mod_GlobUsage( "visdata",	world.visdatasize,	MAX_MAP_VISIBILITY );
-	totalmemory += Mod_GlobUsage( "entdata",	world.entdatasize,	MAX_MAP_ENTSTRING );
+	totalmemory += Mod_GlobUsage( "texdata",	(int)world.texdatasize,	MAX_MAP_MIPTEX );
+	totalmemory += Mod_GlobUsage( "lightdata",	(int)world.litdatasize,	MAX_MAP_LIGHTING );
+	totalmemory += Mod_GlobUsage( "deluxemap",	(int)world.vecdatasize,	MAX_MAP_LIGHTING );
+	totalmemory += Mod_GlobUsage( "visdata",	(int)world.visdatasize,	MAX_MAP_VISIBILITY );
+	totalmemory += Mod_GlobUsage( "entdata",	(int)world.entdatasize,	MAX_MAP_ENTSTRING );
 
 	Msg( "=== Total BSP file data space used: %s ===\n", Q_memprint( totalmemory ));
 	Msg( "World size ( %g %g %g ) units\n", world.size[0], world.size[1], world.size[2] );

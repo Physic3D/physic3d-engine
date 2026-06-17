@@ -437,7 +437,7 @@ qboolean GAME_EXPORT Info_SetValueForKey( char *s, const char *key, const char *
 		return false;
 	}
 
-	return Info_SetValueForStarKey( s, key, value, maxsize );
+	return Info_SetValueForStarKey( s, key, value, (int)maxsize );
 }
 
 static void Cvar_LookupBitInfo( const char *name, const char *string, void *info, void *unused )

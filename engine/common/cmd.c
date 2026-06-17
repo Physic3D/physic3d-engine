@@ -1032,7 +1032,7 @@ void Cmd_ExecuteString( const char *text, cmd_source_t src )
 					*ptoken++ = *text++;
 				*ptoken = 0;
 
-				len += Q_strncpy( pcmd, Cvar_VariableString( token ), MAX_CMD_LINE - len );
+				len += (int)Q_strncpy( pcmd, Cvar_VariableString( token ), MAX_CMD_LINE - len );
 				pcmd = command + len;
 
 				if( !*text )
@@ -1190,7 +1190,7 @@ void Cmd_List_f( void )
 		if( cmd->name[0] == '@' )
 			continue;	// never show system cmds
 
-		if( partial && ( ispattern ? !matchpattern_with_separator( cmd->name, partial, false, "", false ) : Q_strncmp( partial, cmd->name, len )))
+		if( partial && ( ispattern ? !matchpattern_with_separator( cmd->name, partial, false, "", false ) : Q_strncmp( partial, cmd->name, (int)len )))
 			continue;
 
 		// doesn't look exactly as anticipated, but still better

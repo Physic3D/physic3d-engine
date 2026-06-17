@@ -379,7 +379,7 @@ void R_TextureList_f( void )
 	{
 		if( !image->texnum ) continue;
 
-		bytes += image->size;
+		bytes += (int)image->size;
 		texCount++;
 
 		Msg( "%4i: ", i );
@@ -1094,23 +1094,23 @@ static void GL_TextureImageDXT( GLenum format, GLenum glTarget, GLint side, GLin
 #if !defined XASH_NANOGL && !defined XASH_WES
 	if( glTarget == GL_TEXTURE_1D )
 	{
-		if( subImage ) pglCompressedTexSubImage1DARB( glTarget, level, 0, width, format, size, data );
-		else pglCompressedTexImage1DARB( glTarget, level, format, width, 0, size, data );
+		if( subImage ) pglCompressedTexSubImage1DARB( glTarget, level, 0, width, format, (GLsizei)size, data );
+		else pglCompressedTexImage1DARB( glTarget, level, format, width, 0, (GLsizei)size, data );
 	}
 	else if( glTarget == GL_TEXTURE_CUBE_MAP_ARB )
 	{
-		if( subImage ) pglCompressedTexSubImage2DARB( GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB + side, level, 0, 0, width, height, format, size, data );
-		else pglCompressedTexImage2DARB( GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB + side, level, format, width, height, 0, size, data );
+		if( subImage ) pglCompressedTexSubImage2DARB( GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB + side, level, 0, 0, width, height, format, (GLsizei)size, data );
+		else pglCompressedTexImage2DARB( GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB + side, level, format, width, height, 0, (GLsizei)size, data );
 	}
 	else if( glTarget == GL_TEXTURE_3D )
 	{
-		if( subImage ) pglCompressedTexSubImage3DARB( glTarget, level, 0, 0, 0, width, height, depth, format, size, data );
-		else pglCompressedTexImage3DARB( glTarget, level, format, width, height, depth, 0, size, data );
+		if( subImage ) pglCompressedTexSubImage3DARB( glTarget, level, 0, 0, 0, width, height, depth, format, (GLsizei)size, data );
+		else pglCompressedTexImage3DARB( glTarget, level, format, width, height, depth, 0, (GLsizei)size, data );
 	}
 	else // 2D or RECT
 	{
-		if( subImage ) pglCompressedTexSubImage2DARB( glTarget, level, 0, 0, width, height, format, size, data );
-		else pglCompressedTexImage2DARB( glTarget, level, format, width, height, 0, size, data );
+		if( subImage ) pglCompressedTexSubImage2DARB( glTarget, level, 0, 0, width, height, format, (GLsizei)size, data );
+		else pglCompressedTexImage2DARB( glTarget, level, format, width, height, 0, (GLsizei)size, data );
 	}
 #endif
 }
@@ -1239,7 +1239,7 @@ static void GL_UploadTextureDXT( rgbdata_t *pic, gltexture_t *tex, qboolean subI
 		{
 			width = max( 1, ( pic->width >> j ));
 			height = max( 1, ( pic->height >> j ));
-			texsize = Image_DXTGetLinearSize( pic->type, width, height, depth );
+			texsize = (int)Image_DXTGetLinearSize( pic->type, width, height, depth );
 			if( ImageDXT( pic->type ))
 				GL_TextureImageDXT( inFormat, glTarget, i, j, width, height, depth, subImage, texsize, buf );
 			else GL_TextureImage( inFormat, tex->format, glTarget, i, j, width, height, depth, subImage, texsize, buf );

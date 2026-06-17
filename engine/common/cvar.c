@@ -1079,7 +1079,7 @@ void Cvar_List_f( void )
 		if( var->name[0] == '@' )
 			continue;	// never shows system cvars
 
-		if( len && ( ispattern ? !matchpattern_with_separator( var->name, partial, false, "", false ) : Q_strncmp( partial, var->name, len )))
+		if( len && ( ispattern ? !matchpattern_with_separator( var->name, partial, false, "", false ) : Q_strncmp( partial, var->name, (int)len )))
 			continue;
 
 		// TODO: fix ugly formatting

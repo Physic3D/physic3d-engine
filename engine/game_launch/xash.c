@@ -253,7 +253,7 @@ int __stdcall WinMain( HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR cmdLine, int 
 
 	for( i = 0; i < szArgc; ++i )
 	{
-		int size = wcslen(lpArgv[i]) + 1;
+		int size = (int)wcslen(lpArgv[i]) + 1;
 		szArgv[i] = ( char* )malloc( size );
 		wcstombs( szArgv[i], lpArgv[i], size );
 	}

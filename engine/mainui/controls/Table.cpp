@@ -449,7 +449,7 @@ void CMenuTable::DrawLine( Point p, const char **psz, size_t size, uint textColo
 		}
 
 		UI_DrawString( font, pt, sz, psz[i], textColor, m_scChSize,
-			m_pModel->GetAlignmentForColumn( i ), textflags );
+			m_pModel->GetAlignmentForColumn( (int)i ), textflags );
 	}
 }
 
