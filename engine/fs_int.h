@@ -53,14 +53,11 @@ typedef struct
 		char    *filenamesbuffer;
 } search_t;
 
-// Android assets
-#ifdef __ANDROID__
+// Forward declarations
 struct android_assets_s;
-typedef struct android_assets_s android_assets_t;
-searchpath_t *FS_AddAndroidAssets_Fullpath( const char *path, int flags );
-void FS_InitAndroidAssets( void );
-#endif
+struct searchpath_s;
 
+// Android assets
 #ifdef __ANDROID__
 #include <android/asset_manager.h>
 typedef struct android_assets_s
@@ -81,6 +78,12 @@ typedef struct searchpath_s
 		android_assets_t *android_assets;
 #endif
 } searchpath_t;
+
+// Android assets functions
+#ifdef __ANDROID__
+searchpath_t *FS_AddAndroidAssets_Fullpath( const char *path, int flags );
+void FS_InitAndroidAssets( void );
+#endif
 
 // filesystem flags
 #define FS_STATIC_PATH  ( 1U << 0 )  // FS_ClearSearchPath will be ignore this path
