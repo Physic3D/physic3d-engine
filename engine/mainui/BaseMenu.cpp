@@ -1170,5 +1170,7 @@ void UI_Shutdown( void )
 
 	UI_FreeCustomStrings();
 
-	uiStatic = uiStatic_t{};
+	uiStatic.menu.Clean();
+	uiStatic.client.Clean();
+	memset( (char *)&uiStatic + offsetof( uiStatic_t, bgmaps ), 0, sizeof( uiStatic_t ) - offsetof( uiStatic_t, bgmaps ) );
 }
