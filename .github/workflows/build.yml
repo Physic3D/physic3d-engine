@@ -57,12 +57,12 @@ jobs:
         with:
           name: xash3d-windows
           path: |
-            build/*.dll
-            build/*.exe
+            build/**/*.dll
+            build/**/*.exe
 
       - name: Upload artifacts (Linux)
         if: runner.os == 'Linux'
         uses: actions/upload-artifact@v4
         with:
           name: xash3d-linux
-          path: build/*.so
+          path: build/**/*.so
