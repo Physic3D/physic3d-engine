@@ -34,12 +34,42 @@ typedef off_t         fs_offset_t;
 typedef struct file_s file_t; // normal file
 #endif
 
+typedef struct stringlist_s
+{
+	int		maxstrings;
+	int		numstrings;
+	char		**strings;
+} stringlist_t;
+
+void stringlistinit( stringlist_t *list );
+void stringlistfreecontents( stringlist_t *list );
+void stringlistappend( stringlist_t *list, const char *text );
+void stringlistsort( stringlist_t *list );
+
 typedef struct
 {
 	    int     numfilenames;
 		char    **filenames;
 		char    *filenamesbuffer;
 } search_t;
+
+// Android assets
+#ifdef __ANDROID__
+struct android_assets_s;
+typedef struct android_assets_s android_assets_t;
+searchpath_t *FS_AddAndroidAssets_Fullpath( const char *path, int flags );
+void FS_InitAndroidAssets( void );
+#endif
+
+#ifdef __ANDROID__
+#include <android/asset_manager.h>
+typedef struct android_assets_s
+{
+	char		package_name[256];
+	qboolean	engine;
+	AAssetManager	*asset_manager;
+} android_assets_t;
+#endif
 
 typedef struct searchpath_s
 {
@@ -48,6 +78,9 @@ typedef struct searchpath_s
 		struct wfile_s  *wad;
 		int             flags;
 		struct searchpath_s *next;
+#ifdef __ANDROID__
+		android_assets_t *android_assets;
+#endif
 } searchpath_t;
 
 // filesystem flags

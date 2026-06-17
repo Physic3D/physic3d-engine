@@ -168,6 +168,7 @@ LOCAL_SRC_FILES := \
 	   common/sequence.c \
            platform/android/vid_android.c \
            platform/android/android_nosdl.c \
+           platform/android/android_fs.c \
            platform/posix/crashhandler.c
 
 LOCAL_STATIC_LIBRARIES := NanoGL

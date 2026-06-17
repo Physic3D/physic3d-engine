@@ -466,7 +466,7 @@ DECLARE_JNI_INTERFACE( int, nativeInit, jobject array )
 	/* Init callbacks. */
 
 	jni.env = env;
-	jni.actcls = (*env)->FindClass(env, "in/celest/xash3d/XashActivity");
+	jni.actcls = (*env)->FindClass(env, "com/physic3d/android/GameActivity");
 	jni.swapBuffers = (*env)->GetStaticMethodID(env, jni.actcls, "swapBuffers", "()V");
 	jni.toggleEGL = (*env)->GetStaticMethodID(env, jni.actcls, "toggleEGL", "(I)V");
 	jni.enableTextInput = (*env)->GetStaticMethodID(env, jni.actcls, "showKeyboard", "(I)V");

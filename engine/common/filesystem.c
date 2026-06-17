@@ -46,14 +46,6 @@ GNU General Public License for more details.
 #define PAK_LOAD_NO_FILES		5
 #define PAK_LOAD_CORRUPTED		6
 
-typedef struct stringlist_s
-{
-	// maxstrings changes as needed, causing reallocation of strings[] array
-	int		maxstrings;
-	int		numstrings;
-	char		**strings;
-} stringlist_t;
-
 typedef struct wadtype_s
 {
 	char		*ext;
@@ -94,6 +86,12 @@ static qboolean FS_SysFolderExists( const char *path );
 static int FS_SysFileTime( const char *filename );
 static signed char W_TypeFromExt( const char *lumpname );
 static const char *W_ExtFromType( signed char lumptype );
+
+#ifdef __ANDROID__
+int FS_FindFile_AndroidAssets( struct searchpath_s *search, const char *path, char *fixedname, size_t len );
+int FS_OpenFile_AndroidAssets( struct searchpath_s *search, const char *filename, off_t *outOffset, off_t *outLength );
+void FS_Search_AndroidAssets( struct searchpath_s *search, stringlist_t *list, const char *pattern, int caseinsensitive );
+#endif
 
 /*
 =============================================================================
@@ -170,12 +168,12 @@ int matchpattern_with_separator( const char *in, const char *pattern, qboolean c
 	return 1; // success
 }
 
-static void stringlistinit( stringlist_t *list )
+void stringlistinit( stringlist_t *list )
 {
 	Q_memset( list, 0, sizeof( *list ));
 }
 
-static void stringlistfreecontents( stringlist_t *list )
+void stringlistfreecontents( stringlist_t *list )
 {
 	int	i;
 
@@ -192,7 +190,7 @@ static void stringlistfreecontents( stringlist_t *list )
 	list->strings = NULL;
 }
 
-static void stringlistappend( stringlist_t *list, const char *text )
+void stringlistappend( stringlist_t *list, const char *text )
 {
 	size_t	textlen;
 	char	**oldstrings;
@@ -212,7 +210,7 @@ static void stringlistappend( stringlist_t *list, const char *text )
 	list->numstrings++;
 }
 
-static void stringlistsort( stringlist_t *list )
+void stringlistsort( stringlist_t *list )
 {
 	int	i, j;
 	char	*temp;
@@ -1163,6 +1161,31 @@ void FS_Rescan( void )
 		FS_AddPack_Fullpath( va( "%s/%s/extras.pak", dir , GI->gamefolder ), NULL, false, FS_NOWRITE_PATH | FS_CUSTOM_PATH );
 #endif
 
+#ifdef __ANDROID__
+	{
+		searchpath_t *assets_search;
+
+		// mount base game assets from APK
+		assets_search = FS_AddAndroidAssets_Fullpath( "", 0 );
+		if( assets_search )
+		{
+			assets_search->next = fs_searchpaths;
+			fs_searchpaths = assets_search;
+		}
+
+		// mount mod assets from APK
+		if( Q_stricmp( GI->basedir, GI->gamefolder ))
+		{
+			assets_search = FS_AddAndroidAssets_Fullpath( "", FS_GAMEDIR_PATH );
+			if( assets_search )
+			{
+				assets_search->next = fs_searchpaths;
+				fs_searchpaths = assets_search;
+			}
+		}
+	}
+#endif
+
 	if( Q_stricmp( GI->basedir, GI->gamefolder ))
 		FS_AddGameHierarchy( GI->basedir, 0 );
 	if( Q_stricmp( GI->basedir, GI->falldir ) && Q_stricmp( GI->gamefolder, GI->falldir ))
@@ -1821,6 +1844,10 @@ void FS_Init( void )
 
 	FS_InitMemory();
 
+#ifdef __ANDROID__
+	FS_InitAndroidAssets();
+#endif
+
 	Cmd_AddCommand( "fs_rescan", FS_Rescan_f, "rescan filesystem search paths" );
 	Cmd_AddCommand( "fs_path", FS_Path_f, "show filesystem search paths" );
 	Cmd_AddCommand( "fs_clearpaths", FS_ClearPaths_f, "clear filesystem search paths" );
@@ -2299,6 +2326,18 @@ searchpath_t *FS_FindFile( const char *name, int* index, qboolean gamedironly )
 		else
 		{
 			char	netpath[MAX_SYSPATH];
+#ifdef __ANDROID__
+			if( search->android_assets )
+			{
+				int ret = FS_FindFile_AndroidAssets( search, name, NULL, 0 );
+				if( ret >= 0 )
+				{
+					if( index != NULL ) *index = -2; // android asset marker
+					return search;
+				}
+				continue;
+			}
+#endif
 			Q_sprintf( netpath, "%s%s", search->filename, name );
 			if( FS_SysFileExists( netpath, !(search->flags & FS_CUSTOM_PATH ) ) )
 			{
@@ -2387,6 +2426,26 @@ file_t *FS_OpenReadFile( const char *filename, const char *mode, qboolean gamedi
 		return FS_OpenPackedFile( search->pack, pack_ind );
 	else if( search->wad )
 		return NULL; // let W_LoadFile get lump correctly
+#ifdef __ANDROID__
+	else if( search->android_assets )
+	{
+		off_t offset, length;
+		int fd = FS_OpenFile_AndroidAssets( search, filename, &offset, &length );
+		if( fd >= 0 )
+		{
+			file_t *file = (file_t *)Mem_Alloc( fs_mempool, sizeof( file_t ));
+			if( !file ) { close( fd ); return NULL; }
+			file->handle = fd;
+			file->offset = offset;
+			file->real_length = length;
+			file->position = 0;
+			file->ungetc = EOF;
+			file->filetime = 0;
+			return file;
+		}
+		return NULL;
+	}
+#endif
 	else if( pack_ind < 0 )
 	{
 		// found in the filesystem?
@@ -3387,6 +3446,12 @@ search_t *FS_Search( const char *pattern, int caseinsensitive, int gamedironly )
 				}
 			}
 		}
+#ifdef __ANDROID__
+		else if( searchpath->android_assets )
+		{
+			FS_Search_AndroidAssets( searchpath, &resultlist, pattern, caseinsensitive );
+		}
+#endif
 		else
 		{
 			// get a directory listing and look at each name
