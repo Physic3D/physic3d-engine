@@ -65,7 +65,6 @@ void FS_InitAndroidAssets( void );
 #include <android/asset_manager.h>
 typedef struct android_assets_s
 {
-	char		package_name[256];
 	qboolean	engine;
 	AAssetManager	*asset_manager;
 } android_assets_t;

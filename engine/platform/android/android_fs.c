@@ -30,7 +30,6 @@ static struct
 	JNIEnv	*env;
 	jobject	activity;
 	jclass	activity_class;
-	jmethodID getPackageName;
 	jmethodID getAssetsList;
 	jmethodID getAssets;
 } jni_assets;
@@ -80,21 +79,6 @@ static android_assets_t *FS_LoadAndroidAssets( qboolean engine )
 		MsgDev( D_WARN, "FS_LoadAndroidAssets: Can't get asset manager\n" );
 		Mem_Free( assets );
 		return NULL;
-	}
-
-	// get package name
-	{
-		jstring pkgName = (*jni_assets.env)->CallStaticObjectMethod( jni_assets.env, jni_assets.activity_class, jni_assets.getPackageName );
-		if( pkgName )
-		{
-			const char *pkgStr = (*jni_assets.env)->GetStringUTFChars( jni_assets.env, pkgName, NULL );
-			if( pkgStr )
-			{
-				Q_strncpy( assets->package_name, pkgStr, sizeof( assets->package_name ));
-				(*jni_assets.env)->ReleaseStringUTFChars( jni_assets.env, pkgName, pkgStr );
-			}
-			(*jni_assets.env)->DeleteLocalRef( jni_assets.env, pkgName );
-		}
 	}
 
 	return assets;
@@ -228,7 +212,7 @@ searchpath_t *FS_AddAndroidAssets_Fullpath( const char *path, int flags )
 	android_assets_t *assets;
 	qboolean engine = true;
 
-	if( !jni_assets.getAssets || !jni_assets.getAssetsList || !jni_assets.getPackageName )
+	if( !jni_assets.getAssets || !jni_assets.getAssetsList )
 		return NULL;
 
 	if( (flags & FS_STATIC_PATH) || (flags & FS_CUSTOM_PATH) )
@@ -252,8 +236,6 @@ searchpath_t *FS_AddAndroidAssets_Fullpath( const char *path, int flags )
 	search->flags = flags;
 	search->flags |= FS_NOWRITE_PATH | FS_CUSTOM_PATH;
 
-	MsgDev( D_INFO, "Adding Android assets: %s\n", assets->package_name );
-
 	return search;
 }
 
@@ -270,9 +252,8 @@ void FS_InitAndroidAssets( void )
 
 	jni_assets.getAssets = (*jni_assets.env)->GetStaticMethodID( jni_assets.env, jni_assets.activity_class, "getAssets", "(Z)Landroid/content/res/AssetManager;" );
 	jni_assets.getAssetsList = (*jni_assets.env)->GetStaticMethodID( jni_assets.env, jni_assets.activity_class, "getAssetsList", "(ZLjava/lang/String;)[Ljava/lang/String;" );
-	jni_assets.getPackageName = (*jni_assets.env)->GetStaticMethodID( jni_assets.env, jni_assets.activity_class, "getPackageName", "()Ljava/lang/String;" );
 
-	if( !jni_assets.getAssets || !jni_assets.getAssetsList || !jni_assets.getPackageName )
+	if( !jni_assets.getAssets || !jni_assets.getAssetsList )
 		MsgDev( D_WARN, "FS_InitAndroidAssets: unable to find JNI methods\n" );
 }
 
