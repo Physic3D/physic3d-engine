@@ -126,7 +126,7 @@ static void stack_trace( PEXCEPTION_POINTERS pInfo )
 	stackframe.AddrStack.Offset = context.IntSp;
 	stackframe.AddrStack.Mode = AddrModeFlat;
 #endif
-	len += Q_snprintf( message + len, 1024 - len, "Sys_Crash: address %p, code %p\n", pInfo->ExceptionRecord->ExceptionAddress, (void*)pInfo->ExceptionRecord->ExceptionCode );
+	len += Q_snprintf( message + len, 1024 - len, "Sys_Crash: address %p, code %p\n", pInfo->ExceptionRecord->ExceptionAddress, (void*)(uintptr_t)pInfo->ExceptionRecord->ExceptionCode );
 	if( SymGetLineFromAddr64( process, (DWORD64)pInfo->ExceptionRecord->ExceptionAddress, &dline, &line ) )
 	{
 		len += Q_snprintf(message + len, 1024 - len,"Exception: %s:%d:%d\n", (char*)line.FileName, (int)line.LineNumber, (int)dline);

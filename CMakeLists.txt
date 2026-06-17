@@ -116,7 +116,7 @@ endif()
 
 if(NOT XASH_64BIT AND CMAKE_SIZEOF_VOID_P EQUAL 8)
 	message(STATUS "64-bit build detected, enabling XASH_64BIT")
-	set(XASH_64BIT ON)
+	set(XASH_64BIT ON CACHE BOOL "" FORCE)
 endif()
 if(NOT XASH_LIBDL AND NOT XASH_NONSTANDARD_LOAD)
 	message(FATAL_ERROR "You must enable XASH_LIBDL or XASH_NONSTANDARD_LOAD. Otherwise engine is useless.")
