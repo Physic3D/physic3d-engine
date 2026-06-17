@@ -159,7 +159,6 @@ private:
 	const char  *szDownArrowPressed;
 
 	int		iTopItem;
-	int     iNumRows;
 // scrollbar stuff // ADAMIX
 	Point	sbarPos;
 	Size	sbarSize;
@@ -167,6 +166,7 @@ private:
 // highlight // mittorn
 	int		iHighlight;
 	int		iCurItem;
+	int     iNumRows;
 
 	int		m_iLastItemMouseChange;
 

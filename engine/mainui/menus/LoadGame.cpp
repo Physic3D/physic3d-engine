@@ -190,7 +190,7 @@ void CMenuSavesListModel::Update( void )
 		COM_FileBase( filenames[j], delName[i] );
 
 		// fill save desc
-		snprintf( m_szCells[i][0], MAX_CELLSTRING, "%s %s", comment + CS_SIZE, comment + CS_SIZE + CS_TIME );
+		snprintf( m_szCells[i][0], MAX_CELLSTRING, "%.16s %.16s", comment + CS_SIZE, comment + CS_SIZE + CS_TIME );
 		Q_strncpy( m_szCells[i][1], comment, MAX_CELLSTRING );
 		Q_strncpy( m_szCells[i][2], comment + CS_SIZE + (CS_TIME * 2), MAX_CELLSTRING );
 	}

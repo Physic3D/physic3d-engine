@@ -813,7 +813,13 @@ qboolean Host_IsLocalGame( void );
 qboolean Host_IsLocalClient( void );
 void Host_ShutdownServer( void );
 void Host_Print( const char *txt );
+#ifdef __GNUC__
+void Host_Error( const char *error, ... ) __attribute__ ((noreturn)) _format(1);
+#elif defined _MSC_VER
+__declspec(noreturn) void Host_Error( const char *error, ... ) _format(1);
+#else
 void Host_Error( const char *error, ... ) _format(1);
+#endif
 void Host_MapDesignError( const char *error, ... ) _format(1);
 void Host_PrintEngineFeatures( void );
 void Host_InitDecals( void );

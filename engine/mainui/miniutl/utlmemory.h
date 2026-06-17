@@ -94,10 +94,10 @@ protected:
 		EXTERNAL_CONST_BUFFER_MARKER = -2,
 	};
 
-	uint32 m_unSizeOfElements;
 	void * m_pMemory;
 	int m_nAllocationCount;
 	int m_nGrowSize;
+	uint32 m_unSizeOfElements;
 };
 
 template< class T >

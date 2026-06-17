@@ -411,7 +411,7 @@ size_t CUtlString::TrimTrailingWhitespace()
 //-----------------------------------------------------------------------------
 void CUtlString::AssertStringTooLong()
 {
-	AssertMsg( false, "Assertion failed: length > k_cchMaxString" );
+	(void)AssertMsg( false, "Assertion failed: length > k_cchMaxString" );
 }
 
 

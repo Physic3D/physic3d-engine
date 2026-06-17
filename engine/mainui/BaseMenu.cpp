@@ -1170,5 +1170,5 @@ void UI_Shutdown( void )
 
 	UI_FreeCustomStrings();
 
-	memset( &uiStatic, 0, sizeof( uiStatic_t ));
+	uiStatic = uiStatic_t{};
 }

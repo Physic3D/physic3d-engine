@@ -12,6 +12,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <math.h>
+#include <inttypes.h>
 #include "strtools.h"
 
 #if defined( _WIN32 )
@@ -102,8 +103,8 @@ public:
 	inline const char* SetUint16( uint16 un16 )		{ NUMSTR_CHECK_FAST( un16, uint16 )	m_nLength = V_snprintf( m_szBuf, sizeof(m_szBuf), "%d", (int32)un16 ); return m_szBuf; }
 	inline const char* SetInt32( int32 n32 )		{ NUMSTR_CHECK_FAST( n32,  uint32 )	m_nLength = V_snprintf( m_szBuf, sizeof(m_szBuf), "%d", n32 ); return m_szBuf; }
 	inline const char* SetUint32( uint32 un32 )		{ NUMSTR_CHECK_FAST( un32, uint32 )	m_nLength = V_snprintf( m_szBuf, sizeof(m_szBuf), "%u", un32 ); return m_szBuf; }
-	inline const char* SetInt64( int64 n64 )		{ NUMSTR_CHECK_FAST( n64,  uint64 )	m_nLength = V_snprintf( m_szBuf, sizeof(m_szBuf), "%lld", n64 ); return m_szBuf; }
-	inline const char* SetUint64( uint64 un64 )		{ NUMSTR_CHECK_FAST( un64, uint64 )	m_nLength = V_snprintf( m_szBuf, sizeof(m_szBuf), "%llu", un64 ); return m_szBuf; }
+	inline const char* SetInt64( int64 n64 )		{ NUMSTR_CHECK_FAST( n64,  uint64 )	m_nLength = V_snprintf( m_szBuf, sizeof(m_szBuf), "%" PRId64, n64 ); return m_szBuf; }
+	inline const char* SetUint64( uint64 un64 )		{ NUMSTR_CHECK_FAST( un64, uint64 )	m_nLength = V_snprintf( m_szBuf, sizeof(m_szBuf), "%" PRIu64, un64 ); return m_szBuf; }
 #endif
 
 	inline const char* SetDouble( double f )

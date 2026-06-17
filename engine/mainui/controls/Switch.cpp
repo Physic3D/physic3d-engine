@@ -21,7 +21,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "BaseMenu.h"
 #include "Switch.h"
 
-CMenuSwitch::CMenuSwitch( ) : BaseClass( )
+CMenuSwitch::CMenuSwitch( ) : BaseClass( ), m_Sizes{}, m_Points{}
 {
 	bMouseToggle = true;
 	bKeepToggleWidth = false;
@@ -39,8 +39,7 @@ CMenuSwitch::CMenuSwitch( ) : BaseClass( )
 	m_iState = 0;
 	m_iSwitches = 0;
 	memset( m_szNames, 0, sizeof( m_szNames ));
-	memset( m_Sizes, 0, sizeof( m_Sizes ));
-	memset( m_Points, 0, sizeof( m_Points ));
+
 
 	bChangeOnPressed = false;
 }

@@ -62,10 +62,10 @@ static void Sys_Crash( int signal, siginfo_t *si, void *ucontext)
 	// Now get log fd and write trace directly to log
 	logfd = Sys_LogFileNo();
 
-	write( STDERR_FILENO, message, len );
-	write( logfd, message, len );
-	write( STDERR_FILENO, "Stack backtrace:\n", 17 );
-	write( logfd, "Stack backtrace:\n", 17 );
+	(void)write( STDERR_FILENO, message, len );
+	(void)write( logfd, message, len );
+	(void)write( STDERR_FILENO, "Stack backtrace:\n", 17 );
+	(void)write( logfd, "Stack backtrace:\n", 17 );
 	strncpy(message + len, "Stack backtrace:\n", sizeof( message ) - len);
 	len += 17;
 
@@ -81,8 +81,8 @@ static void Sys_Crash( int signal, siginfo_t *si, void *ucontext)
 			line = Q_snprintf( message + len, sizeof( message ) - len, "#%-2d 0x%016" PRIxPTR " sp=0x%016" PRIxPTR " %s + 0x%" PRIxPTR " %s\n", ++i, ip, sp, symbol, off, (unw_is_signal_frame(&cursor) > 0) ? "<" : "" );
 		}
 
-		write( STDERR_FILENO, message + len, line );
-		write( logfd, message + len, line );
+		(void)write( STDERR_FILENO, message + len, line );
+		(void)write( logfd, message + len, line );
 		len += line;
 	}
 

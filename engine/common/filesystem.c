@@ -1256,7 +1256,7 @@ static qboolean FS_WriteGameInfo( const char *filepath, gameinfo_t *GameInfo )
 		FS_Printf( f, "version\t\t%g\n", GameInfo->version );
 
 	if( GameInfo->size != 0 )
-		FS_Printf( f, "size\t\t%i\n", GameInfo->size );
+		FS_Printf( f, "size\t\t%zu\n", GameInfo->size );
 
 	if( Q_strlen( GameInfo->game_url ))
 		FS_Printf( f, "url_info\t\t\"%s\"\n", GameInfo->game_url );
@@ -1899,7 +1899,7 @@ void FS_Init( void )
 		if( dirs.maxstrings == 0 )
 		{
 			char cwd[1024];
-			getcwd(cwd, 1023);
+			(void)getcwd(cwd, 1023);
 			cwd[1023] = 0;
 			MsgDev( D_ERROR, "No gamedirs found, cwd is is \"%s\"\n", cwd);
 		}
@@ -2531,6 +2531,7 @@ fs_offset_t FS_Read( file_t *file, void *buffer, size_t buffersize )
 
 	// we must take care to not read after the end of the file
 	count = file->real_length - file->position;
+	if( count < 0 ) count = 0;
 
 	// if we have a lot of data to get, put them directly into "buffer"
 	if( buffersize > sizeof( file->buff ) / 2 )
@@ -3811,8 +3812,8 @@ wfile_t *W_Open( const char *filename, const char *mode )
 		hdr.ident = LittleLong(IDWAD3HEADER);
 		hdr.numlumps = LittleLong(wad->numlumps);
 		hdr.infotableofs = LittleLong(sizeof( dwadinfo_t ));
-		write( wad->handle, &hdr, sizeof( hdr ));
-		write( wad->handle, comment, Q_strlen( comment ) + 1 );
+		(void)write( wad->handle, &hdr, sizeof( hdr ));
+		(void)write( wad->handle, comment, Q_strlen( comment ) + 1 );
 		wad->infotableofs = tell( wad->handle );
 	}
 	else if( mode[0] == 'r' || mode[0] == 'a' )
@@ -3912,7 +3913,7 @@ void W_Close( wfile_t *wad )
 
 		// write the lumpinfo
 		ofs = tell( wad->handle );
-		write( wad->handle, wad->lumps, wad->numlumps * sizeof( dlumpinfo_t ));
+		(void)write( wad->handle, wad->lumps, wad->numlumps * sizeof( dlumpinfo_t ));
 
 		// write the header
 		hdr.ident = IDWAD3HEADER;
@@ -3920,7 +3921,7 @@ void W_Close( wfile_t *wad )
 		hdr.infotableofs = ofs;
 
 		lseek( wad->handle, 0, SEEK_SET );
-		write( wad->handle, &hdr, sizeof( hdr ));
+		(void)write( wad->handle, &hdr, sizeof( hdr ));
 	}
 
 	Mem_FreePool( &wad->mempool );

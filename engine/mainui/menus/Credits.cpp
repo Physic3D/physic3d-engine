@@ -165,8 +165,9 @@ void CMenuCredits::_Init( void )
 				memcpy( tmp, uiCredits.buffer, count ); 
 				EngFuncs::COM_FreeFile( uiCredits.buffer );
 				uiCredits.buffer = tmp; 
-				strncpy( uiCredits.buffer + count, "\r", 1 ); // add terminator
-				count += 2; // added "\r\0"
+				uiCredits.buffer[count] = '\r';
+				uiCredits.buffer[count + 1] = '\0';
+				count += 2;
 			}
 			p = uiCredits.buffer;
 

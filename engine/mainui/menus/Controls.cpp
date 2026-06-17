@@ -188,9 +188,9 @@ void CMenuKeysModel::Update( void )
 			if( !pfile ) break;	// technically an error
 
 			if( token[0] == '#' )
-				snprintf( name[i], sizeof( name[i] ), "^6%s^7", L( token ));
+				snprintf( name[i], sizeof( name[i] ), "^6%.59s^7", L( token ));
 			else
-				snprintf( name[i], sizeof( name[i] ), "^6%s^7", token );
+				snprintf( name[i], sizeof( name[i] ), "^6%.59s^7", token );
 
 			keysBind[i][0] = firstKey[i][0] = secondKey[i][0] = 0;
 			i++;
@@ -207,9 +207,9 @@ void CMenuKeysModel::Update( void )
 			if( !pfile ) break; // technically an error
 
 			if( token[0] == '#' )
-				snprintf( name[i], sizeof( name[i] ), "^6%s^7", L( token ));
+				snprintf( name[i], sizeof( name[i] ), "^6%.59s^7", L( token ));
 			else
-				snprintf( name[i], sizeof( name[i] ), "^6%s^7", token );
+				snprintf( name[i], sizeof( name[i] ), "^6%.59s^7", token );
 
 			if( keys[0] == keys[1] )
 				Con_DPrintf( "%i %i\n", keys[0], keys[1]);

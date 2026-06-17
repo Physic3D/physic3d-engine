@@ -1239,7 +1239,7 @@ static void Mod_LoadDeluxemap( void )
 
 	if( world.vecdatasize != world.litdatasize )
 	{
-		MsgDev( D_ERROR, "Mod_LoadDeluxemap: %s has mismatched size (%i should be %i)\n", path, world.vecdatasize, world.litdatasize );
+		MsgDev( D_ERROR, "Mod_LoadDeluxemap: %s has mismatched size (%zu should be %zu)\n", path, world.vecdatasize, world.litdatasize );
 		world.deluxedata = NULL;
 		world.vecdatasize = 0;
 		Mem_Free( in );
@@ -1794,7 +1794,7 @@ void Mod_BuildSurfacePolygons( msurface_t *surf, mextrasurf_t *info )
 	{
 		if( i == MAX_SIDE_VERTS )
 		{
-			MsgDev( D_ERROR, "BuildSurfMesh: poly %i exceeded %i vertexes!\n", surf - loadmodel->surfaces, MAX_SIDE_VERTS );
+			MsgDev( D_ERROR, "BuildSurfMesh: poly %td exceeded %i vertexes!\n", surf - loadmodel->surfaces, MAX_SIDE_VERTS );
 			break; // too big polygon ?
 		}
 
@@ -1821,7 +1821,7 @@ void Mod_BuildSurfacePolygons( msurface_t *surf, mextrasurf_t *info )
 		texname = surf->texinfo->texture->name;
 	else texname = "notexture";
 
-	MsgDev( D_ERROR, "BuildSurfMesh: surface %i (%s) failed to build surfmesh\n", surf - loadmodel->surfaces, texname );
+	MsgDev( D_ERROR, "BuildSurfMesh: surface %td (%s) failed to build surfmesh\n", surf - loadmodel->surfaces, texname );
 }
 
 /*
@@ -1859,7 +1859,7 @@ void Mod_TesselatePolygon( msurface_t *surf, model_t *mod, float tessSize )
 	{
 		if( i == MAX_SIDE_VERTS )
 		{
-			MsgDev( D_ERROR, "BuildSurfMesh: poly %i exceeded %i vertexes!\n", surf - loadmodel->surfaces, MAX_SIDE_VERTS );
+			MsgDev( D_ERROR, "BuildSurfMesh: poly %td exceeded %i vertexes!\n", surf - loadmodel->surfaces, MAX_SIDE_VERTS );
 			break; // too big polygon ?
 		}
 
@@ -1881,7 +1881,7 @@ void Mod_TesselatePolygon( msurface_t *surf, model_t *mod, float tessSize )
 		texname = surf->texinfo->texture->name;
 	else texname = "notexture";
 
-	MsgDev( D_ERROR, "BuildSurfMesh: surface %i (%s) failed to build surfmesh\n", surf - loadmodel->surfaces, texname );
+	MsgDev( D_ERROR, "BuildSurfMesh: surface %td (%s) failed to build surfmesh\n", surf - loadmodel->surfaces, texname );
 }
 
 /*

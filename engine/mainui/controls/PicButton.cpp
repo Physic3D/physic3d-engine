@@ -51,7 +51,7 @@ CMenuPicButton::CMenuPicButton() : BaseClass()
 #endif
 
 	TransPic = 0;
-	memset( TitleLerpQuads, 0, sizeof( TitleLerpQuads ));
+	for( auto &q : TitleLerpQuads ) q = Quad();
 }
 
 /*

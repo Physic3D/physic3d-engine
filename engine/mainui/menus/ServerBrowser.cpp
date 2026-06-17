@@ -307,7 +307,7 @@ void CMenuGameListModel::OnActivateEntry( int line )
 void CMenuGameListModel::AddServerToList(netadr_t adr, const char *info)
 {
 	int i;
-	char passwd[2], dedicated[2];
+	char passwd[2] = "", dedicated[2] = "";
 
 	// ignore if duplicated
 	for( i = 0; i < servers.Count(); i++ )

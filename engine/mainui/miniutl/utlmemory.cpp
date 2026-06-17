@@ -199,7 +199,7 @@ int UtlMemory_CalcNewAllocationCount( int nAllocationCount, int nGrowSize, int n
 				// Should be impossible, but if hit try to grow an amount that may be large
 				// enough for most cases and thus avoid both divide by zero above as well as
 				// likely memory corruption afterwards.
-				AssertMsg1( false, "nBytesItem is %d in UtlMemory_CalcNewAllocationCount", nBytesItem );
+				(void)AssertMsg1( false, "nBytesItem is %d in UtlMemory_CalcNewAllocationCount", nBytesItem );
 				nAllocationCount = 256;
 			}
 		}

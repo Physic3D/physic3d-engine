@@ -7,7 +7,9 @@
 //===========================================================================//
 
 #ifndef _XBOX
+#ifdef _MSC_VER
 #pragma warning (disable : 4514)
+#endif
 #endif
 
 #include <stdio.h>
@@ -576,7 +578,7 @@ const char* CUtlBuffer::GetStringFast()
 
 	if ( IsText() )
 	{
-		AssertMsg( false, "CUtlBuffer::GetStringFast: binary buffers only" );
+		(void)AssertMsg( false, "CUtlBuffer::GetStringFast: binary buffers only" );
 		return NULL; // this function doesn't work in text mode
 	}
 
@@ -598,7 +600,7 @@ const char* CUtlBuffer::GetStringFast()
 	// Read the terminating NULL, make sure it's there
 	if ( GetChar() != 0 )
 	{
-		AssertMsg( false, "CUtlBuffer::GetStringFast: no string termination" );
+		(void)AssertMsg( false, "CUtlBuffer::GetStringFast: no string termination" );
 		return NULL;
 	}
 	
@@ -655,7 +657,7 @@ bool CUtlBuffer::GetString( char *pString, int nMaxChars )
 	if ( !IsText() )
 	{
 		char c = GetChar();
-		VerifyEquals( c, 0 );
+		(void)VerifyEquals( c, 0 );
 	}
 	return true;
 }
@@ -917,7 +919,9 @@ bool CUtlBuffer::SeekGet( SeekType_t type, int offset )
 // Parse...
 //-----------------------------------------------------------------------------
 
+#ifdef _MSC_VER
 #pragma warning ( disable : 4706 )
+#endif
 
 int CUtlBuffer::VaScanf( const char* pFmt, va_list list )
 {
@@ -1087,7 +1091,9 @@ int CUtlBuffer::VaScanf( const char* pFmt, va_list list )
 	return numScanned;
 }
 
+#ifdef _MSC_VER
 #pragma warning ( default : 4706 )
+#endif
 
 int CUtlBuffer::Scanf( const char* pFmt, ... )
 {

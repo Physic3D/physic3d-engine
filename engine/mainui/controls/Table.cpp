@@ -424,7 +424,7 @@ void CMenuTable::DrawLine( Point p, const char **psz, size_t size, uint textColo
 		if( !psz[i] ) // headers may be null, cells too
 			continue;
 
-		if( bAllowSorting && i == GetSortingColumn() )
+		if( bAllowSorting && i == (size_t)GetSortingColumn() )
 		{
 			HIMAGE hPic;
 
