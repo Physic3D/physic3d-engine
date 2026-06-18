@@ -1,8 +1,10 @@
+#if !defined(__ANDROID__)
+#error This file is Android-only
+#endif
+
 #include "common.h"
 #include "filesystem.h"
 #include "fs_int.h"
-
-#if XASH_ANDROID
 
 #include <jni.h>
 #include <android/asset_manager.h>
@@ -257,4 +259,3 @@ void FS_InitAndroidAssets( void )
 		MsgDev( D_WARN, "FS_InitAndroidAssets: unable to find JNI methods\n" );
 }
 
-#endif // XASH_ANDROID
