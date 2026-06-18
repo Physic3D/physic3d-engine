@@ -1,0 +1,31 @@
+# Build data
+libs/armeabi*
+libs/x86
+obj
+bin
+gen
+
+# Gradle
+.gradle/
+build/
+local.properties
+
+# Builds
+*.apk
+
+# VKontakte gives a shit when uploading APK
+*.bin 
+
+# Generated
+assets/extras.pak
+res/values/git-rev.xml
+app/src/main/java/com/physic3d/android/XashConfig.java
+
+# IDE
+.idea/
+*.iml
+
+# Misc
+*.swp
+*.save
+*.bak

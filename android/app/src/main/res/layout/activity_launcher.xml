@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?attr/colorSurface"
+    android:fitsSystemWindows="true">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:elevation="0dp"
+        android:background="?attr/colorSurface">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="?attr/colorSurface"
+            app:contentInsetStart="24dp"
+            app:contentInsetEnd="16dp"
+            app:contentInsetStartWithNavigation="24dp">
+
+            <ImageView
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:src="@drawable/physic3d"
+                android:layout_gravity="start|center_vertical"
+                android:layout_marginStart="8dp"/>
+
+            <ImageView
+                android:id="@+id/button_about"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_gravity="end|center_vertical"
+                android:src="@drawable/ic_info"
+                android:padding="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:onClick="showAbout"/>
+        </com.google.android.material.appbar.MaterialToolbar>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <TabHost
+            android:id="@+id/tabhost"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical">
+
+                <TabWidget
+                    android:id="@android:id/tabs"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:showDividers="none"
+                    android:gravity="center"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:background="?attr/colorSurfaceVariant"/>
+
+                <ScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:fillViewport="true">
+
+                    <FrameLayout
+                        android:id="@android:id/tabcontent"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
+
+                        <LinearLayout
+                            android:id="@+id/tab1"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="8dp">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:background="@drawable/tui_border"
+                                android:padding="16dp"
+                                style="@style/CardLayout">
+
+                                <TextView
+                                    style="@style/SectionTitle"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:text="Game Resources"
+                                    android:layout_marginBottom="12dp"/>
+
+                                <LinearLayout
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:orientation="horizontal"
+                                    android:gravity="center_vertical">
+
+                                    <com.google.android.material.textfield.TextInputLayout
+                                        android:layout_width="0dp"
+                                        android:layout_height="wrap_content"
+                                        android:layout_weight="1"
+                                        android:hint=""
+                                        app:prefixText="> "
+                                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+
+                                        <com.google.android.material.textfield.TextInputEditText
+                                            android:id="@+id/cmd_path"
+                                            android:layout_width="match_parent"
+                                            android:layout_height="wrap_content"
+                                            android:maxLines="1"
+                                            android:inputType="textUri"
+                                            android:scrollHorizontally="true"
+                                            android:textSize="14sp"
+                                            />
+                                    </com.google.android.material.textfield.TextInputLayout>
+
+                                    <com.google.android.material.button.MaterialButton
+                                        android:id="@+id/button_select"
+                                        android:layout_width="48dp"
+                                        android:layout_height="48dp"
+                                        android:layout_marginStart="8dp"
+                                        android:text=""
+                                        android:minWidth="0dp"
+                                        app:icon="@drawable/ic_folder"
+                                        style="@style/Widget.Button"/>
+                                </LinearLayout>
+
+                            </LinearLayout>
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/button_launch"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
+                                android:text="@string/launch_button"
+                                style="@style/Widget.Button.Secondary"
+                                android:onClick="startGame"/>
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:id="@+id/tab2"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="8dp">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:background="@drawable/tui_border"
+                                android:padding="16dp"
+                                style="@style/CardLayout">
+
+                                    <com.google.android.material.textfield.TextInputLayout
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:hint=""
+                                        app:prefixText="> "
+                                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+
+                                        <com.google.android.material.textfield.TextInputEditText
+                                            android:id="@+id/cmdArgs"
+                                            android:layout_width="match_parent"
+                                            android:layout_height="wrap_content"
+                                            android:minLines="1"
+                                            />
+                                    </com.google.android.material.textfield.TextInputLayout>
+
+
+
+                                    <LinearLayout
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:orientation="horizontal"
+                                        android:gravity="center_vertical"
+                                        android:layout_marginTop="8dp">
+
+                                        <TextView
+                                            android:layout_width="wrap_content"
+                                            android:layout_height="wrap_content"
+                                            android:text="@string/pixel_format"
+                                            android:textColor="?attr/colorOnSurface"
+                                            android:textSize="14sp"
+                                            
+                                            android:layout_marginEnd="8dp"/>
+
+                                        <Spinner
+                                            android:id="@+id/pixelSpinner"
+                                            android:layout_width="0dp"
+                                            android:layout_height="48dp"
+                                            android:layout_weight="1"/>
+                                    </LinearLayout>
+
+                                    <com.google.android.material.switchmaterial.SwitchMaterial
+                                        android:id="@+id/enableResizeWorkaround"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:text="@string/resize_on"
+                                        android:textColor="?attr/colorOnSurface"/>
+
+                                    <com.google.android.material.switchmaterial.SwitchMaterial
+                                        android:id="@+id/immersive_mode"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:text="@string/immersive_mode"
+                                        android:textColor="?attr/colorOnSurface"/>
+
+                                    <com.google.android.material.switchmaterial.SwitchMaterial
+                                        android:id="@+id/resolution"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:text="@string/resolution"
+                                        android:textColor="?attr/colorOnSurface"/>
+
+                                    <LinearLayout
+                                        android:id="@+id/resolution_settings"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:orientation="vertical">
+
+                                        <LinearLayout
+                                            android:layout_width="match_parent"
+                                            android:layout_height="wrap_content"
+                                            android:orientation="horizontal"
+                                            android:gravity="center_vertical">
+
+                                            <com.google.android.material.textfield.TextInputLayout
+                                                android:layout_width="0dp"
+                                                android:layout_height="wrap_content"
+                                                android:layout_weight="1"
+                                                style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+
+                                                <com.google.android.material.textfield.TextInputEditText
+                                                    android:id="@+id/resolution_width"
+                                                    android:layout_width="match_parent"
+                                                    android:layout_height="wrap_content"
+                                                    android:inputType="number"
+                                                    />
+                                            </com.google.android.material.textfield.TextInputLayout>
+
+                                            <TextView
+                                                android:layout_width="wrap_content"
+                                                android:layout_height="wrap_content"
+                                                android:text="x"
+                                                android:textColor="?attr/colorOnSurface"
+                                                android:textSize="16sp"
+                                                
+                                                android:paddingLeft="12dp"
+                                                android:paddingRight="12dp"/>
+
+                                            <com.google.android.material.textfield.TextInputLayout
+                                                android:layout_width="0dp"
+                                                android:layout_height="wrap_content"
+                                                android:layout_weight="1"
+                                                style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+
+                                                <com.google.android.material.textfield.TextInputEditText
+                                                    android:id="@+id/resolution_height"
+                                                    android:layout_width="match_parent"
+                                                    android:layout_height="wrap_content"
+                                                    android:inputType="number"
+                                                    />
+                                            </com.google.android.material.textfield.TextInputLayout>
+                                        </LinearLayout>
+                                    </LinearLayout>
+                            </LinearLayout>
+                        </LinearLayout>
+                    </FrameLayout>
+                </ScrollView>
+            </LinearLayout>
+        </TabHost>
+    </LinearLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -1,9 +1,0 @@
-[submodule "hlsdk"]
-	path = hlsdk
-	url = https://github.com/ValveSoftware/halflife
-[submodule "mainui"]
-	path = mainui
-	url = https://github.com/byoreo/mainui_cpp.git
-[submodule "android"]
-	path = android
-	url = https://github.com/Physic3D/physic3d-android

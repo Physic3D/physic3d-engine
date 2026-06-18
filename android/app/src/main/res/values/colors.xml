@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- M3 Minty Palette -->
+    <color name="primary">#006A60</color>
+    <color name="primary_dark">#005048</color>
+    <color name="primary_light">#74F8E5</color>
+    <color name="primary_light_bg">#E0F2F0</color>
+
+    <color name="accent">#984061</color>
+    <color name="accent_light">#FFD9E2</color>
+
+    <color name="background">#F4FBFA</color>
+    <color name="surface">#F4FBFA</color>
+    <color name="surface_variant">#DAE5E1</color>
+
+    <color name="text_primary">#191C1B</color>
+    <color name="text_secondary">#3F4947</color>
+    <color name="text_hint">#707977</color>
+    <color name="text_on_primary">#FFFFFF</color>
+
+    <color name="divider">#BFC9C5</color>
+    <color name="error">#BA1A1A</color>
+    <color name="input_bg">#DAE5E1</color>
+    <color name="header_bg">#006A60</color>
+    <color name="card_shadow">#1A000000</color>
+
+    <!-- Legacy support -->
+    <color name="tab_unselected">#BFC9C5</color>
+    <color name="dot_inactive">#BFC9C5</color>
+</resources>

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="red_small_text" parent="TextAppearance.Material3.BodySmall">
+        <item name="android:textColor">?attr/colorError</item>
+    </style>
+
+    <style name="Widget.Button" parent="Widget.Material3.Button.TextButton">
+        <item name="android:textAllCaps">false</item>
+        <item name="android:letterSpacing">0</item>
+    </style>
+
+    <style name="Widget.Button.Secondary" parent="Widget.Material3.Button.TextButton">
+        <item name="android:textAllCaps">false</item>
+        <item name="android:letterSpacing">0</item>
+    </style>
+
+    <style name="SectionTitle" parent="TextAppearance.Material3.TitleMedium">
+        <item name="android:textColor">?attr/colorPrimary</item>
+        <item name="android:layout_marginBottom">0dp</item>
+    </style>
+
+    <style name="CardLayout">
+        <item name="android:layout_marginLeft">12dp</item>
+        <item name="android:layout_marginRight">12dp</item>
+        <item name="android:layout_marginTop">8dp</item>
+        <item name="android:layout_marginBottom">8dp</item>
+    </style>
+
+    <style name="TuiDialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="shapeAppearanceOverlay">@style/TuiDialogShape</item>
+        <item name="dialogCornerRadius">0dp</item>
+    </style>
+
+    <style name="TuiDialogShape">
+        <item name="cornerSize">0dp</item>
+    </style>
+</resources>

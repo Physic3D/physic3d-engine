@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="16dp"
+    android:orientation="vertical"
+    android:background="@drawable/tui_border"
+    android:padding="20dp">
+
+    <ImageView
+        android:id="@+id/aboutIcon"
+        android:layout_width="96dp"
+        android:layout_height="96dp"
+        android:src="@drawable/physic3d"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="12dp"/>
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/about_main"
+        android:textColor="?attr/colorPrimary"
+        
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:layout_gravity="center_horizontal"/>
+
+    <TextView
+        android:id="@+id/textView_version"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/version_string"
+        android:textColor="?attr/colorOnSurfaceVariant"
+        
+        android:textSize="12sp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="4dp"/>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="?attr/colorOutlineVariant"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="> Credits"
+        android:textColor="?attr/colorPrimary"
+        
+        android:textSize="13sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="8dp"/>
+
+    <TextView
+        android:id="@+id/textView4"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/about_authors"
+        android:textColor="?attr/colorOnSurfaceVariant"
+        
+        android:textSize="12sp"
+        android:lineSpacingExtra="4dp"/>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/button_about_ok"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="@string/ok"
+        style="@style/Widget.Button"/>
+</LinearLayout>

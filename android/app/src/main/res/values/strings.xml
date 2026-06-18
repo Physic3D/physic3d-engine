@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="app_name" translatable="false">Physic3D</string>
+	<string name="launcher_name" translatable="false">Physic3D</string>
+	<string name="launcher_name_test" translatable="false">Physic3D Test</string>
+	<string name="version_string" translatable="false">v0.19.4</string>
+
+	<!-- Generic -->
+	<string name="cancel">Cancel</string>
+	<string name="ok">Close</string>
+	<string name="next">Next</string>
+	<string name="prev">Previous</string>
+	<string name="skip">Skip</string>
+	<string name="finish">Finish</string>
+	<string name="exit">Exit</string>
+	<string name="text_res_path">Path to game resources</string>
+	<!-- Generic -->
+
+	<!-- Launcher(tabs) -->
+	<string name="text_tab1">Normal</string>
+	<string name="text_tab2">Advanced</string>
+	<!-- Launcher(tabs) -->
+	
+	<!-- Launcher(normal) -->
+	<string name="text_res_tittle2">Normal settings</string>
+	<string name="volume">Volume buttons mode</string>
+	<string name="use_volume">Default action</string>
+	<string name="no_volume">Use in game</string>
+	<string name="select_folder">Select game data location</string>
+	<string name="create_shortcut_button">Create mod shortcut</string>
+	<!-- Launcher(normal) -->
+	
+	<!-- Launcher(advanced) -->
+	<string name="text_res_tittle3">Advanced settings</string>
+	<string name="cmd_args_text">Command line arguments(experts only)</string>
+	<string name="pixel_format" translatable="false">Pixel format:</string>
+	<string name="resize_off">Keyboard does not resize screen</string>
+	<string name="resize_on">Keyboard resizes screen</string>
+	<string name="immersive_mode">Immersive Mode</string>
+	<string name="resolution">Custom Resolution</string>
+	<string name="resolution_scale">Scale screen keeping aspect ratio</string>
+	<string name="resolution_custom">Specify screen width and height</string>
+	<string name="resolution_result">Resolution: </string>	
+	<string name="resolution_mod_warn">Use with caution! Some games does not support too low resolution, in case of bugs increase resolution to 640x480 or higher.\nResolution lower than 320x240 is ignored.</string>
+	<!-- Launcher(advanced) -->
+	
+	<!-- Launcher(buttons) -->
+	<string name="about_button">About</string>
+	<string name="launch_button">Launch Game!</string>
+	<!-- Launcher(buttons) -->
+	
+	<!-- Shorcut -->
+	<string name="text_shortcut">Physic3D shortcut</string>
+	<string name="text_shortcut_test">Physic3D Test shortcut</string>
+	<string name="shortcut_button_save">Save shortcut</string>
+	<string name="gamedir">Mod directory</string>
+	<string name="pkgname">Mod package name (experts only)</string>
+	<string name="shortcut_name">Shortcut name</string>
+	<!-- Shorcut -->
+	
+	<!-- About -->
+	<string name="about_main" translatable="false">Physic3D</string>
+	<string name="about_copyright">All copyrights reserved to their respective owners.</string>
+	<string name="about_description" translatable="false">Xash3D Engine, but way better.\nBased on Xash3D SWES by FWGS.</string>
+	<string name="about_authors" translatable="false">
+		Original Xash3D engine:\n
+		- Uncle Mike\n
+		- FWGS (Android port)\n\n
+		Physic3D fork:\n
+		- Physic3D Team (github.com/Physic3D)\n\n
+		Special thanks:\n
+		- Valve Software for Half-Life
+	</string>
+	<string name="git_revisions" translatable="false">unknown</string>
+	<string name="about_links" translatable="false">
+		- <a href="https://github.com/Physic3D">GitHub (Physic3D)</a>\n
+		- <a href="https://github.com/Physic3D/physic3d-engine">Engine Source</a>\n
+		- <a href="https://github.com/Physic3D/physic3d-android">Android Source</a>\n
+		- <a href="https://github.com/Physic3D/physic3d-extras">Extras</a>
+	</string>
+	<!-- About -->
+	
+	<!-- Write check  -->
+	<string name="write_failed">Write test has failed</string>
+	<string name="ask_about_new_basedir_msg">Move your game files somewhere else, for example Android/data/com.physic3d.android or internal memory. At next run I will ask you about folder again.</string>
+	<!-- These strings must be concat with a "ask_about_new_basedir" string -->
+	<string name="lollipop_request_permission_fail_msg">Write test has been failed twice. </string>
+	<string name="lollipop_write_fail_msg">Due to writing politics of newer Android versions, you can\'t use this storage. </string>
+	<string name="kitkat_write_fail_msg">Due to writing politics of Android 4.4, you can\'t use this storage. </string>
+	<string name="readonly_fs_fail_msg">Seems you have read-only filesystem. </string>
+	<string name="manage_storage_required">This app needs \"Allow access to manage all files\" permission to write to the selected folder. Please grant it in Settings > Apps > Special app access > All files access.</string>
+	<!-- /Write check  -->
+
+	<!-- FPicker -->
+	<string name="folder">Set current folder</string>
+	<string name="parent_directory">Parent directory</string>
+	<string name="chosen_path">Chosen path:</string>
+	<string name="current_dir">Current directory:</string>
+
+	<plurals name="item_plurals">
+		<item quantity="zero">No folders</item>
+		<item quantity="one">%d folder</item>
+        <item quantity="other">%d folders</item>
+	</plurals>
+	<!-- /FPicker -->
+</resources>
