@@ -78,7 +78,7 @@ static void FS_CloseAndroidAssets( android_assets_t *assets )
 
 static android_assets_t *FS_LoadAndroidAssets( qboolean engine )
 {
-	android_assets_t *assets = Mem_Calloc( fs_mempool, sizeof( *assets ));
+	android_assets_t *assets = (android_assets_t *)Mem_Calloc( fs_mempool, sizeof( *assets ));
 
 	assets->engine = engine;
 
