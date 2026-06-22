@@ -47,8 +47,8 @@ extern "C" {
 #define MSGBOX3( x )	Android_MessageBox("Host Recursive Error", x )
 #elif defined _WIN32
 #define MSGBOX( x ) 	MessageBox( NULL, x, "Xash Error", MB_OK|MB_SETFOREGROUND|MB_ICONSTOP )
-#define MSGBOX2( x )	MessageBox( host.hWnd, x, "Host Error", MB_OK|MB_SETFOREGROUND|MB_ICONSTOP )
-#define MSGBOX3( x )	MessageBox( host.hWnd, x, "Host Recursive Error", MB_OK|MB_SETFOREGROUND|MB_ICONSTOP )
+#define MSGBOX2( x )	MessageBox( (HWND)host.hWnd, x, "Host Error", MB_OK|MB_SETFOREGROUND|MB_ICONSTOP )
+#define MSGBOX3( x )	MessageBox( (HWND)host.hWnd, x, "Host Recursive Error", MB_OK|MB_SETFOREGROUND|MB_ICONSTOP )
 #else
 #define BORDER1 "======================================\n"
 #define MSGBOX( x )		fprintf(stderr, BORDER1 "Xash Error: %s\n" BORDER1,x)

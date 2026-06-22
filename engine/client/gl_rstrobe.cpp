@@ -25,12 +25,13 @@ typedef enum
 	NegativeBlackFrame
 } CountType;
 
-typedef enum
+typedef int FrameState;
+enum
 {
 	PHASE_POSITIVE = BIT( 0 ),
 	PHASE_INVERTED = BIT( 1 ),
 	FRAME_RENDER   = BIT( 2 )
-} FrameState; // Frame State
+}; // Frame State
 
 typedef struct
 {
@@ -315,7 +316,7 @@ _inline double _period( void )
 
 _inline double _geometricMean( double x, double y )
 {
-	return sqrt( abs( x * y ) );
+	return sqrt( fabs( x * y ) );
 }
 
 _inline double _arithmeticMean( double x, double y )
@@ -717,7 +718,7 @@ void R_Strobe_Tick( void )
 
 	if ( r_strobe_cooldown->integer > 0 )
 	{
-		if ( ( strobe.cdTimer > (double)abs( r_strobe_cooldown->integer ) ) && strobe.cdTriggered == true )
+		if ( ( strobe.cdTimer > (double)abs( r_strobe_cooldown->integer ) ) && strobe.cdTriggered )
 		{
 			strobe.cdTriggered = false;
 			strobe.cdTimer     = -1.0;

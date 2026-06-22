@@ -238,7 +238,7 @@ void VGui_Startup( int width, int height )
 
 		if( s_pVGuiSupport )
 		{
-			F = Com_GetProcAddress( s_pVGuiSupport, "InitVGUISupportAPI" );
+			F = (void (*)(vguiapi_t *))Com_GetProcAddress( s_pVGuiSupport, "InitVGUISupportAPI" );
 			if( F )
 			{
 				F( &vgui );
@@ -286,7 +286,7 @@ void VGui_Startup( int width, int height )
 		}
 		else
 		{
-			F = Com_GetProcAddress( s_pVGuiSupport, "InitAPI" );
+			F = (void (*)(vguiapi_t *))Com_GetProcAddress( s_pVGuiSupport, "InitAPI" );
 			if( F )
 			{
 				F( &vgui );

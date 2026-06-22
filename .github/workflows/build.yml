@@ -1,70 +1,113 @@
-name: Build Engine
+name: Build
 
 on:
   push:
-    branches: [ master ]
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
   workflow_dispatch:
 
 jobs:
-  build:
-    strategy:
-      matrix:
-        os: [windows-latest, ubuntu-latest]
-
-    runs-on: ${{ matrix.os }}
-
+  windows-client:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: cmd
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-          fetch-depth: 0
 
-      - name: Install dependencies (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libsdl2-dev libfontconfig-dev libfreetype-dev libunwind-dev
+      - name: Configure (x86 Client)
+        run: >
+          cmake --preset x86-release -B build-x86-client
 
-      - name: Setup MSVC environment
-        if: runner.os == 'Windows'
-        uses: ilammy/msvc-dev-cmd@v1
+      - name: Build
+        run: cmake --build build-x86-client --config RelWithDebInfo
 
-      - name: Configure CMake (Linux)
-        if: runner.os == 'Linux'
-        env:
-          CMAKE_POLICY_VERSION_MINIMUM: 3.5
-        run: |
-          cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
-
-      - name: Configure CMake (Windows)
-        if: runner.os == 'Windows'
-        env:
-          CMAKE_POLICY_VERSION_MINIMUM: 3.5
-        run: |
-          cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
-
-      - name: Build (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          cmake --build build --parallel
-
-      - name: Build (Windows)
-        if: runner.os == 'Windows'
-        run: |
-          cmake --build build --parallel
-
-      - name: Upload artifacts (Windows)
-        if: runner.os == 'Windows'
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: xash3d-windows
-          path: |
-            build/**/*.dll
-            build/**/*.exe
+          name: xash3d-windows-x86
+          path: build-x86-client/engine/xash_sdl.dll
 
-      - name: Upload artifacts (Linux)
-        if: runner.os == 'Linux'
+  windows-dedicated:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: cmd
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Configure (x86 Dedicated)
+        run: >
+          cmake --preset x86-dedicated -B build-x86-dedicated
+
+      - name: Build
+        run: cmake --build build-x86-dedicated --config RelWithDebInfo
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: xash-dedicated-windows-x86
+          path: build-x86-dedicated/engine/xash_dedicated.exe
+
+  linux-client:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq cmake ninja-build libsdl2-dev
+
+      - name: Configure (Linux Client)
+        run: >
+          cmake --preset linux-release -B build-linux-client -G "Ninja"
+
+      - name: Build
+        run: cmake --build build-linux-client --config RelWithDebInfo
+
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: xash3d-linux
-          path: build/**/*.so
+          path: build-linux-client/engine/xash3d
+
+  linux-dedicated:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq cmake ninja-build
+
+      - name: Configure (Linux Dedicated)
+        run: >
+          cmake --preset linux-dedicated -B build-linux-dedicated -G "Ninja"
+
+      - name: Build
+        run: cmake --build build-linux-dedicated --config RelWithDebInfo
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: xash-dedicated-linux
+          path: build-linux-dedicated/engine/xash3d
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check for TAB characters
+        run: |
+          ! grep -rnP '\t' engine/ --include='*.c' --include='*.cpp' --include='*.h' || echo "Tabs found"

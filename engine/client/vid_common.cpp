@@ -23,7 +23,7 @@ GNU General Public License for more details.
 #include "input.h"
 #include "gl_vidnt.h"
 
-extern convar_t *renderinfo;
+extern "C" convar_t *renderinfo;
 convar_t	*gl_allow_software;
 convar_t	*gl_extensions;
 convar_t	*gl_alphabits;
@@ -943,7 +943,7 @@ void Win_SetDPIAwareness( void )
 
 	if( ( hModule = LoadLibrary( "shcore.dll" ) ) )
 	{
-		if( ( pSetProcessDpiAwareness = (void*)GetProcAddress( hModule, "SetProcessDpiAwareness" ) ) )
+		if( ( pSetProcessDpiAwareness = (HRESULT (__stdcall *)(XASH_DPI_AWARENESS))GetProcAddress( hModule, "SetProcessDpiAwareness" ) ) )
 		{
 			// I hope SDL don't handle WM_DPICHANGED message
 			HRESULT hResult = pSetProcessDpiAwareness( XASH_SYSTEM_DPI_AWARE );
@@ -968,7 +968,7 @@ void Win_SetDPIAwareness( void )
 
 		if( ( hModule = LoadLibrary( "user32.dll" ) ) )
 		{
-			if( ( pSetProcessDPIAware = ( void* )GetProcAddress( hModule, "SetProcessDPIAware" ) ) )
+			if( ( pSetProcessDPIAware = (BOOL (__stdcall *)(void))GetProcAddress( hModule, "SetProcessDPIAware" ) ) )
 			{
 				// I hope SDL don't handle WM_DPICHANGED message
 				BOOL hResult = pSetProcessDPIAware();

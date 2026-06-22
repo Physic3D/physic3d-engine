@@ -15,6 +15,7 @@ GNU General Public License for more details.
 
 #include "imagelib.h"
 
+#pragma warning(disable:5033) // 'register' is no longer a supported storage class
 
 #define netsize		256			// number of colours used
 #define prime1		499

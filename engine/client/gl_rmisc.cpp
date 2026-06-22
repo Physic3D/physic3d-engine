@@ -362,7 +362,7 @@ void R_ParseTexFilters( const char *filename )
 
 		// reading flags
 		pfile = COM_ParseFile( pfile, token );
-		filter.flags = Q_atoi( token );
+		filter.flags = (flFlags_t)Q_atoi( token );
 
 		// make sure what factor is not zeroed
 		if( filter.factor == 0.0f )

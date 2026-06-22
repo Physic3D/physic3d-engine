@@ -1,5 +1,6 @@
 /*
 layer3.c - compact version of famous library mpg123
+#pragma warning(disable:5033) // 'register' is no longer a supported storage class
 Copyright (C) 2017 Uncle Mike
 
 This program is free software: you can redistribute it and/or modify

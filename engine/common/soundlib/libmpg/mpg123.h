@@ -457,6 +457,8 @@ void init_layer3_stuff( mpg123_handle_t *fr );
 int do_layer3( mpg123_handle_t *fr );
 
 //
+#pragma warning(disable:5033) // 'register' is no longer a supported storage class
+
 // dct36.c
 //
 void dct36( float *inbuf, float *o1, float *o2, float *wintab, float *tsbuf );

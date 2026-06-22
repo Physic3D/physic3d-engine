@@ -811,12 +811,12 @@ static void R_SetupFrame( void )
 	R_RunViewmodelEvents();
 
 	// sort opaque entities by model type to avoid drawing model shadows under alpha-surfaces
-	qsort( tr.solid_entities, tr.num_solid_entities, sizeof( cl_entity_t* ), (void*)R_SolidEntityCompare );
+	qsort( tr.solid_entities, tr.num_solid_entities, sizeof( cl_entity_t* ), (int (__cdecl *)(const void *, const void *))R_SolidEntityCompare );
 
 	if( !gl_nosort->integer )
 	{
 		// sort translucents entities by rendermode and distance
-		qsort( tr.trans_entities, tr.num_trans_entities, sizeof( cl_entity_t* ), (void*)R_TransEntityCompare );
+		qsort( tr.trans_entities, tr.num_trans_entities, sizeof( cl_entity_t* ), (int (__cdecl *)(const void *, const void *))R_TransEntityCompare );
 	}
 
 	// current viewleaf
@@ -1680,20 +1680,20 @@ static render_api_t gRenderAPI =
 	GL_TextureName,
 	GL_TextureData,
 	GL_LoadTextureNoFilter,
-	(void*)GL_CreateTexture,
+	(int (__cdecl *)(const char *, int, int, const void *, int))GL_CreateTexture,
 	GL_SetTextureType,
 	GL_TextureUpdateCache,
 	GL_FreeTexture,
 	DrawSingleDecal,
 	R_DecalSetupVerts,
 	R_EntityRemoveDecals,
-	(void*)AVI_LoadVideoNoSound,
-	(void*)AVI_GetVideoInfo,
-	(void*)AVI_GetVideoFrameNumber,
-	(void*)AVI_GetVideoFrame,
+	(void *(__cdecl *)(const char *, int))AVI_LoadVideoNoSound,
+	(int (__cdecl *)(void *, long *, long *, float *))AVI_GetVideoInfo,
+	(int (__cdecl *)(void *, float))AVI_GetVideoFrameNumber,
+	(byte *(__cdecl *)(void *, long))AVI_GetVideoFrame,
 	R_UploadStretchRaw,
-	(void*)AVI_FreeVideo,
-	(void*)AVI_IsActive,
+	(void (__cdecl *)(void *))AVI_FreeVideo,
+	(int (__cdecl *)(void *))AVI_IsActive,
 	GL_Bind,
 	GL_SelectTexture,
 	GL_LoadTexMatrixExt,
@@ -1707,7 +1707,7 @@ static render_api_t gRenderAPI =
 	NULL,
 	NULL,
 	CL_DrawParticlesExternal,
-	(void*)R_EnvShot,
+	R_EnvShot,
 	COM_CompareFileTime,
 	Host_Error,
 	pfnSPR_LoadExt,
@@ -1715,7 +1715,7 @@ static render_api_t gRenderAPI =
 	R_StudioGetTexture,
 	GL_GetOverviewParms,
 	S_FadeMusicVolume,
-	(void*)COM_SetRandomSeed,
+	(void (__cdecl *)(long))COM_SetRandomSeed,
 	R_Mem_Alloc,
 	R_Mem_Free,
 	pfnGetFilesList,

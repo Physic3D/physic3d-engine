@@ -1188,6 +1188,7 @@ void SV_SaveClientState( SAVERESTOREDATA *pSaveData, const char *level )
 	}
 
 	// DYNAMIC SOUNDS SECTION (don't go across transition)
+#if !defined( XASH_DEDICATED )
 	if( !svgame.globals->changelevel && ( soundCount = S_GetCurrentDynamicSounds( soundInfo, MAX_CHANNELS )) != 0 )
 	{
 		sections.offsets[LUMP_SOUNDS_OFFSET] = FS_Tell( pFile );
@@ -1217,7 +1218,10 @@ void SV_SaveClientState( SAVERESTOREDATA *pSaveData, const char *level )
 		FS_Write( pFile, &entry->forcedEnd, sizeof( entry->forcedEnd ));
 	}
 
+#endif // !XASH_DEDICATED
+
 	// BACKGROUND MUSIC SECTION (don't go across transition)
+#if !defined( XASH_DEDICATED )
 	if( !svgame.globals->changelevel && S_StreamGetCurrentState( curtrack, looptrack, &position ))
 	{
 		byte	nameSize;
@@ -1237,6 +1241,7 @@ void SV_SaveClientState( SAVERESTOREDATA *pSaveData, const char *level )
 		// write current track position
 		FS_Write( pFile, &position, sizeof( position ));
 	}
+#endif // !XASH_DEDICATED
 
 	// AT END
 	FS_Seek( pFile, header_offset, SEEK_SET );
@@ -2153,8 +2158,10 @@ qboolean SV_LoadGame( const char *pName )
 		SV_Shutdown( true );
 	sv.background = false;
 
+#ifndef XASH_DEDICATED
 	SCR_BeginLoadingPlaque ( false );
 	S_StopBackgroundTrack();
+#endif
 
 	MsgDev( D_INFO, "Loading game from %s...\n", name );
 	SV_ClearSaveDir();

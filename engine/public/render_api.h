@@ -96,7 +96,7 @@ typedef enum
 	TEX_DEPTHMAP	// shadowmap texture
 } texType_t;
 
-typedef enum
+enum texFlags_e
 {
 	TF_NEAREST	= (1<<0),		// disable texfilter
 	TF_KEEP_RGBDATA	= (1<<1),		// some images keep source
@@ -127,7 +127,8 @@ typedef enum
 	TF_FLOAT		= (1<<26),	// float textures
 	TF_NOCOMPARE	= (1<<27),	// disable comparing for depth textures
 	TF_FLOATDATA	= (1<<28),
-} texFlags_t;
+};
+typedef int texFlags_t;
 
 typedef struct beam_s BEAM;
 typedef struct particle_s particle_t;

@@ -127,27 +127,7 @@ if(MSVC)
 	add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE)
 endif()
 
-# These files are C code with .cpp extension; compile as C to avoid strict C++ type errors
-    set_source_files_properties(
-        client/cl_game.cpp
-        client/cl_menu.cpp
-        client/gl_image.cpp
-        client/gl_mirror.cpp
-        client/gl_rstrobe.cpp
-        client/gl_warp.cpp
-        client/gl_studio.cpp
-        client/gl_rsurf.cpp
-        client/gl_sprite.cpp
-        client/gl_rmain.cpp
-        client/gl_rmisc.cpp
-        client/joyinput.cpp
-        client/s_utils.cpp
-        client/touch.cpp
-        client/vid_common.cpp
-        client/vgui/vgui_draw.cpp
-        client/cl_parse.cpp
-        client/s_load.cpp
-    PROPERTIES LANGUAGE C COMPILE_FLAGS "/TC")
+
 
 if(WIN32 AND CMAKE_SIZEOF_VOID_P EQUAL 4)
 	add_definitions( -DDBGHELP -DXASH_W32CON) # dbghelp crashhandler

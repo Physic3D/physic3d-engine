@@ -1,0 +1,95 @@
+{
+    "version": 6,
+    "configurePresets": [
+        {
+            "name": "default",
+            "hidden": true,
+            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "installDir": "${sourceDir}/out/install/${presetName}",
+            "cacheVariables": {
+                "XASH_DOWNLOAD_DEPENDENCIES": "ON",
+                "XASH_NONSTANDARD_LOAD": "ON",
+                "XASH_USE_STB_SPRINTF": "ON",
+                "XASH_VECTORIZE_SINCOS": "ON"
+            }
+        },
+        {
+            "name": "x86-release",
+            "inherits": "default",
+            "displayName": "x86 Release (Client)",
+            "description": "Client build using MSVC x86, Ninja",
+            "generator": "Ninja",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+                "XASH_SDL": "ON",
+                "XASH_MAINUI": "ON",
+                "XASH_VGUI": "OFF",
+                "XASH_DEDICATED": "OFF",
+                "XASH_SINGLE_BINARY": "OFF"
+            }
+        },
+        {
+            "name": "x86-dedicated",
+            "inherits": "default",
+            "displayName": "x86 Dedicated Server",
+            "description": "Dedicated server build using MSVC x86, Ninja",
+            "generator": "Ninja",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+                "XASH_SDL": "OFF",
+                "XASH_MAINUI": "OFF",
+                "XASH_VGUI": "OFF",
+                "XASH_DEDICATED": "ON",
+                "XASH_SINGLE_BINARY": "ON"
+            }
+        },
+        {
+            "name": "linux-release",
+            "inherits": "default",
+            "displayName": "Linux Release (Client)",
+            "description": "Linux client build using GCC",
+            "generator": "Unix Makefiles",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+                "XASH_SDL": "ON",
+                "XASH_MAINUI": "ON",
+                "XASH_VGUI": "OFF",
+                "XASH_DEDICATED": "OFF",
+                "XASH_SINGLE_BINARY": "OFF"
+            }
+        },
+        {
+            "name": "linux-dedicated",
+            "inherits": "default",
+            "displayName": "Linux Dedicated Server",
+            "description": "Linux dedicated server build using GCC",
+            "generator": "Unix Makefiles",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+                "XASH_SDL": "OFF",
+                "XASH_MAINUI": "OFF",
+                "XASH_VGUI": "OFF",
+                "XASH_DEDICATED": "ON",
+                "XASH_SINGLE_BINARY": "ON"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "x86-release",
+            "configurePreset": "x86-release"
+        },
+        {
+            "name": "x86-dedicated",
+            "configurePreset": "x86-dedicated"
+        },
+        {
+            "name": "linux-release",
+            "configurePreset": "linux-release"
+        },
+        {
+            "name": "linux-dedicated",
+            "configurePreset": "linux-dedicated"
+        }
+    ]
+}

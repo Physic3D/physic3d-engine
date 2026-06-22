@@ -576,7 +576,7 @@ void Mod_LoadStudioModel( model_t *mod, const void *buffer, qboolean *loaded )
 	loadmodel->cache.data = Mem_Alloc( loadmodel->mempool, phdr->length );
 	Q_memcpy( loadmodel->cache.data, buffer, phdr->length );
 
-	phdr = loadmodel->cache.data;
+	phdr = (studiohdr_t *)loadmodel->cache.data;
 
 	// setup bounding box
 	VectorCopy( phdr->bbmin, loadmodel->mins );
@@ -617,7 +617,7 @@ void Mod_UnloadStudioModel( model_t *mod )
 	if( mod->type != mod_studio )
 		return; // not a studio
 
-	pstudio = mod->cache.data;
+	pstudio = (studiohdr_t *)mod->cache.data;
 	if( !pstudio ) return; // already freed
 
 	Mem_FreePool( &mod->mempool );
@@ -699,7 +699,7 @@ void Mod_UnloadSpriteModel( model_t *mod )
 	if( mod->type != mod_sprite )
 		return; // not a sprite
 
-	psprite = mod->cache.data;
+	psprite = (msprite_t *)mod->cache.data;
 	if( !psprite ) return; // already freed
 
 	Mem_FreePool( &mod->mempool );

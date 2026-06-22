@@ -383,13 +383,13 @@ void GL_BuildPolygonFromSurface( model_t *mod, msurface_t *fa )
 		for( i = 0; i < lnumverts; i++ )
 		{
 			vec3_t	v1, v2;
-			float	*prev, *this, *next;
+			float	*prev, *cur, *next;
 
 			prev = &verts_p[VERTEXSIZE * ((i + lnumverts - 1) % lnumverts)];
 			next = &verts_p[VERTEXSIZE * ((i + 1) % lnumverts)];
-			this = &verts_p[VERTEXSIZE * i];
+			cur = &verts_p[VERTEXSIZE * i];
 
-			VectorSubtract( this, prev, v1 );
+			VectorSubtract( cur, prev, v1 );
 			VectorNormalize( v1 );
 			VectorSubtract( next, prev, v2 );
 			VectorNormalize( v2 );
@@ -780,7 +780,7 @@ static void R_BuildDeluxeMap( msurface_t *surf, byte *dest, int stride )
 		for( i = 0, bl = r_blockdeluxe; i < size; i++, bl += 3, lm++, dm++ )
 		{
 			int l;
-			vec3_t v = { lm->r, lm->g, lm->b };
+			vec3_t v = { (float)lm->r, (float)lm->g, (float)lm->b };
 
 			l = (int)(VectorLength(v) * scale);
 			bl[0] += ((int)dm->r - 128) * l;
@@ -1672,7 +1672,7 @@ void R_DrawBrushModel( cl_entity_t *e )
 	}
 
 	if( need_sort && !gl_nosort->integer )
-		qsort( world.draw_surfaces, num_sorted, sizeof( msurface_t* ), (void*)R_SurfaceCompare );
+		qsort( world.draw_surfaces, num_sorted, sizeof( msurface_t* ), (int(*)(const void*, const void*))R_SurfaceCompare );
 
 	// draw sorted translucent surfaces
 	for( i = 0; i < num_sorted; i++ )
@@ -1848,7 +1848,7 @@ typedef struct vbodecaldata_s
 } vbodecaldata_t;
 
 // gl_decals.c
-extern decal_t	gDecalPool[MAX_RENDER_DECALS];
+extern "C" decal_t	gDecalPool[MAX_RENDER_DECALS];
 
 struct vbo_static_s
 {

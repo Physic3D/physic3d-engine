@@ -280,9 +280,9 @@ void Joy_AxisMotionEvent( int id, byte axis, short value )
 		return; // it is not an update
 
 	if( engineAxis >= JOY_AXIS_RT )
-		Joy_ProcessTrigger( engineAxis, value );
+		Joy_ProcessTrigger( (engineAxis_t)engineAxis, value );
 	else
-		Joy_ProcessStick( engineAxis, value );
+		Joy_ProcessStick( (engineAxis_t)engineAxis, value );
 }
 
 /*

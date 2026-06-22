@@ -172,7 +172,7 @@ int SV_CalcPacketLoss( sv_client_t *cl )
 {
 	int	i, lost, count;
 	float	losspercent;
-	register client_frame_t *frame;
+	client_frame_t *frame;
 	int	numsamples;
 
 	lost  = 0;

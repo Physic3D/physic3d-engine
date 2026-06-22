@@ -265,7 +265,7 @@ void Mod_LoadSpriteModel( model_t *mod, byte *buffer, qboolean *loaded, uint32_t
 
 	for( i = 0; i < psprite->numframes; i++ )
 	{
-		frametype_t frametype = *buffer;
+		frametype_t frametype = (frametype_t)*buffer;
 		psprite->frames[i].type = (spriteframetype_t)LittleLong(frametype);
 
 		switch( frametype )
@@ -315,7 +315,7 @@ void Mod_LoadMapSprite( model_t *mod, const void *buffer, size_t size, qboolean 
 	if( loaded ) *loaded = false;
 	Q_snprintf( texname, sizeof( texname ), "#%s", mod->name );
 	host.overview_loading = true;
-	pix = FS_LoadImage( texname, buffer, size );
+	pix = FS_LoadImage( texname, (const byte *)buffer, size );
 	host.overview_loading = false;
 	if( !pix ) return;	// bad image or something else
 
@@ -434,7 +434,7 @@ void Mod_UnloadSpriteModel( model_t *mod )
 	if( mod->type != mod_sprite )
 		return; // not a sprite
 
-	psprite = mod->cache.data;
+	psprite = (msprite_t *)mod->cache.data;
 	if( !psprite ) return; // already freed
 
 	// release all textures
@@ -481,7 +481,7 @@ mspriteframe_t *R_GetSpriteFrame( const model_t *pModel, int frame, float yaw )
 	int		i, numframes;
 
 	ASSERT( pModel );
-	psprite = pModel->cache.data;
+	psprite = (msprite_t *)pModel->cache.data;
 
 	if( frame < 0 ) frame = 0;
 	else if( frame >= psprite->numframes )
@@ -542,7 +542,7 @@ float R_GetSpriteFrameInterpolant( cl_entity_t *ent, mspriteframe_t **oldframe, 
 	float		*pintervals, fullinterval, targettime;
 	int		m_fDoInterp;
 
-	psprite = ent->model->cache.data;
+	psprite = (msprite_t *)ent->model->cache.data;
 	frame = (int)ent->curstate.frame;
 	lerpFrac = 1.0f;
 

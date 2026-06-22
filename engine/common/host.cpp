@@ -29,6 +29,8 @@ GNU General Public License for more details.
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#else
+#include <direct.h> // _getcwd
 #endif
 
 #include "netchan.h"
@@ -767,7 +769,9 @@ void Host_Frame( float time )
 
 	Sys_SendKeyEvents (); // call WndProc on WIN32
 
+#ifndef XASH_DEDICATED
 	Host_InputFrame ();	// input frame
+#endif
 
 #ifndef XASH_DEDICATED
 	Host_ClientBegin(); // prepare client command
@@ -1046,7 +1050,7 @@ void Host_InitCommon( int argc, const char** argv, const char *progname, qboolea
 		Q_strncpy( host.rootdir, baseDir, sizeof( host.rootdir ) );
 		SDL_free( baseDir );
 #else
-		if( !getcwd( host.rootdir, sizeof(host.rootdir) ) )
+		if( !_getcwd( host.rootdir, sizeof(host.rootdir) ) )
 		{
 			Sys_Error( "couldn't determine current directory: %s", strerror( errno ) );
 			host.rootdir[0] = 0;
@@ -1207,7 +1211,9 @@ void Host_InitCommon( int argc, const char** argv, const char *progname, qboolea
 
 	HPAK_Init();
 
+#ifndef XASH_DEDICATED
 	IN_Init();
+#endif
 	Key_Init();
 }
 
@@ -1227,7 +1233,7 @@ void Host_FreeCommon( void )
 Host_Main
 =================
 */
-int EXPORT Host_Main( int argc, const char **argv, const char *progname, int bChangeGame, pfnChangeGame func )
+extern "C" int EXPORT Host_Main( int argc, const char **argv, const char *progname, int bChangeGame, pfnChangeGame func )
 {
   #if ( !defined( __HAIKU__ ) && !defined( _WIN32 ) && !defined( __SAILFISH__ ) && !defined( __ANDROID__ ) )
 	  if ( !getuid( ) )
@@ -1389,8 +1395,10 @@ int EXPORT Host_Main( int argc, const char **argv, const char *progname, int bCh
 	if( !host.stuffcmdsrun )
 		Cbuf_AddText( "stuffcmds\n" );
 
+#ifndef XASH_DEDICATED
 	Touch_InitConfig();
 	SCR_CheckStartupVids();	// must be last
+#endif
 #ifdef XASH_SDL
 	SDL_StopTextInput(); // disable text input event. Enable this in chat/console?
 #endif
@@ -1409,7 +1417,7 @@ int EXPORT Host_Main( int argc, const char **argv, const char *progname, int bCh
 Host_Shutdown
 =================
 */
-void EXPORT Host_Shutdown( void )
+extern "C" void EXPORT Host_Shutdown( void )
 {
 	if( host.shutdown_issued ) return;
 	host.shutdown_issued = true;

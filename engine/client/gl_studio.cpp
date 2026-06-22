@@ -665,7 +665,7 @@ mstudioanim_t *R_StudioGetAnim( model_t *m_pSubModel, mstudioseqdesc_t *pseqdesc
 	if( paSequences == NULL )
 	{
 		paSequences = (cache_user_t *)Mem_Alloc( com_studiocache, MAXSTUDIOGROUPS * sizeof( cache_user_t ));
-		m_pSubModel->submodels = (void *)paSequences;
+		m_pSubModel->submodels = (dmodel_t *)paSequences;
 	}
 
 	// check for already loaded
@@ -1826,7 +1826,7 @@ mstudiotexture_t *R_StudioGetTexture( cl_entity_t *e )
 	mstudiotexture_t	*ptexture;
 	studiohdr_t	*phdr, *thdr;
 
-	if(( phdr = Mod_Extradata( e->model )) == NULL )
+	if(( phdr = (studiohdr_t *)Mod_Extradata( e->model )) == NULL )
 		return NULL;
 
 #ifndef STUDIO_MERGE_TEXTURES
@@ -4086,7 +4086,7 @@ void Mod_UnloadStudioModel( model_t *mod )
 	if( mod->type != mod_studio )
 		return; // not a studio
 
-	pstudio = mod->cache.data;
+	pstudio = (studiohdr_t *)mod->cache.data;
 	if( !pstudio ) return; // already freed
 
 	ptexture = (mstudiotexture_t *)(((byte *)pstudio) + pstudio->textureindex);
@@ -4107,8 +4107,8 @@ static engine_studio_api_t gStudioAPI =
 {
 	Mod_Calloc,
 	Mod_CacheCheck,
-	(void*)Mod_LoadCacheFile,
-	(void*)Mod_ForName,
+	(void(*)(char *, struct cache_user_s *))Mod_LoadCacheFile,
+	Mod_ForName,
 	Mod_Extradata,
 	Mod_Handle,
 	pfnGetCurrentEntity,
@@ -4134,13 +4134,13 @@ static engine_studio_api_t gStudioAPI =
 	R_StudioDrawHulls,
 	R_StudioDrawAbsBBox,
 	R_StudioDrawBones,
-	(void*)R_StudioSetupSkin,
+	(void(*)(void *, int))R_StudioSetupSkin,
 	R_StudioSetRemapColors,
 	R_StudioSetupPlayerModel,
 	R_StudioClientEvents,
 	R_StudioGetForceFaceFlags,
 	R_StudioSetForceFaceFlags,
-	(void*)R_StudioSetHeader,
+	(void(*)(void *))R_StudioSetHeader,
 	R_StudioSetRenderModel,
 	R_StudioSetupRenderer,
 	R_StudioRestoreRenderer,

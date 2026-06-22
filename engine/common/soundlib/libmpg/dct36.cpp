@@ -1,5 +1,6 @@
 /* 
 	This is an optimized DCT from Jeff Tsay's maplay 1.2+ package.
+#pragma warning(disable:5033) // 'register' is no longer a supported storage class
 	Saved one multiplication by doing the 'twiddle factor' stuff
 	together with the window mul. (MH)
 

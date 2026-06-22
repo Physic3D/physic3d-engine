@@ -269,7 +269,7 @@ S_BeginRegistration
 
 =====================
 */
-void S_BeginRegistration( void )
+extern "C" void S_BeginRegistration( void )
 {
 	int	i;
 
@@ -300,7 +300,7 @@ S_EndRegistration
 
 =====================
 */
-void S_EndRegistration( void )
+extern "C" void S_EndRegistration( void )
 {
 	sfx_t	*sfx;
 	int	i;
