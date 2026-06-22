@@ -106,8 +106,10 @@ GNU General Public License for more details.
 	#define SetCurrentDirectory( x )	(!chdir( x ))
 	#define FreeLibrary( x )			dlclose( x )
 	//#define MAKEWORD( a, b )			((short int)(((unsigned char)(a))|(((short int)((unsigned char)(b)))<<8)))
+	#ifndef __cplusplus
 	#define max( a, b )                 (((a) > (b)) ? (a) : (b))
 	#define min( a, b )                 (((a) < (b)) ? (a) : (b))
+	#endif
 	#define tell( a )					lseek(a, 0, SEEK_CUR)
 
 	typedef unsigned char	BYTE;
@@ -153,12 +155,15 @@ GNU General Public License for more details.
 	#pragma warning(disable : 4310)	// cast truncates constant value
 
 	#define HSPRITE WINAPI_HSPRITE
+		#ifndef NOMINMAX
+		#define NOMINMAX
+		#endif
 		#include <windows.h>
 	#undef HSPRITE
 
 	#define OS_LIB_EXT "dll"
-	#define MENUDLL "menu"ARCH_SUFFIX"." OS_LIB_EXT
-	#define CLIENTDLL "client"ARCH_SUFFIX"." OS_LIB_EXT
+	#define MENUDLL "menu" ARCH_SUFFIX "." OS_LIB_EXT
+	#define CLIENTDLL "client" ARCH_SUFFIX "." OS_LIB_EXT
 	#define VGUI_SUPPORT_DLL "../vgui_support." OS_LIB_EXT
 	#include <limits.h>
 

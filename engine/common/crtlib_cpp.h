@@ -6,7 +6,14 @@
 // Must be included AFTER crtlib.h (for _Mem_Alloc/_Mem_Realloc prototypes)
 // and after port.h (for byte typedef).
 
+#include <algorithm>
 #include <cstddef>
+
+template<typename T, typename U>
+inline auto min(T a, U b) -> decltype(a < b ? a : b) { return (a < b) ? a : b; }
+
+template<typename T, typename U>
+inline auto max(T a, U b) -> decltype(a < b ? a : b) { return (a > b) ? a : b; }
 
 struct MemAllocResult {
 	void* pool;
