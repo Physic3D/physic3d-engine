@@ -617,13 +617,13 @@ void SV_InitClientMove( void )
 #ifdef DLL_LOADER // w32-compatible ABI
 	if( host.enabledll && Loader_GetDllHandle( svgame.hInstance ) )
 	{
-		svgame.pmove->PM_PlayerTrace = (void*)pfnPlayerTrace_w32;
-		svgame.pmove->PM_PlayerTraceEx = (void*)pfnPlayerTraceEx_w32;
+		svgame.pmove->PM_PlayerTrace = (pmtrace_t (*)(float*, float*, int, int))pfnPlayerTrace_w32;
+		svgame.pmove->PM_PlayerTraceEx = (pmtrace_t (*)(float*, float*, int, int (*)(physent_t*)))pfnPlayerTraceEx_w32;
 	}
 #endif
 #if defined(__MINGW32__)
-	svgame.pmove->PM_PlayerTrace = (void*)pfnPlayerTrace_w32;
-	svgame.pmove->PM_PlayerTraceEx = (void*)pfnPlayerTraceEx_w32;
+	svgame.pmove->PM_PlayerTrace = (pmtrace_t (*)(float*, float*, int, int))pfnPlayerTrace_w32;
+	svgame.pmove->PM_PlayerTraceEx = (pmtrace_t (*)(float*, float*, int, int (*)(physent_t*)))pfnPlayerTraceEx_w32;
 #endif
 
 

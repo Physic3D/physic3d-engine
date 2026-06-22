@@ -291,7 +291,7 @@ int d_dladdr( void *sym, Dl_info *info )
 	static int (*dladdr_real) ( void *sym, Dl_info *info );
 
 	if( !dladdr_real )
-		dladdr_real = dlsym( (void*)(size_t)(-1), "dladdr" );
+		dladdr_real = (int (*)( void *sym, Dl_info *info ))dlsym( (void*)(size_t)(-1), "dladdr" );
 
 	Q_memset( info, 0, sizeof( *info ) );
 
