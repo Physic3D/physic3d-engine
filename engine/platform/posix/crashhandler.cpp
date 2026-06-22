@@ -92,7 +92,7 @@ static void Sys_Crash( int signal, siginfo_t *si, void *context)
 		void *pc = (void*)ucontext->uc_mcontext.gregs[REG_EIP], **bp = (void**)ucontext->uc_mcontext.gregs[REG_EBP], **sp = (void**)ucontext->uc_mcontext.gregs[REG_ESP];
 	#endif
 #elif defined(__aarch64__) // arm not tested
-	void *pc = (void*)ucontext->uc_mcontext.pc, **bp = (void*)ucontext->uc_mcontext.regs[29], **sp = (void*)ucontext->uc_mcontext.sp;
+	void *pc = (void*)ucontext->uc_mcontext.pc, **bp = (void**)ucontext->uc_mcontext.regs[29], **sp = (void**)ucontext->uc_mcontext.sp;
 #elif defined(__arm__)
 	void *pc = (void*)ucontext->uc_mcontext.arm_pc, **bp = (void*)ucontext->uc_mcontext.arm_fp, **sp = (void*)ucontext->uc_mcontext.arm_sp;
 #else
