@@ -288,7 +288,12 @@ int Q_snprintf( char *buffer, size_t buffersize, const char *format, ... ) _form
 int Q_sprintf( char *buffer, const char *format, ... ) _format(2);
 #else // XASH_SKIPCRTLIB
 #define Q_stristr strcasestr
+#ifdef __cplusplus
+static inline char *Q_strstr_wrapper( const char *s1, const char *s2 ) { return (char*)strstr(s1, s2); }
+#define Q_strstr Q_strstr_wrapper
+#else
 #define Q_strstr strstr
+#endif
 #define Q_vsprintf vsprintf
 #define Q_vsnprintf vsnprintf
 #define Q_snprintf snprintf
