@@ -50,7 +50,7 @@ static SLresult SLAPIENTRY (*pslCreateEngine)(
 		const SLboolean         * pInterfaceRequired
 );
 
-void S_Activate( qboolean active )
+extern "C" void S_Activate( qboolean active )
 {
 	if( !dma.initialized )
 		return;

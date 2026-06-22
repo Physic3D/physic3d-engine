@@ -1865,7 +1865,7 @@ pfnGetScreenInfo
 get actual screen info
 =============
 */
-int GAME_EXPORT pfnGetScreenInfo( SCREENINFO *pscrinfo )
+extern "C" int GAME_EXPORT pfnGetScreenInfo( SCREENINFO *pscrinfo )
 {
 	// setup screen info
 	float scale_factor = hud_scale->value;

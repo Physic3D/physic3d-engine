@@ -18,6 +18,10 @@ GNU General Public License for more details.
 
 #include "common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // skyorder_q2[6] = { 2, 3, 1, 0, 4, 5, }; // Quake, Half-Life skybox ordering
 // skyorder_ms[6] = { 4, 5, 1, 0, 2, 3  }; // Microsoft DDS ordering (reverse)
 
@@ -324,5 +328,9 @@ void Image_CopyParms( rgbdata_t *src );
 qboolean Image_ValidSize( const char *name );
 qboolean Image_LumpValidSize( const char *name );
 qboolean Image_CheckFlag( int bit );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif//IMAGELIB_H

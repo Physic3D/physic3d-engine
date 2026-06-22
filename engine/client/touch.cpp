@@ -979,7 +979,7 @@ void Touch_Init( void )
 #endif
 	touch.initialized = true;
 }
-int pfnGetScreenInfo( SCREENINFO *pscrinfo );
+extern "C" int pfnGetScreenInfo( SCREENINFO *pscrinfo );
 // must be called after executing config.cfg
 void Touch_InitConfig( void )
 {

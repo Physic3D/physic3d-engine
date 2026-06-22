@@ -342,7 +342,7 @@ VID_SetMode
 Set the described video mode
 ==================
 */
-qboolean VID_SetMode( void )
+extern "C" qboolean VID_SetMode( void )
 {
 	int width, height;
 	Android_GetScreenRes( &width, &height );
