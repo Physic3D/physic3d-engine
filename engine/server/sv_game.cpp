@@ -3089,13 +3089,13 @@ void SV_AllocStringPool( void )
 	{
 		size_t pagesize = sysconf( _SC_PAGESIZE );
 		int arrlen = ( str64.maxstringarray * 2 ) & ~( pagesize - 1 );
-		void *base = (void*)svgame.dllFuncs.pfnGameInit;
-		void *start = svgame.hInstance - arrlen;
+		char *base = (char*)svgame.dllFuncs.pfnGameInit;
+		char *start = (char*)svgame.hInstance - arrlen;
 
 		while( start - base > INT_MIN )
 		{
 			void *mapptr = mmap((void*)((unsigned long)start & ~(pagesize - 1)), arrlen, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, 0, 0 );
-			if( mapptr && mapptr != (void*)-1 && mapptr - base > INT_MIN && mapptr - base < INT_MAX )
+			if( mapptr && mapptr != (void*)-1 && (char*)mapptr - base > INT_MIN && (char*)mapptr - base < INT_MAX )
 			{
 				ptr = mapptr;
 				break;
@@ -3110,7 +3110,7 @@ void SV_AllocStringPool( void )
 			while( start - base < INT_MAX )
 			{
 				void *mapptr = mmap((void*)((unsigned long)start & ~(pagesize - 1)), arrlen, PROT_READ | PROT_WRITE, MAP_ANONYMOUS | MAP_PRIVATE, 0, 0 );
-				if( mapptr && mapptr != (void*)-1  && mapptr - base > INT_MIN && mapptr - base < INT_MAX )
+				if( mapptr && mapptr != (void*)-1  && (char*)mapptr - base > INT_MIN && (char*)mapptr - base < INT_MAX )
 				{
 					ptr = mapptr;
 					break;

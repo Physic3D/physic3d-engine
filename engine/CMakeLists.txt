@@ -106,6 +106,11 @@ if(NOT WIN32) # Windows by default have hidden visibility and better linker
 	fwgs_add_compile_options(CXX -fvisibility=hidden)
 endif()
 
+# Suppress high-volume warnings from C code compiled as C++
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+	fwgs_add_compile_options(CXX -Wno-write-strings -Wno-register -Wno-unused-result)
+endif()
+
 # ----- Conditions -----
 
 if(XASH_VECTORIZE_SINCOS) # I know what I am doing and I want to build version that requires SSE

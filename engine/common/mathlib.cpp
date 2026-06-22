@@ -15,7 +15,9 @@ GNU General Public License for more details.
 
 #if defined (__linux__) && !defined (__ANDROID__)
 //sincosf
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
 #include <math.h>
 #endif
 #include "common.h"

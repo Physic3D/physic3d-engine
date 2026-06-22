@@ -828,7 +828,7 @@ qboolean Host_IsLocalClient( void );
 void Host_ShutdownServer( void );
 void Host_Print( const char *txt );
 #ifdef __GNUC__
-void Host_Error( const char *error, ... ) __attribute__ ((noreturn)) _format(1);
+void Host_Error( const char *error, ... ) _format(1);
 #elif defined _MSC_VER
 void Host_Error( const char *error, ... ) _format(1);
 #else

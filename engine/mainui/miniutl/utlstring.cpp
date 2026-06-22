@@ -6,7 +6,7 @@
 // $NoKeywords: $
 //=============================================================================//
 
-#ifndef _XBOX
+#if defined(_MSC_VER) && !defined(_XBOX)
 #pragma warning (disable:4514)
 #endif
 
