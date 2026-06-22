@@ -3089,7 +3089,7 @@ void SV_AllocStringPool( void )
 	{
 		size_t pagesize = sysconf( _SC_PAGESIZE );
 		int arrlen = ( str64.maxstringarray * 2 ) & ~( pagesize - 1 );
-		void *base = svgame.dllFuncs.pfnGameInit;
+		void *base = (void*)svgame.dllFuncs.pfnGameInit;
 		void *start = svgame.hInstance - arrlen;
 
 		while( start - base > INT_MIN )
