@@ -14,6 +14,7 @@
 #include "platform/android/android-main.h"
 
 #include <dlfcn.h>
+extern byte *fs_mempool;
 static AAssetManager *AAssetManager_fromJava_compat( JNIEnv *env, jobject assetManager )
 {
 	static AAssetManager *(*real_func)( JNIEnv *, jobject ) = NULL;
@@ -47,12 +48,12 @@ static void Android_GetAssetManager( android_assets_t *assets )
 static void Android_ListDirectory( stringlist_t *list, const char *path, qboolean engine )
 {
 	jstring JStr = jni_assets.env->NewStringUTF( path );
-	jobjectArray JNIArray = jni_assets.env->CallStaticObjectMethod( jni_assets.activity_class, jni_assets.getAssetsList, engine, JStr );
+	jobjectArray JNIArray = (jobjectArray)jni_assets.env->CallStaticObjectMethod( jni_assets.activity_class, jni_assets.getAssetsList, engine, JStr );
 	int JNIArraySize = jni_assets.env->GetArrayLength( JNIArray );
 
 	for( int i = 0; i < JNIArraySize; i++ )
 	{
-		jstring JNIStr = jni_assets.env->GetObjectArrayElement( JNIArray, i );
+		jstring JNIStr = (jstring)jni_assets.env->GetObjectArrayElement( JNIArray, i );
 		const char *CStr = jni_assets.env->GetStringUTFChars( JNIStr, NULL );
 
 		stringlistappend( list, (char *)CStr );
