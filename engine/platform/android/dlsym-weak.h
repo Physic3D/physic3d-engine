@@ -16,6 +16,6 @@ GNU General Public License for more details.
 #define DLSYM_WEAK_H
 
 // ------------ dlsym-weak.cpp ------------ //
-void* dlsym_weak(void* handle, const char* symbol);
+extern "C" void* dlsym_weak(void* handle, const char* symbol);
 
 #endif

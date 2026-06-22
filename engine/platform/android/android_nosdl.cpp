@@ -203,7 +203,7 @@ static struct jnimouse_s
 #define Android_PushEvent() Android_Unlock()
 
 void Android_UpdateSurface( void );
-int EXPORT Host_Main( int argc, const char **argv, const char *progname, int bChangeGame, void *func );
+extern "C" int EXPORT Host_Main( int argc, const char **argv, const char *progname, int bChangeGame, void *func );
 void VID_SetMode( void );
 void S_Activate( qboolean active );
 

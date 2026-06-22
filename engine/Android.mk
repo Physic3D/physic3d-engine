@@ -173,6 +173,6 @@ LOCAL_SRC_FILES := \
 
 LOCAL_STATIC_LIBRARIES := NanoGL
 
-LOCAL_LDLIBS := -ldl -llog
+LOCAL_LDLIBS := -ldl -llog -landroid
 
 include $(BUILD_SHARED_LIBRARY)
