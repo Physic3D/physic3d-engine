@@ -210,13 +210,13 @@ static inline char *Q_strchr( const char *s, char c )
 {
 	if( !s )
 		return NULL;
-	return strchr( s, c );
+	return const_cast<char*>( strchr( s, c ) );
 }
 static inline char *Q_strrchr( const char *s, char c )
 {
 	if( !s )
 		return NULL;
-	return strrchr( s, c );
+	return const_cast<char*>( strrchr( s, c ) );
 }
 static inline int Q_stricmp( const char *s1, const char *s2 )
 {
