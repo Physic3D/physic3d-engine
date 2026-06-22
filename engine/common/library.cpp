@@ -119,7 +119,7 @@ void *Com_LoadLibrary( const char *dllname, int build_ordinals_table )
 
 		for( i = 0; i < 2; i++ )
 		{
-			Q_snprintf( path, MAX_SYSPATH, "%s/lib%s"POSTFIX"."OS_LIB_EXT, libdir[i], dllname );
+			Q_snprintf( path, MAX_SYSPATH, "%s/lib%s" POSTFIX "." OS_LIB_EXT, libdir[i], dllname );
 			pHandle = dlopen( path, RTLD_NOW );
 			if( pHandle )
 				return pHandle;
