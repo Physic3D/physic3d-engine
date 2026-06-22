@@ -383,11 +383,13 @@ if(NOT LIBUNWIND_FOUND)
 endif()
 
 # FindSDL2 -- inlined Find module
+if(NOT DEFINED XASH_SDL OR XASH_SDL)
 if(WIN32 AND (NOT SDL2_PATH AND NOT XASH_DOWNLOAD_DEPENDENCIES))
 	message(FATAL_ERROR "To find SDL2 correctly, you need to pass SDL2_PATH variable to CMake")
 endif()
+endif()
 
-if(NOT SDL2_FOUND)
+if(NOT SDL2_FOUND AND (NOT DEFINED XASH_SDL OR XASH_SDL))
 	set(SDL2_SEARCH_PATHS
 		${SDL2_PATH}
 		${CMAKE_LIBRARY_PATH}

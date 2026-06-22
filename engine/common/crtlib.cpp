@@ -444,7 +444,7 @@ char *Q_pretifymem( float value, int digitsafterdecimal )
 	else Q_sprintf( suffix, " bytes" );
 
 	// clamp to >= 0
-	digitsafterdecimal = max( digitsafterdecimal, 0 );
+	digitsafterdecimal = digitsafterdecimal > 0 ? digitsafterdecimal : 0;
 
 	// if it's basically integral, don't do any decimals
 	if( fabs( value - (int)value ) < 0.00001 )

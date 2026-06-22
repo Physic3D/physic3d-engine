@@ -73,7 +73,7 @@ static int num_decals;
 
 void Sys_PrintUsage( void )
 {
-#define O(x,y) "   "x"  "y"\n"
+#define O(x,y) "   " x "  " y "\n"
 
 	const char *usage_str = "Usage:\n"
 	"\t    "

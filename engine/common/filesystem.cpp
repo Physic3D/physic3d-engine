@@ -3322,7 +3322,7 @@ search_t *FS_Search( const char *pattern, int caseinsensitive, int gamedironly )
 	slash = Q_strrchr( pattern, '/' );
 	backslash = Q_strrchr( pattern, '\\' );
 	colon = Q_strrchr( pattern, ':' );
-	separator = max(max( slash, backslash ), colon);
+	separator = slash > backslash ? (slash > colon ? slash : colon) : (backslash > colon ? backslash : colon);
 	basepathlength = separator ? (separator + 1 - pattern) : 0;
 	basepath = Mem_Alloc( fs_mempool, basepathlength + 1 );
 	if( basepathlength ) Q_memcpy( basepath, pattern, basepathlength );
