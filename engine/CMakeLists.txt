@@ -20,23 +20,22 @@
 # SOFTWARE.
 #
 cmake_minimum_required(VERSION 3.5.1)
-project(XASH_ENGINE C)
+project(XASH_ENGINE C CXX)
 
-# Set C standard to C11 to avoid C23 keyword conflicts (false/true are keywords in C23)
-# and to avoid conflicts with C23 standard functions like rsqrt
-set(CMAKE_C_STANDARD 11)
-set(CMAKE_C_STANDARD_REQUIRED ON)
+# Set C++ standard
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(XASH_ENGINE xash) # Lib name
 
 fwgs_fix_default_msvc_settings()
-file(GLOB_RECURSE XASH_ENGINE_SOURCES         common/*.c server/*.c ) # Minimal sources
-file(GLOB_RECURSE XASH_ENGINE_WIN32_SOURCES   game_launch/game.rc platform/win32/*.c) # Win32 only sources
-file(GLOB_RECURSE XASH_ENGINE_SDL_SOURCES     platform/sdl/*.c) # SDL version sources
-#file(GLOB_RECURSE XASH_ENGINE_POSIX_SOURCES     platform/posix/*.c) # Posix sources
-file(GLOB_RECURSE XASH_ENGINE_STUB_SOURCES     platform/stub/*.c) # Stub sources
-file(GLOB_RECURSE XASH_ENGINE_ANDROID_SOURCES platform/android/*.c platform/android/*.cpp) # Android sources
-file(GLOB_RECURSE XASH_ENGINE_CLIENT_SOURCES  client/*.c) # Client sources
+file(GLOB_RECURSE XASH_ENGINE_SOURCES         common/*.cpp server/*.cpp ) # Minimal sources
+file(GLOB_RECURSE XASH_ENGINE_WIN32_SOURCES   game_launch/game.rc platform/win32/*.cpp) # Win32 only sources
+file(GLOB_RECURSE XASH_ENGINE_SDL_SOURCES     platform/sdl/*.cpp) # SDL version sources
+#file(GLOB_RECURSE XASH_ENGINE_POSIX_SOURCES     platform/posix/*.cpp) # Posix sources
+file(GLOB_RECURSE XASH_ENGINE_STUB_SOURCES     platform/stub/*.cpp) # Stub sources
+file(GLOB_RECURSE XASH_ENGINE_ANDROID_SOURCES platform/android/*.cpp) # Android sources
+file(GLOB_RECURSE XASH_ENGINE_CLIENT_SOURCES  client/*.cpp) # Client sources
 
 if(NOT WIN32 AND NOT APPLE)
 	find_package (Libunwind)
@@ -45,14 +44,14 @@ endif()
 if(LIBUNWIND_FOUND AND UNIX AND NOT APPLE)
 	message(STATUS "libunwind found")
 	include_directories(${LIBUNWIND_INCLUDE_DIRS})
-	file(GLOB XASH_ENGINE_POSIX_SOURCES platform/posix/crashhandler_libunwind.c)
+	file(GLOB XASH_ENGINE_POSIX_SOURCES platform/posix/crashhandler_libunwind.cpp)
 elseif(UNIX)
 	message(STATUS "libunwind not found")
-	file(GLOB XASH_ENGINE_POSIX_SOURCES platform/posix/crashhandler.c)
+	file(GLOB XASH_ENGINE_POSIX_SOURCES platform/posix/crashhandler.cpp)
 	set(LIBUNWIND_INCLUDE_DIR "")
 	set(LIBUNWIND_LIBRARIES "")
 elseif(NOT WIN32)
-#	file(GLOB XASH_ENGINE_POSIX_SOURCES platform/stub/crashhandler.c)
+#	file(GLOB XASH_ENGINE_POSIX_SOURCES platform/stub/crashhandler.cpp)
 endif()
 
 cond_list_append(WIN32        XASH_ENGINE_SOURCES XASH_ENGINE_WIN32_SOURCES)
@@ -90,6 +89,7 @@ elseif(XASH_WES)
 		message(FATAL_ERROR "Clone both gl-wes-v2 and nanogl sources to engine folder!")
 	endif()
 	list(APPEND XASH_ENGINE_SOURCES ${XASH_ENGINE_GLESWRAP_SOURCES})
+	set_source_files_properties(${XASH_ENGINE_GLESWRAP_SOURCES} PROPERTIES LANGUAGE C)
 
 	include_directories(${XASH_NANOGL_SRC}/ ${XASH_NANOGL_SRC}/GL/ ${XASH_WES_SRC}/src/)
 	add_definitions(-DXASH_WES)
@@ -103,7 +103,7 @@ add_definitions(-DXASH_FORCEINLINE)
 
 # Important, as HLSDK and engine shares some symbol names!
 if(NOT WIN32) # Windows by default have hidden visibility and better linker
-	fwgs_add_compile_options(C -fvisibility=hidden)
+	fwgs_add_compile_options(CXX -fvisibility=hidden)
 endif()
 
 # ----- Conditions -----
@@ -126,6 +126,28 @@ endif()
 if(MSVC)
 	add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_DEPRECATE)
 endif()
+
+# These files are C code with .cpp extension; compile as C to avoid strict C++ type errors
+    set_source_files_properties(
+        client/cl_game.cpp
+        client/cl_menu.cpp
+        client/gl_image.cpp
+        client/gl_mirror.cpp
+        client/gl_rstrobe.cpp
+        client/gl_warp.cpp
+        client/gl_studio.cpp
+        client/gl_rsurf.cpp
+        client/gl_sprite.cpp
+        client/gl_rmain.cpp
+        client/gl_rmisc.cpp
+        client/joyinput.cpp
+        client/s_utils.cpp
+        client/touch.cpp
+        client/vid_common.cpp
+        client/vgui/vgui_draw.cpp
+        client/cl_parse.cpp
+        client/s_load.cpp
+    PROPERTIES LANGUAGE C COMPILE_FLAGS "/TC")
 
 if(WIN32 AND CMAKE_SIZEOF_VOID_P EQUAL 4)
 	add_definitions( -DDBGHELP -DXASH_W32CON) # dbghelp crashhandler

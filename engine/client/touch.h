@@ -16,6 +16,10 @@ GNU General Public License for more details.
 #ifndef TOUCH_H
 #define TOUCH_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum
 {
 	event_down = 0,
@@ -41,4 +45,8 @@ void Touch_GetMove( float * forward, float *side, float *yaw, float *pitch );
 void Touch_ResetDefaultButtons( void );
 int IN_TouchEvent( touchEventType type, int fingerID, float x, float y, float dx, float dy );
 void Touch_KeyEvent( int key, int down );
+#ifdef __cplusplus
+}
+#endif
+
 #endif // TOUCH_H

@@ -34,6 +34,10 @@ GNU General Public License for more details.
 #include "world.h"
 #include "qfont.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define MAX_DEMOS		32
 #define MAX_MOVIES		8
 #define MAX_CDTRACKS	32
@@ -701,18 +705,11 @@ enum WeaponIDs
 	WEAPON_SHIELDGUN = 99
 };
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 extern client_t		cl;
 extern client_static_t	cls;
 extern clgame_static_t	clgame;
 extern menu_static_t	menu;
 extern local_t g_Local;
-#ifdef __cplusplus
-}
-#endif
 
 //
 // cvars
@@ -1167,5 +1164,8 @@ extern float fog_den;
 extern int iIndex;
 extern char *szTeam;
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif//CLIENT_H

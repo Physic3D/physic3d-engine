@@ -596,7 +596,7 @@ inline int CUtlVector<T, A>::SortedInsert( const T& src, bool (__cdecl *pfnLessF
 template< typename T, class A >
 inline void CUtlVector<T, A>::Sort( int (__cdecl *pfnCompare)(const T *, const T *) )
 {
-	qsort( &Head(), Count(), sizeof( T ), (void*)pfnCompare );
+	qsort( &Head(), Count(), sizeof( T ), (int (__cdecl *)(const void *, const void *))pfnCompare );
 }
 
 //-----------------------------------------------------------------------------

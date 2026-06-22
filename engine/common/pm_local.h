@@ -18,6 +18,10 @@ GNU General Public License for more details.
 
 #include "pm_defs.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef int (*pfnIgnore)( physent_t *pe );	// custom trace filter
 
 //
@@ -36,5 +40,9 @@ int PM_HullPointContents( hull_t *hull, int num, const vec3_t p );
 const char *PM_TraceTexture( physent_t *pe, vec3_t vstart, vec3_t vend );
 msurface_t *PM_RecursiveSurfCheck( model_t *model, mnode_t *node, vec3_t p1, vec3_t p2 );
 msurface_t *PM_TraceSurface( physent_t *pe, vec3_t start, vec3_t end );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif//PM_LOCAL_H

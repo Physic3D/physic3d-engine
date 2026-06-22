@@ -16,6 +16,10 @@ GNU General Public License for more details.
 #ifndef CL_TENT_H
 #define CL_TENT_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define SPARK_ELECTRIC_MINSPEED	64.0f
 #define SPARK_ELECTRIC_MAXSPEED	100.0f
 
@@ -108,5 +112,9 @@ void TriNormal3fv( const float *v );
 void TriColor4f( float r, float g, float b, float a );
 int TriSpriteTexture( model_t *pSpriteModel, int frame );
 int TriWorldToScreen( float *world, float *screen );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif//CL_TENT_H

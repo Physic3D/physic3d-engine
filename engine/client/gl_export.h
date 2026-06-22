@@ -16,6 +16,10 @@ GNU General Public License for more details.
 #ifndef GL_EXPORT_H
 #define GL_EXPORT_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef APIENTRY
 #define APIENTRY
 #endif
@@ -776,6 +780,10 @@ typedef float GLmatrix[16];
 #include "gl_static.h"
 #else
 #include "gl_dynamic.h"
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif//GL_EXPORT_H

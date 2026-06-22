@@ -16,6 +16,10 @@ GNU General Public License for more details.
 #ifndef GL_LOCAL_H
 #define GL_LOCAL_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef XASH_SDL
 #include <SDL_video.h>
 #endif
@@ -720,5 +724,9 @@ extern convar_t	*vid_gamma;
 extern convar_t	*vid_texgamma;
 extern convar_t	*vid_mode;
 extern convar_t *vid_highdpi;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //GL_LOCAL_H

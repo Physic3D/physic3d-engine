@@ -25,6 +25,10 @@ GNU General Public License for more details.
 */
 #include "net_buffer.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // 0 == regular, 1 == file stream
 #define MAX_STREAMS			2    
 
@@ -269,5 +273,9 @@ void Huff_CompressPacket( sizebuf_t *msg, int offset );
 void Huff_DecompressPacket( sizebuf_t *msg, int offset );
 void Huff_CompressData( byte *data, size_t *length );
 void Huff_DecompressData( byte *data, size_t *length );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif//NET_MSG_H

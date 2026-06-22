@@ -16,6 +16,10 @@ GNU General Public License for more details.
 #ifndef LIBRARY_H
 #define LIBRARY_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define DOS_SIGNATURE		0x5A4D		// MZ
 #define NT_SIGNATURE		0x00004550	// PE00
 #define NUMBER_OF_DIRECTORY_ENTRIES	16
@@ -183,6 +187,10 @@ void *Loader_GetDllHandle( void *hndl );
 const char * Loader_GetFuncName( void *hndl, void *func);
 const char * Loader_GetFuncName_int( void *wm , void *func);
 void *Setup_LDT_Keeper(void);
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif//LIBRARY_H

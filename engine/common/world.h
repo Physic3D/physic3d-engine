@@ -16,6 +16,10 @@ GNU General Public License for more details.
 #ifndef WORLD_H
 #define WORLD_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define MOVE_NORMAL		0	// normal trace
 #define MOVE_NOMONSTERS	1	// ignore monsters (edicts with flags (FL_MONSTER|FL_FAKECLIENT|FL_CLIENT) set)
 #define MOVE_MISSILE	2	// extra size for monsters
@@ -104,4 +108,8 @@ typedef struct event_state_s
 	event_info_t	ei[MAX_EVENT_QUEUE];
 } event_state_t;
 	
+#ifdef __cplusplus
+}
+#endif
+
 #endif//WORLD_H

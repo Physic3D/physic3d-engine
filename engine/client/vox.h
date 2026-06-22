@@ -45,7 +45,15 @@ typedef struct
 
 typedef struct channel_s channel_t;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void VOX_LoadWord( struct channel_s *pchan );
 void VOX_FreeWord( struct channel_s *pchan );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

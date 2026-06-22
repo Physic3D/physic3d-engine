@@ -16,12 +16,20 @@ GNU General Public License for more details.
 #ifndef COMMON_H
 #define COMMON_H
 
+#include <stdint.h>
+
+// Ensure PRI format macros (e.g. PRIX64) are available.
+// __STDC_FORMAT_MACROS required by some older MSVC CRT <inttypes.h> in C++ mode.
+#ifndef __STDC_FORMAT_MACROS
+#define __STDC_FORMAT_MACROS
+#endif
+#include <inttypes.h>
+
 #ifdef __cplusplus
+#include <cinttypes>
 extern "C" {
 #endif
 
-#include <stdint.h>
-#include <inttypes.h>
 #include "port.h"
 
 #include "backends.h"
@@ -192,6 +200,12 @@ typedef enum
 #include "filesystem.h"
 #include "crtlib.h"
 #include "base_cmd.h"
+
+#ifdef __cplusplus
+}
+#include "crtlib_cpp.h"
+extern "C" {
+#endif
 
 #define XASH_VERSION	"0.19.4"		// engine current version
 
@@ -816,7 +830,7 @@ void Host_Print( const char *txt );
 #ifdef __GNUC__
 void Host_Error( const char *error, ... ) __attribute__ ((noreturn)) _format(1);
 #elif defined _MSC_VER
-__declspec(noreturn) void Host_Error( const char *error, ... ) _format(1);
+void Host_Error( const char *error, ... ) _format(1);
 #else
 void Host_Error( const char *error, ... ) _format(1);
 #endif
@@ -890,6 +904,9 @@ void pfnResetTutorMessageDecayData( void );
 ==============================================================
 */
 #define Z_Malloc( size )		Mem_Alloc( host.mempool, size )
+#ifdef __cplusplus
+#define Z_MallocT( type, size ) Mem_AllocT( type, host.mempool, size )
+#endif
 #define Z_Realloc( ptr, size )	Mem_Realloc( host.mempool, ptr, size )
 #define Z_Free( ptr )		if( ptr ) Mem_Free( ptr )
 
@@ -915,7 +932,7 @@ uint32_t Com_HashKey( const char *string, uint32_t hashSize );
 void HPAK_Init( void );
 qboolean HPAK_GetDataPointer( const char *filename, struct resource_s *pRes, byte **buffer, int *size );
 qboolean HPAK_ResourceForHash( const char *filename, char *hash, struct resource_s *pRes );
-void HPAK_AddLump( qboolean queue, const char *filename, struct resource_s *pRes, byte *data, file_t *f );
+void HPAK_AddLump( qboolean queue, const char *filename, struct resource_s *pRes, void *data, file_t *f );
 void HPAK_CheckIntegrity( const char *filename );
 void HPAK_CheckSize( const char *filename );
 void HPAK_FlushHostQueue( void );
@@ -1151,4 +1168,4 @@ byte TextureToGamma( byte b );
 #ifdef __cplusplus
 }
 #endif
-#endif//COMMON_H
+#endif //COMMON_H

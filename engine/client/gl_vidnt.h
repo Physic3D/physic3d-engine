@@ -2,6 +2,10 @@
 #ifndef GL_VIDNT_H
 #define GL_VIDNT_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define VID_NOMODE -2.0f
 #define VID_AUTOMODE	"-1"
 #define VID_DEFAULTMODE	2.0f
@@ -41,5 +45,9 @@ const char *VID_GetModeString( int vid_mode );
 // common functions
 void R_SaveVideoMode( int w, int h );
 void GL_SetExtension( int r_ext, int enable );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

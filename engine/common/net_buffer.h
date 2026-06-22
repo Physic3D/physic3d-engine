@@ -18,6 +18,10 @@ GNU General Public License for more details.
 
 #include "engine_features.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
 ==============================================================================
 
@@ -121,4 +125,8 @@ void BF_ReadVec3Coord( sizebuf_t *bf, vec3_t fa );
 qboolean BF_ReadBytes( sizebuf_t *bf, void *pOut, int nBytes );
 char *BF_ReadStringExt( sizebuf_t *bf, qboolean bLine );
 					
+#ifdef __cplusplus
+}
+#endif
+
 #endif//NET_BUFFER_H

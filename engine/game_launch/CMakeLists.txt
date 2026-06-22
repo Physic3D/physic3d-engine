@@ -21,15 +21,14 @@
 #
 
 cmake_minimum_required(VERSION 3.5.1)
-project(XASH_LAUNCHER C)
+project(XASH_LAUNCHER CXX)
 
-# Set C standard to C11 to avoid C23 keyword conflicts (false/true are keywords in C23)
-set(CMAKE_C_STANDARD 11)
-set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(XASH_LAUNCHER xash3d)
 fwgs_fix_default_msvc_settings()
-file(GLOB XASH_LAUNCHER_SOURCES *.c)
+file(GLOB XASH_LAUNCHER_SOURCES *.cpp)
 if(WIN32)
 	list(APPEND XASH_LAUNCHER_SOURCES game.rc)
 endif()

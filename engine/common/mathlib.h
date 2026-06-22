@@ -16,6 +16,10 @@ GNU General Public License for more details.
 #ifndef MATHLIB_H
 #define MATHLIB_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <math.h>
 
 #ifdef MSC_VER
@@ -218,5 +222,9 @@ qboolean Matrix4x4_Invert_Full( matrix4x4 out, cmatrix4x4 in1 );
 extern vec3_t		vec3_origin;
 extern const matrix3x4	matrix3x4_identity;
 extern const matrix4x4	matrix4x4_identity;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif//MATHLIB_H

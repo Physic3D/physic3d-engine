@@ -32,6 +32,10 @@ typedef SDL_Cursor Xash_Cursor;
 typedef void Xash_Cursor;
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct keyname_s
 {
 	char       *name;    // key name
@@ -54,5 +58,9 @@ void IN_ToggleClientMouse( int newstate, int oldstate );
 long IN_WndProc( void *hWnd, uint32_t uMsg, uint32_t wParam, long lParam );
 void IN_SetCursor( Xash_Cursor *hCursor );
 extern qboolean	in_mouseinitialized;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif//INPUT_H

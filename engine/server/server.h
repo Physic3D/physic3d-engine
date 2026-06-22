@@ -30,6 +30,10 @@ GNU General Public License for more details.
 #include "custom.h"
 #include "world.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 //=============================================================================
 
 #define SV_UPDATE_MASK	(SV_UPDATE_BACKUP - 1)
@@ -734,5 +738,9 @@ void SV_InitFilter( void );
 void SV_ShutdownFilter( void );
 qboolean SV_CheckIP( netadr_t *adr );
 qboolean SV_CheckID( const char *id );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif//SERVER_H

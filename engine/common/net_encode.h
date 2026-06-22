@@ -16,6 +16,10 @@ GNU General Public License for more details.
 #ifndef NET_ENCODE_H
 #define NET_ENCODE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define DT_BYTE		BIT( 0 )	// A byte
 #define DT_SHORT		BIT( 1 ) 	// 2 byte field
 #define DT_FLOAT		BIT( 2 )	// A floating point field
@@ -121,5 +125,9 @@ void MSG_WriteWeaponData( sizebuf_t *msg, struct weapon_data_s *from, struct wea
 void MSG_ReadWeaponData( sizebuf_t *msg, struct weapon_data_s *from, struct weapon_data_s *to, float timebase );
 void MSG_WriteDeltaEntity( struct entity_state_s *from, struct entity_state_s *to, sizebuf_t *msg, qboolean force, qboolean player, float timebase );
 qboolean MSG_ReadDeltaEntity( sizebuf_t *msg, struct entity_state_s *from, struct entity_state_s *to, int num, qboolean player, float timebase );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif//NET_ENCODE_H

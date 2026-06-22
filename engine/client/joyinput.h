@@ -2,6 +2,10 @@
 #ifndef JOYINPUT_H
 #define JOYINPUT_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Same as SDL hat values
  * All positions is mapped to keyboard arrows
@@ -40,5 +44,9 @@ void Joy_DrawOnScreenKeyboard( void );
 
 extern convar_t *joy_found;
 extern convar_t *joy_enable;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // JOYINPUT_H

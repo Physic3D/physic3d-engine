@@ -22,6 +22,10 @@ GNU General Public License for more details.
 #include "eiface.h"
 #include "com_model.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // 1/32 epsilon to keep floating point happy
 #define DIST_EPSILON		(1.0f / 32.0f)
 #define FRAC_EPSILON		(1.0f / 1024.0f)
@@ -145,5 +149,9 @@ void Mod_StudioGetAttachment( const edict_t *e, int iAttachment, float *org, flo
 void Mod_GetBonePosition( const edict_t *e, int iBone, float *org, float *ang );
 hull_t *Mod_HullForStudio( model_t *m, float frame, int seq, vec3_t ang, vec3_t org, vec3_t size, byte *pcnt, byte *pbl, int *hitboxes, edict_t *ed );
 int Mod_HitgroupForStudioHull( int index );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif//MOD_LOCAL_H

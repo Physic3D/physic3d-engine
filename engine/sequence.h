@@ -189,6 +189,11 @@ struct sentenceGroupEntry_
 //---------------------------------------------------------------------------
 // Function declarations
 //---------------------------------------------------------------------------
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 sequenceEntry_s* Sequence_Get( const char* fileName, const char* entryName );
 void Sequence_ParseFile( const char* fileName, qboolean isGlobal );
 void Sequence_OnLevelLoad( const char* mapName );
@@ -196,5 +201,9 @@ sentenceEntry_s* Sequence_PickSentence( const char *groupName, int pickMethod, i
 void Sequence_Init( void );
 void Sequence_PurgeEntries( qboolean purgeGlobals );
 sentenceEntry_s *Sequence_GetSentenceByIndex( uint32_t index );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // _INCLUDE_SEQUENCE_H_

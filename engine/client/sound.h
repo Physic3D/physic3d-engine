@@ -16,8 +16,6 @@ GNU General Public License for more details.
 #ifndef SOUND_H
 #define SOUND_H
 
-extern byte *sndpool;
-
 #include "mathlib.h"
 
 // local flags (never sending acorss the net)
@@ -145,6 +143,12 @@ typedef struct
 } dma_t;
 
 #include "vox.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+extern byte *sndpool;
 
 typedef struct
 {
@@ -346,5 +350,9 @@ void VOX_SetChanVol( channel_t *ch );
 void VOX_LoadSound( channel_t *pchan, const char *psz );
 float VOX_ModifyPitch( channel_t *ch, float pitch );
 int VOX_MixDataToDevice( channel_t *pChannel, int sampleCount, int outputRate, int outputOffset );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif//SOUND_H
