@@ -432,7 +432,7 @@ nativeSetPause
 	JNIEXPORT ret JNICALL Java_com_physic3d_android_GameActivity_##name( JNIEnv *env, jclass clazz )
 #include <sys/prctl.h>
 
-DECLARE_JNI_INTERFACE( int, nativeInit, jobject array )
+DECLARE_JNI_INTERFACE( int, nativeInit, jobjectArray array )
 {
 	int i;
 	int argc;
@@ -446,7 +446,7 @@ DECLARE_JNI_INTERFACE( int, nativeInit, jobject array )
 	for (i = 0; i < len; ++i) {
 		const char* utf;
 		char* arg = NULL;
-		jstring string = env->GetObjectArrayElement(array, i);
+		jstring string = (jstring)env->GetObjectArrayElement(array, i);
 		if (string) {
 			utf = env->GetStringUTFChars(string, 0);
 			if (utf) {
@@ -564,7 +564,7 @@ DECLARE_JNI_INTERFACE( void, nativeKey, jint down, jint code )
 	}
 }
 
-DECLARE_JNI_INTERFACE( void, nativeString, jobject string )
+DECLARE_JNI_INTERFACE( void, nativeString, jstring string )
 {
 	char* str = (char *) env->GetStringUTFChars(string, NULL);
 
@@ -621,7 +621,7 @@ DECLARE_JNI_INTERFACE( void, nativeTouch, jint finger, jint action, jfloat x, jf
 
 	event = Android_AllocEvent();
 	event->arg = finger;
-	event->type = action;
+	event->type = (eventtype_t)action;
 	event->touch.x = x;
 	event->touch.y = y;
 	event->touch.dx = dx;
