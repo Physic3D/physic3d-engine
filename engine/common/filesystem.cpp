@@ -234,7 +234,7 @@ void stringlistsort( stringlist_t *list )
 int sel(const struct dirent *d)
 {
 	int plen, extlen;
-	char* p = strrchr(d->d_name, '.');
+	const char* p = strrchr(d->d_name, '.');
 	if ( !p ) return 0;
 	plen = strlen(p);
 	extlen = strlen("*");

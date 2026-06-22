@@ -1050,7 +1050,11 @@ void Host_InitCommon( int argc, const char** argv, const char *progname, qboolea
 		Q_strncpy( host.rootdir, baseDir, sizeof( host.rootdir ) );
 		SDL_free( baseDir );
 #else
+#ifdef _WIN32
 		if( !_getcwd( host.rootdir, sizeof(host.rootdir) ) )
+#else
+		if( !getcwd( host.rootdir, sizeof(host.rootdir) ) )
+#endif
 		{
 			Sys_Error( "couldn't determine current directory: %s", strerror( errno ) );
 			host.rootdir[0] = 0;

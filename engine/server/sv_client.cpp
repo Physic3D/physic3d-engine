@@ -673,7 +673,7 @@ SVC COMMAND REDIRECT
 
 ==============================================================================
 */
-void SV_BeginRedirect( netadr_t adr, int target, char *buffer, int buffersize, void (*flush))
+void SV_BeginRedirect( netadr_t adr, int target, char *buffer, int buffersize, void (*flush)( netadr_t, int, char * ))
 {
 	if( !target || !buffer || !buffersize || !flush )
 		return;
@@ -1594,7 +1594,7 @@ void SV_New_f( sv_client_t *cl )
 	// get the game a chance to reject this connection or modify the userinfo
 	if( !SV_ClientConnect( cl->edict, cl->userinfo ) )
 	{
-		char *errorpacket = cl->useragent[0]?"errormsg":"print";
+		const char *errorpacket = cl->useragent[0]?"errormsg":"print";
 
 		if( *Info_ValueForKey( cl->userinfo, "rejmsg" ))
 			Netchan_OutOfBandPrint( NS_SERVER, cl->netchan.remote_address, "%s\n%s\nConnection refused.\n", errorpacket, Info_ValueForKey( cl->userinfo, "rejmsg" ));
