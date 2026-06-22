@@ -15,6 +15,12 @@
 
 #include <dlfcn.h>
 extern byte *fs_mempool;
+static inline void *Mem_Calloc( byte *pool, size_t size )
+{
+	void *ptr = _Mem_Alloc( pool, size, __FILE__, __LINE__ );
+	if( ptr ) memset( ptr, 0, size );
+	return ptr;
+}
 static AAssetManager *AAssetManager_fromJava_compat( JNIEnv *env, jobject assetManager )
 {
 	static AAssetManager *(*real_func)( JNIEnv *, jobject ) = NULL;
