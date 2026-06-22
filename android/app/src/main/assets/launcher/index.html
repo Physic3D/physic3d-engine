@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Physic3D Launcher</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0f1215;--surface:#181c22;--surface2:#20262e;--primary:#4fc3f7;--primary-dim:#1a3a4a;--text:#e0e0e0;--text2:#8a929f;--border:#2a3038;--accent:#ff6b35;--success:#4caf50;--radius:10px}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.topbar{display:flex;align-items:center;gap:12px;padding:16px 20px;background:var(--surface);border-bottom:1px solid var(--border)}
+.topbar .logo{width:40px;height:40px;border-radius:8px;background:linear-gradient(135deg,#4fc3f7,#1565c0);display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:18px;color:#fff;flex-shrink:0}
+.topbar h1{font-size:18px;font-weight:600;flex:1}
+.topbar .about-btn{background:none;border:none;color:var(--text2);font-size:22px;padding:8px;cursor:pointer;border-radius:50%}
+.topbar .about-btn:hover{background:var(--surface2)}
+.tabs{display:flex;background:var(--surface);padding:0 16px;gap:4px;border-bottom:1px solid var(--border)}
+.tab{padding:12px 20px;font-size:14px;font-weight:500;color:var(--text2);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;transition:all .2s}
+.tab.active{color:var(--primary);border-bottom-color:var(--primary)}
+.content{display:none;padding:16px;max-width:600px;margin:0 auto}
+.content.active{display:block}
+.card{background:var(--surface);border-radius:var(--radius);padding:16px;margin-bottom:12px;border:1px solid var(--border)}
+.card-title{font-size:14px;font-weight:600;color:var(--text2);margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px}
+label{display:block;font-size:13px;color:var(--text2);margin-bottom:4px}
+input[type="text"],input[type="number"],select{width:100%;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;outline:none;transition:border .2s}
+input:focus,select:focus{border-color:var(--primary)}
+.field-row{display:flex;gap:8px;align-items:center}
+.field-row .flex{flex:1}
+.pixel-label{font-size:13px;color:var(--text2);margin-bottom:4px;display:block}
+select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238a929f' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)}
+.toggle-row:last-child{border-bottom:none}
+.toggle-label{font-size:14px;flex:1}
+.toggle{position:relative;width:44px;height:24px;flex-shrink:0;cursor:pointer}
+.toggle input{opacity:0;width:0;height:0}
+.toggle .slider{position:absolute;inset:0;background:var(--surface2);border-radius:12px;transition:.3s;border:1px solid var(--border)}
+.toggle .slider::before{content:'';position:absolute;width:18px;height:18px;left:2px;bottom:2px;background:var(--text2);border-radius:50%;transition:.3s}
+.toggle input:checked+.slider{background:var(--primary-dim);border-color:var(--primary)}
+.toggle input:checked+.slider::before{background:var(--primary);transform:translateX(20px)}
+.launch-btn{display:block;width:100%;padding:14px;background:linear-gradient(135deg,var(--primary),#1565c0);border:none;border-radius:var(--radius);color:#fff;font-size:16px;font-weight:600;cursor:pointer;text-align:center;transition:opacity .2s;margin:16px 0}
+.launch-btn:hover{opacity:.9}
+.launch-btn:active{transform:scale(.98)}
+.res-section{display:none;padding-top:12px}
+.res-section.show{display:block}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;align-items:center;justify-content:center;padding:24px}
+.modal-overlay.show{display:flex}
+.modal{background:var(--surface);border-radius:var(--radius);padding:24px;max-width:400px;width:100%;max-height:80vh;overflow-y:auto;border:1px solid var(--border)}
+.modal h2{font-size:18px;margin-bottom:4px}
+.modal .version{color:var(--text2);font-size:13px;margin-bottom:16px}
+.modal p{color:var(--text2);font-size:13px;line-height:1.5;margin-bottom:8px}
+.modal a{color:var(--primary)}
+.modal-close{display:block;width:100%;padding:10px;margin-top:16px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;cursor:pointer;text-align:center}
+.modal-close:hover{background:var(--border)}
+.hint{font-size:11px;color:var(--text2);margin-top:4px;opacity:.7}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="logo">P</div>
+  <h1>Physic3D Launcher</h1>
+  <button class="about-btn" onclick="showAbout()">&#9432;</button>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('normal',this)">Normal</button>
+  <button class="tab" onclick="switchTab('advanced',this)">Advanced</button>
+</div>
+
+<div id="tab-normal" class="content active">
+  <div class="card">
+    <div class="card-title">Game Resources</div>
+    <div class="field-row">
+      <div class="flex">
+        <input type="text" id="basedir" placeholder="/sdcard/xash">
+      </div>
+      <button onclick="pickFolder()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;cursor:pointer;color:var(--text);font-size:18px;line-height:1">&#128193;</button>
+    </div>
+  </div>
+  <button class="launch-btn" onclick="launchGame()">Launch Game!</button>
+</div>
+
+<div id="tab-advanced" class="content">
+  <div class="card">
+    <div class="card-title">Command Line Arguments</div>
+    <input type="text" id="argv" placeholder="-dev 3 -log">
+    <div class="hint">For expert users only</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Display</div>
+
+    <label class="pixel-label">Pixel format</label>
+    <select id="pixelformat">
+      <option value="0">32 bit (RGBA8888)</option>
+      <option value="1">24 bit (RGB888)</option>
+      <option value="2">16 bit (RGB565)</option>
+      <option value="3">16 bit (RGBA5551)</option>
+      <option value="4">16 bit (RGBA4444)</option>
+      <option value="5">8 bit (RGB332)</option>
+    </select>
+    <div style="height:8px"></div>
+
+    <div class="toggle-row">
+      <span class="toggle-label">Keyboard resizes screen</span>
+      <label class="toggle"><input type="checkbox" id="resizeWorkaround"><span class="slider"></span></label>
+    </div>
+
+    <div class="toggle-row">
+      <span class="toggle-label">Immersive Mode</span>
+      <label class="toggle" id="immersiveContainer"><input type="checkbox" id="immersiveMode"><span class="slider"></span></label>
+    </div>
+
+    <div class="toggle-row">
+      <span class="toggle-label">Custom Resolution</span>
+      <label class="toggle"><input type="checkbox" id="resolution"><span class="slider"></span></label>
+    </div>
+
+    <div class="res-section" id="resSection">
+      <div class="field-row" style="margin-top:8px">
+        <div class="flex">
+          <label>Width</label>
+          <input type="number" id="resWidth" min="1">
+        </div>
+        <span style="padding:0 8px;margin-top:16px;color:var(--text2)">x</span>
+        <div class="flex">
+          <label>Height</label>
+          <input type="number" id="resHeight" min="1">
+        </div>
+      </div>
+      <div class="hint">Some games don't support very low resolutions</div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="aboutModal">
+  <div class="modal">
+    <h2>Physic3D</h2>
+    <div class="version" id="aboutVersion">v0.19.4</div>
+    <p>Xash3D Engine, but way better.<br>Based on Xash3D SWES by FWGS.</p>
+    <p><strong>Authors</strong><br>
+    Original Xash3D engine:<br>
+    - Uncle Mike<br>
+    - FWGS (Android port)<br><br>
+    Physic3D fork:<br>
+    - Physic3D Team (github.com/Physic3D)<br><br>
+    Special thanks:<br>
+    - Valve Software for Half-Life</p>
+    <p><strong>Links</strong><br>
+    <a href="#" onclick="openUrl('https://github.com/Physic3D')">GitHub (Physic3D)</a><br>
+    <a href="#" onclick="openUrl('https://github.com/Physic3D/physic3d-engine')">Engine Source</a><br>
+    <a href="#" onclick="openUrl('https://github.com/Physic3D/physic3d-android')">Android Source</a><br>
+    <a href="#" onclick="openUrl('https://github.com/Physic3D/physic3d-extras')">Extras</a></p>
+    <button class="modal-close" onclick="hideAbout()">Close</button>
+  </div>
+</div>
+
+<script>
+var deviceWidth = 0, deviceHeight = 0;
+var sdk = 24;
+
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active')});
+  document.querySelectorAll('.content').forEach(function(c){c.classList.remove('active')});
+  btn.classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+}
+
+function loadSettings() {
+  try {
+    var s = JSON.parse(Android.getSettings());
+    deviceWidth = s.deviceWidth || 0;
+    deviceHeight = s.deviceHeight || 0;
+    sdk = s.sdk || 24;
+    document.getElementById('basedir').value = s.basedir || '';
+    document.getElementById('argv').value = s.argv || '';
+    document.getElementById('pixelformat').value = s.pixelformat || '0';
+    document.getElementById('resizeWorkaround').checked = s.resizeWorkaround !== false;
+    if (sdk >= 19) {
+      document.getElementById('immersiveMode').checked = s.immersiveMode !== false;
+    } else {
+      document.getElementById('immersiveContainer').style.display = 'none';
+    }
+    document.getElementById('resolution').checked = s.resolutionFixed || false;
+    document.getElementById('resWidth').value = s.resWidth || deviceWidth;
+    document.getElementById('resHeight').value = s.resHeight || deviceHeight;
+    toggleRes();
+  } catch(e) {}
+}
+
+function collectSettings() {
+  return {
+    basedir: document.getElementById('basedir').value,
+    argv: document.getElementById('argv').value,
+    pixelformat: parseInt(document.getElementById('pixelformat').value),
+    resizeWorkaround: document.getElementById('resizeWorkaround').checked,
+    immersiveMode: document.getElementById('immersiveMode').checked,
+    resolutionFixed: document.getElementById('resolution').checked,
+    resWidth: parseInt(document.getElementById('resWidth').value) || deviceWidth,
+    resHeight: parseInt(document.getElementById('resHeight').value) || deviceHeight
+  };
+}
+
+function toggleRes() {
+  var el = document.getElementById('resSection');
+  el.classList.toggle('show', document.getElementById('resolution').checked);
+}
+
+document.getElementById('resolution').addEventListener('change', toggleRes);
+
+document.getElementById('resWidth').addEventListener('input', function() {
+  if (deviceWidth > 0 && deviceHeight > 0) {
+    var w = parseInt(this.value) || deviceWidth;
+    var h = Math.round(deviceHeight / deviceWidth * w);
+    document.getElementById('resHeight').value = h;
+  }
+});
+
+function pickFolder() {
+  Android.pickFolder();
+}
+
+function onFolderPicked(path) {
+  document.getElementById('basedir').value = path;
+}
+
+function launchGame() {
+  Android.launchGame(JSON.stringify(collectSettings()));
+}
+
+function showAbout() {
+  document.getElementById('aboutModal').classList.add('show');
+}
+
+function hideAbout() {
+  document.getElementById('aboutModal').classList.remove('show');
+}
+
+function openUrl(url) {
+  Android.openUrl(url);
+}
+
+document.addEventListener('DOMContentLoaded', loadSettings);
+</script>
+</body>
+</html>
