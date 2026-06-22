@@ -38,7 +38,7 @@ static struct
 
 static void Android_GetAssetManager( android_assets_t *assets )
 {
-	jobject assetManager = (*jni_assets.env)->CallStaticObjectMethod( jni_assets.env, jni_assets.activity_class, jni_assets.getAssets, assets->engine );
+	jobject assetManager = jni_assets.env->CallStaticObjectMethod( jni_assets.activity_class, jni_assets.getAssets, assets->engine );
 
 	if( assetManager )
 		assets->asset_manager = AAssetManager_fromJava( jni_assets.env, assetManager );
@@ -46,22 +46,22 @@ static void Android_GetAssetManager( android_assets_t *assets )
 
 static void Android_ListDirectory( stringlist_t *list, const char *path, qboolean engine )
 {
-	jstring JStr = (*jni_assets.env)->NewStringUTF( jni_assets.env, path );
-	jobjectArray JNIArray = (*jni_assets.env)->CallStaticObjectMethod( jni_assets.env, jni_assets.activity_class, jni_assets.getAssetsList, engine, JStr );
-	int JNIArraySize = (*jni_assets.env)->GetArrayLength( jni_assets.env, JNIArray );
+	jstring JStr = jni_assets.env->NewStringUTF( path );
+	jobjectArray JNIArray = jni_assets.env->CallStaticObjectMethod( jni_assets.activity_class, jni_assets.getAssetsList, engine, JStr );
+	int JNIArraySize = jni_assets.env->GetArrayLength( JNIArray );
 
 	for( int i = 0; i < JNIArraySize; i++ )
 	{
-		jstring JNIStr = (*jni_assets.env)->GetObjectArrayElement( jni_assets.env, JNIArray, i );
-		const char *CStr = (*jni_assets.env)->GetStringUTFChars( jni_assets.env, JNIStr, NULL );
+		jstring JNIStr = jni_assets.env->GetObjectArrayElement( JNIArray, i );
+		const char *CStr = jni_assets.env->GetStringUTFChars( JNIStr, NULL );
 
 		stringlistappend( list, (char *)CStr );
-		(*jni_assets.env)->ReleaseStringUTFChars( jni_assets.env, JNIStr, CStr );
-		(*jni_assets.env)->DeleteLocalRef( jni_assets.env, JNIStr );
+		jni_assets.env->ReleaseStringUTFChars( JNIStr, CStr );
+		jni_assets.env->DeleteLocalRef( JNIStr );
 	}
 
-	(*jni_assets.env)->DeleteLocalRef( jni_assets.env, JNIArray );
-	(*jni_assets.env)->DeleteLocalRef( jni_assets.env, JStr );
+	jni_assets.env->DeleteLocalRef( JNIArray );
+	jni_assets.env->DeleteLocalRef( JStr );
 }
 
 static void FS_CloseAndroidAssets( android_assets_t *assets )
@@ -252,8 +252,8 @@ void FS_InitAndroidAssets( void )
 		return;
 	}
 
-	jni_assets.getAssets = (*jni_assets.env)->GetStaticMethodID( jni_assets.env, jni_assets.activity_class, "getAssets", "(Z)Landroid/content/res/AssetManager;" );
-	jni_assets.getAssetsList = (*jni_assets.env)->GetStaticMethodID( jni_assets.env, jni_assets.activity_class, "getAssetsList", "(ZLjava/lang/String;)[Ljava/lang/String;" );
+	jni_assets.getAssets = jni_assets.env->GetStaticMethodID( jni_assets.activity_class, "getAssets", "(Z)Landroid/content/res/AssetManager;" );
+	jni_assets.getAssetsList = jni_assets.env->GetStaticMethodID( jni_assets.activity_class, "getAssetsList", "(ZLjava/lang/String;)[Ljava/lang/String;" );
 
 	if( !jni_assets.getAssets || !jni_assets.getAssetsList )
 		MsgDev( D_WARN, "FS_InitAndroidAssets: unable to find JNI methods\n" );
