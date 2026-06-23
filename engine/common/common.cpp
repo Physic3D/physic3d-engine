@@ -659,3 +659,27 @@ only exists in PlayStation version
 void GAME_EXPORT pfnResetTutorMessageDecayData( void )
 {
 }
+
+/*
+=============
+COM_SaveFile
+
+save data to a file (engine interface for menu dll)
+=============
+*/
+int GAME_EXPORT COM_SaveFile( const char *filename, const void *data, int len )
+{
+	return FS_WriteFile( filename, data, len );
+}
+
+/*
+=============
+COM_RemoveFile
+
+remove a file (engine interface for menu dll)
+=============
+*/
+int GAME_EXPORT COM_RemoveFile( const char *filepath )
+{
+	return FS_Delete( filepath );
+}

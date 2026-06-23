@@ -1041,7 +1041,9 @@ static ui_enginefuncs_t gEngfuncs =
 	pfnIsMapValid,
 	GL_ProcessTexture,
 	(int (__cdecl *)(char *, char *, int *))COM_CompareFileTime,
-	VID_GetModeString
+	VID_GetModeString,
+	COM_SaveFile,
+	COM_RemoveFile
 };
 
 static ui_textfuncs_t gTextfuncs =

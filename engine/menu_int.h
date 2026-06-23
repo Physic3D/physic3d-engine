@@ -163,6 +163,10 @@ typedef struct ui_enginefuncs_s
 	int	(*pfnCompareFileTime)( char *filename1, char *filename2, int *iCompare );
 
 	const char *(*pfnGetModeString)( int vid_mode );
+
+	// new engine interface
+	int	(*COM_SaveFile)( const char *filename, const void *data, int len );
+	int	(*COM_RemoveFile)( const char *filepath );
 } ui_enginefuncs_t;
 
 typedef struct ui_textfuncs_s {
