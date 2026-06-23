@@ -68,22 +68,22 @@ GNU General Public License for more details.
 		#define MENUDLL   "libmenu"   POSTFIX "." OS_LIB_EXT
 		#define CLIENTDLL "libclient" POSTFIX "." OS_LIB_EXT
 		#define SERVERDLL "libserver" POSTFIX "." OS_LIB_EXT
-		#define GAMEPATH "/sdcard/xash"
+		#define GAMEPATH "/sdcard/physic3d"
 	#elif defined(__SAILFISH__)
 		#define POSTFIX
 		// don't change these names
 		#define MENUDLL   "libmenu"   POSTFIX "." OS_LIB_EXT
 		#define CLIENTDLL "libclient" POSTFIX "." OS_LIB_EXT
 		#define SERVERDLL "libserver" POSTFIX "." OS_LIB_EXT
-		#define GAMEPATH "/home/nemo/xash"
-		#define LIBPATH "/usr/lib/xash3d/"
-		#define SHAREPATH "/usr/share/xash3d/"
+#define GAMEPATH "/home/nemo/physic3d"
+#define LIBPATH "/usr/lib/physic3d/"
+#define SHAREPATH "/usr/share/physic3d/"
 	#elif defined(__HAIKU__)
 		#define POSTFIX   "-haiku"
 		#define MENUDLL   "libmenu"                       "." OS_LIB_EXT
 		#define CLIENTDLL "libclient" POSTFIX ARCH_SUFFIX "." OS_LIB_EXT
 		#define SERVERDLL "libserver" POSTFIX ARCH_SUFFIX "." OS_LIB_EXT
-		#define PACKAGE   "/Xash3D"
+		#define PACKAGE   "/Physic3D"
 	#else
 		#define MENUDLL   "libxashmenu" ARCH_SUFFIX "." OS_LIB_EXT
 		#define CLIENTDLL "client"      ARCH_SUFFIX "." OS_LIB_EXT

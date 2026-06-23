@@ -396,8 +396,8 @@ void Host_Exec_f( void )
 			Q_strstr( f, "//\t\t\tCopyright XashXT Group" ) &&
 			Q_strstr( f, "//\t\t\tserver.cfg - server temp" ) )
 		{
-			Msg( "^1Found old generated xash3d listenserver config, skipping!\n" );
-			Msg( "^1Remove Xash3D header to use it\n" );
+Msg( "^1Found old generated physic3d listenserver config, skipping!\n" );
+		Msg( "^1Remove Physic3D header to use it\n" );
 			Mem_Free( f );
 			return;
 		}

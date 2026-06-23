@@ -68,7 +68,7 @@ int main( int argc, char** argv )
 	#if (!defined(__HAIKU__) && !defined(_WIN32) && !defined(__SAILFISH__))
 	  if( !getuid() )
 	  {
-		  printf( "WARNING : You shouldn't run Xash3D as root!\n" );
+		  printf( "WARNING : You shouldn't run Physic3D as root!\n" );
 	  }
 	#endif
 

@@ -130,15 +130,15 @@ public class FWGSLib
 		return false;
 	}
 	
-	public static String getDefaultXashPath()
+	public static String getDefaultPhysic3dPath()
 	{
 		if( Build.VERSION.SDK_INT >= 30 )
-			return "/sdcard/Android/data/com.physic3d.android/files/xash";
+			return "/sdcard/Android/data/com.physic3d.android/files/physic3d";
 		
 		File dir = Environment.getExternalStorageDirectory();
 		if( dir != null && dir.exists() )
-			return dir.getPath() + "/xash";
-		return "/sdcard/xash";
+			return dir.getPath() + "/physic3d";
+		return "/sdcard/physic3d";
 	}
 	static class GetExternalFilesDir extends Thread
 	{
@@ -178,10 +178,10 @@ public class FWGSLib
 		catch(Exception e)
 		{
 			Log.e( TAG, e.toString(), e);
-			externalFilesDir = getDefaultXashPath();
+			externalFilesDir = getDefaultPhysic3dPath();
 		}
 		if( externalFilesDir == null )
-			externalFilesDir = getDefaultXashPath();
+			externalFilesDir = getDefaultPhysic3dPath();
 		return externalFilesDir;
 	}
 	

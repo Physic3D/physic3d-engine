@@ -26,7 +26,7 @@ project(XASH_ENGINE CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(XASH_ENGINE xash) # Lib name
+set(XASH_ENGINE physic3d) # Lib name
 
 fwgs_fix_default_msvc_settings()
 file(GLOB_RECURSE XASH_ENGINE_SOURCES         common/*.cpp server/*.cpp ) # Minimal sources
@@ -242,16 +242,16 @@ if(NOT WIN32)
 	# For single binary builds we change name to game_launch's executable name
 	if(XASH_SINGLE_BINARY)
 		set_target_properties(${XASH_ENGINE} PROPERTIES
-			    OUTPUT_NAME "xash3d")
+			OUTPUT_NAME "physic3d")
 	endif()
 else()
 	# For Win32 we have split DLL names
 	if(XASH_DEDICATED)
 		set_target_properties(${XASH_ENGINE} PROPERTIES
-			OUTPUT_NAME "xash_dedicated")
+			OUTPUT_NAME "physic3d_dedicated")
 	else()
 		set_target_properties(${XASH_ENGINE} PROPERTIES
-			OUTPUT_NAME "xash_sdl")
+			OUTPUT_NAME "physic3d_sdl")
 	endif()
 endif()
 

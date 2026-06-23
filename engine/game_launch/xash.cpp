@@ -28,14 +28,14 @@ GNU General Public License for more details.
 	#include <dlfcn.h>
 	#include <errno.h>
 	#include <unistd.h>
-	#define XASHLIB    "libxash.dylib"
+	#define XASHLIB    "libphysic3d.dylib"
 	#define dlmount(x) dlopen(x, RTLD_NOW)
 	#define HINSTANCE  void*
 #elif __unix__
 	#include <dlfcn.h>
 	#include <errno.h>
 	#include <unistd.h>
-	#define XASHLIB    "libxash.so"
+	#define XASHLIB    "libphysic3d.so"
 	#define dlmount(x) dlopen(x, RTLD_NOW)
 	#define HINSTANCE  void*
 #elif __HAIKU__
@@ -44,7 +44,7 @@ GNU General Public License for more details.
 	#include <libgen.h>
 	#include <limits.h>
 	#include <unistd.h>
-	#define XASHLIB     "libxash.so"
+	#define XASHLIB     "libphysic3d.so"
 	#define dlmount(x)  dlopen(x, RTLD_NOW)
 	#define HINSTANCE   void*
 	#define E_GAME      "XASH3D_GAME"
@@ -59,9 +59,9 @@ GNU General Public License for more details.
 		#define USE_WINMAIN
 	#endif
 	#ifndef XASH_DEDICATED
-		#define XASHLIB "xash_sdl.dll"
+		#define XASHLIB "physic3d_sdl.dll"
 	#else
-		#define XASHLIB "xash_dedicated.dll"
+		#define XASHLIB "physic3d_dedicated.dll"
 	#endif
 	#include "windows.h"
 #endif
@@ -108,9 +108,9 @@ static void Xash_Error( const char *szFmt, ... )
 	va_end( args );
 
 #ifdef XASH_SDL
-	SDL_ShowSimpleMessageBox( SDL_MESSAGEBOX_ERROR, "Xash Error", buffer, NULL );
+	SDL_ShowSimpleMessageBox( SDL_MESSAGEBOX_ERROR, "Physic3D Engine Error", buffer, NULL );
 #elif defined( _WIN32 )
-	MessageBoxA( NULL, buffer, "Xash Error", MB_OK );
+	MessageBoxA( NULL, buffer, "Physic3D Engine Error", MB_OK );
 #else
 	fprintf( stderr, "Xash Error: %s\n", buffer );
 #endif
@@ -201,7 +201,7 @@ int main( int argc, char **argv )
 	#if (!defined(__HAIKU__) && !defined(_WIN32) && !defined(__SAILFISH__))
 	  if( !getuid() )
 	  {
-		  printf( "WARNING : You shouldn't run Xash3D as root!\n" );
+		  printf( "WARNING : You shouldn't run Physic3D as root!\n" );
 	  }
 	#endif
 

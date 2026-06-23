@@ -13,15 +13,15 @@
 #define VER_FILETYPE			VFT_DLL
 #define VER_FILESUBTYPE			VFT2_UNKNOWN
 
-#define VER_PRODUCTNAME_STR		"Xash3D-NG"
+#define VER_PRODUCTNAME_STR		"Physic3D"
 #define VER_COMPANYNAME_STR		""
 
 #define VER_ANSICP
 
-#define VER_FILEDESCRIPTION_STR		"Xash3D Launcher"
-#define VER_ORIGINALFILENAME_STR	"xash.exe"
-#define VER_INTERNALNAME_STR		"xash"
+#define VER_FILEDESCRIPTION_STR		"Physic3D Launcher"
+#define VER_ORIGINALFILENAME_STR	"physic3d.exe"
+#define VER_INTERNALNAME_STR		"physic3d"
 
 #include <common.ver>
 
-IDI_ICON1	ICON    DISCARDABLE		"icon-xash-material.ico"
+IDI_ICON1	ICON    DISCARDABLE		"icon-physic3d-material.ico"

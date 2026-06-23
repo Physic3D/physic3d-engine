@@ -95,12 +95,12 @@ public class GameActivity extends Activity {
 	{
 		try
 		{
-			System.loadLibrary( "xash" );
+			System.loadLibrary( "physic3d" );
 			mNativeLoaded = true;
 		}
 		catch( UnsatisfiedLinkError e )
 		{
-			Log.e( TAG, "Failed to load libxash.so: " + e.getMessage() );
+			Log.e( TAG, "Failed to load libphysic3d.so: " + e.getMessage() );
 		}
 	}
 
@@ -136,7 +136,7 @@ public class GameActivity extends Activity {
 			Log.v( TAG, "folderask == false. Checking write permission..." );
 
 			// check write permission and run engine, if possible
-			String basedir = FWGSLib.getStringExtraFromIntent( getIntent(), "basedir", mPref.getString( "basedir", FWGSLib.getDefaultXashPath() ) );
+			String basedir = FWGSLib.getStringExtraFromIntent( getIntent(), "basedir", mPref.getString( "basedir", FWGSLib.getDefaultPhysic3dPath() ) );
 			checkWritePermission( basedir );
 		}
 	}
@@ -172,7 +172,7 @@ public class GameActivity extends Activity {
 		{
 			if( mReturingWithResultCode == FPICKER_RESULT )
 			{
-				String basedir = mPref.getString( "basedir", FWGSLib.getDefaultXashPath() );
+				String basedir = mPref.getString( "basedir", FWGSLib.getDefaultPhysic3dPath() );
 				checkWritePermission( basedir );
 			}
 			
@@ -222,7 +222,7 @@ public class GameActivity extends Activity {
 				super.onResume();
 				return;
 			}
-			String basedir = mPref.getString( "basedir", FWGSLib.getDefaultXashPath() );
+			String basedir = mPref.getString( "basedir", FWGSLib.getDefaultPhysic3dPath() );
 			checkWritePermission( basedir );
 			super.onResume();
 			return;
@@ -428,7 +428,7 @@ public class GameActivity extends Activity {
 		String argv       = FWGSLib.getStringExtraFromIntent( intent, "argv", mPref.getString( "argv", "-dev 3 -log" ) );
 		String gamelibdir = FWGSLib.getStringExtraFromIntent( intent, "gamelibdir", enginedir );
 		String gamedir    = FWGSLib.getStringExtraFromIntent( intent, "gamedir", "valve" );
-		String basedir    = FWGSLib.getStringExtraFromIntent( intent, "basedir", mPref.getString( "basedir", FWGSLib.getDefaultXashPath() ) );
+		String basedir    = FWGSLib.getStringExtraFromIntent( intent, "basedir", mPref.getString( "basedir", FWGSLib.getDefaultPhysic3dPath() ) );
 		String gdbsafe    = intent.getStringExtra( "gdbsafe" );
 		
 		bIsCstrike = ( gamedir.equals("cstrike") || gamedir.equals("czero") || gamedir.equals("czeror") );
@@ -965,7 +965,7 @@ class GameMain implements Runnable
  */
 class EngineSurface extends SurfaceView implements SurfaceHolder.Callback, View.OnKeyListener 
 {
-	public static final String TAG = "XASH3D-EngineSurface";
+	public static final String TAG = "Physic3D-EngineSurface";
 	
 	// This is what Xash3D runs in. It invokes main(), eventually
 	private static Thread mEngThread = null;

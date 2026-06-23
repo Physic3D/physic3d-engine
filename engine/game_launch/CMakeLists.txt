@@ -26,7 +26,7 @@ project(XASH_LAUNCHER CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(XASH_LAUNCHER xash3d)
+set(XASH_LAUNCHER physic3d)
 fwgs_fix_default_msvc_settings()
 file(GLOB XASH_LAUNCHER_SOURCES *.cpp)
 if(WIN32)
@@ -50,7 +50,7 @@ endif()
 
 if(WIN32)
 	set_target_properties(${XASH_LAUNCHER} PROPERTIES
-		OUTPUT_NAME xash) # Change name to your gamedir, if you building a standalone game
+		OUTPUT_NAME physic3d)
 endif()
 
 target_link_libraries(${XASH_LAUNCHER} ${CMAKE_DL_LIBS})

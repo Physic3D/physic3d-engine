@@ -5,7 +5,7 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_MODULE := xash
+LOCAL_MODULE := physic3d
 
 APP_PLATFORM := android-12
 

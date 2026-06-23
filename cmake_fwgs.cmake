@@ -513,9 +513,9 @@ function(_fwgs_find_vgui)
 			NAMES ${LIBNAMES}
 			HINTS $ENV{VGUIDIR}
 			PATH_SUFFIXES
-				games/lib/xash3d
-				lib/xash3d
-				xash3d/
+games/lib/physic3d
+lib/physic3d
+physic3d/
 				utils/vgui/lib/win32_vc6
 				linux/
 				linux/release

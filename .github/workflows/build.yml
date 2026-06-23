@@ -2,9 +2,9 @@ name: Build
 
 on:
   push:
-    branches: [main, master]
+    branches: [master]
   pull_request:
-    branches: [main, master]
+    branches: [master]
   workflow_dispatch:
 
 concurrency:
@@ -22,9 +22,10 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Configure (x86 Client)
+      - name: Configure (32-bit Client)
         run: >
-          cmake --preset x86-release -B build-x86-client
+          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x86
+          && cmake --preset x86-release -B build-x86-client
 
       - name: Build
         run: cmake --build build-x86-client --config RelWithDebInfo
@@ -33,14 +34,14 @@ jobs:
         run: |
           curl -sLo sdl2.zip https://github.com/libsdl-org/SDL/releases/download/release-2.30.3/SDL2-devel-2.30.3-VC.zip
           tar -xf sdl2.zip -C "%TEMP%"
-          copy "%TEMP%\SDL2-2.30.3\lib\x64\SDL2.dll" build-x86-client\engine\
+          copy "%TEMP%\SDL2-2.30.3\lib\x86\SDL2.dll" build-x86-client\engine\
           del sdl2.zip
 
       - name: Stage artifacts
         run: |
           mkdir staging
-          copy build-x86-client\engine\game_launch\xash.exe staging\
-          copy build-x86-client\engine\xash_sdl.dll staging\
+          copy build-x86-client\engine\game_launch\physic3d.exe staging\
+          copy build-x86-client\engine\physic3d_sdl.dll staging\
           copy build-x86-client\engine\mainui\libmenu.dll staging\
           copy build-x86-client\engine\SDL2.dll staging\
           if exist build-x86-client\engine\vgui_support\vgui_support.dll copy build-x86-client\engine\vgui_support\vgui_support.dll staging\
@@ -48,7 +49,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: xash3d-windows-x86
+          name: physic3d-windows-x86
           path: staging/*
 
   windows-dedicated:
@@ -61,20 +62,24 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Configure (x86 Dedicated)
+      - name: Configure (32-bit Dedicated)
         run: >
-          cmake --preset x86-dedicated -B build-x86-dedicated
+          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x86
+          && cmake --preset x86-dedicated -B build-x86-dedicated
 
       - name: Build
         run: cmake --build build-x86-dedicated --config RelWithDebInfo
 
+      - name: Stage artifacts
+        run: |
+          mkdir staging
+          copy build-x86-dedicated\engine\physic3d_dedicated.exe staging\
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: xash-dedicated-windows-x86
-          path: |
-            build-x86-dedicated/engine/*.exe
-            build-x86-dedicated/engine/*.dll
+          name: physic3d-dedicated-windows-x86
+          path: staging/*
 
   linux-client:
     runs-on: ubuntu-latest
@@ -134,8 +139,8 @@ jobs:
       - name: Stage artifacts
         run: |
           mkdir -p staging
-          cp build-linux-client/engine/game_launch/xash3d staging/
-          cp build-linux-client/engine/libxash.so staging/
+          cp build-linux-client/engine/game_launch/physic3d staging/
+          cp build-linux-client/engine/libphysic3d.so staging/
           cp build-linux-client/engine/mainui/libmenu.so staging/
           cp build-linux-client/engine/libSDL2-2.0.so.0 staging/
           cp build-linux-client/engine/vgui_support/libvgui_support.so staging/ || true
@@ -143,7 +148,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: xash3d-linux-x86
+          name: physic3d-linux-x86
           path: staging/*
 
   linux-dedicated:
@@ -157,22 +162,60 @@ jobs:
         run: |
           sudo dpkg --add-architecture i386
           sudo apt-get update -qq
-          sudo apt-get install -y -qq g++-multilib
+          sudo apt-get install -y -qq g++-multilib ninja-build
+
+      - name: Build SDL2 from source (32-bit)
+        run: |
+          cd /tmp
+          wget -qO- https://github.com/libsdl-org/SDL/archive/refs/tags/release-2.30.3.tar.gz | tar xz
+          cd SDL-release-2.30.3
+          cmake -S . -B build \
+            -DCMAKE_C_FLAGS="-m32" \
+            -DCMAKE_CXX_FLAGS="-m32" \
+            -DCMAKE_INSTALL_PREFIX=/tmp/sdl2-prefix \
+            -DSDL_X11=OFF \
+            -DSDL_WAYLAND=OFF \
+            -DSDL_PULSEAUDIO=OFF \
+            -DSDL_ALSA=OFF \
+            -DSDL_HIDAPI=OFF \
+            -DSDL_JOYSTICK=OFF \
+            -DSDL_HAPTIC=OFF \
+            -DSDL_POWER=OFF \
+            -DSDL_RENDER=OFF \
+            -DSDL_VULKAN=OFF \
+            -DSDL_OPENGL=OFF \
+            -DSDL_OPENGLES=OFF \
+            -DSDL_STATIC=OFF \
+            -DSDL_SHARED=ON \
+            -DSDL_TEST=OFF
+          cmake --build build -j$(nproc)
+          cmake --install build
 
       - name: Configure (Linux 32-bit Dedicated)
         run: >
           CXXFLAGS="-m32" CFLAGS="-m32"
           cmake --preset linux-dedicated
           -B build-linux-dedicated -G Ninja
+          -DSDL2_PATH=/tmp/sdl2-prefix
+          -DCMAKE_LIBRARY_PATH=/tmp/sdl2-prefix/lib
 
       - name: Build
         run: cmake --build build-linux-dedicated --config RelWithDebInfo
 
+      - name: Copy SDL2 shared library
+        run: cp /tmp/sdl2-prefix/lib/libSDL2-2.0.so.0 build-linux-dedicated/engine/ || true
+
+      - name: Stage artifacts
+        run: |
+          mkdir -p staging
+          cp build-linux-dedicated/engine/physic3d staging/
+          cp build-linux-dedicated/engine/libSDL2-2.0.so.0 staging/ || true
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: xash-dedicated-linux-x86
-          path: build-linux-dedicated/engine/xash3d
+          name: physic3d-dedicated-linux-x86
+          path: staging/*
 
   android-client:
     runs-on: ubuntu-latest
@@ -198,8 +241,12 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
 
+      - name: Rename APK
+        working-directory: engine/android/app/build/outputs/apk/debug
+        run: mv app-debug.apk physic3d-debug.apk
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: xash3d-android-arm64
-          path: engine/android/app/build/outputs/apk/debug/*.apk
+          name: physic3d-android-arm64
+          path: engine/android/app/build/outputs/apk/debug/physic3d-debug.apk

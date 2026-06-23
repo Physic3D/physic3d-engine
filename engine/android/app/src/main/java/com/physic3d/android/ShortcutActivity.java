@@ -73,7 +73,7 @@ public class ShortcutActivity extends Activity
 		Bitmap icon = null;
 		// Try find icon
 		int size = (int) getResources().getDimension(android.R.dimen.app_icon_size);
-		String gamedirstring = getSharedPreferences("engine", 0).getString("basedir", com.physic3d.fwgslib.FWGSLib.getDefaultXashPath())+"/"+(gamedir.length()!=0?gamedir.getText().toString():"valve");
+		String gamedirstring = getSharedPreferences("engine", 0).getString("basedir", com.physic3d.fwgslib.FWGSLib.getDefaultPhysic3dPath())+"/"+(gamedir.length()!=0?gamedir.getText().toString():"valve");
 		try
 		{
 			icon = Bitmap.createScaledBitmap(BitmapFactory.decodeFile(gamedirstring+"/icon.png"), size, size, false);

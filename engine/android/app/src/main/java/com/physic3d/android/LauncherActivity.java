@@ -58,7 +58,7 @@ public class LauncherActivity extends AppCompatActivity
 			try
 			{
 				JSONObject obj = new JSONObject();
-				obj.put("basedir", mPref.getString("basedir", FWGSLib.getDefaultXashPath()));
+				obj.put("basedir", mPref.getString("basedir", FWGSLib.getDefaultPhysic3dPath()));
 				obj.put("argv", mPref.getString("argv", "-dev 3 -log"));
 				obj.put("pixelformat", mPref.getInt("pixelformat", 0));
 				obj.put("resizeWorkaround", mPref.getBoolean("enableResizeWorkaround", true));

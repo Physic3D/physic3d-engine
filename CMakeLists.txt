@@ -46,7 +46,7 @@ if(WIN32 AND NOT XASH_64BIT)
 	endif()
 endif()
 
-project(XASH3D CXX)
+project(PHYSIC3D CXX)
 
 if(WIN32)
 	option(XASH_DOWNLOAD_DEPENDENCIES "Download dependencies automatically, if supported" ON)
@@ -99,7 +99,7 @@ endif()
 
 # Misc
 option(XASH_USE_STB_SPRINTF "Use stb_sprintf implementation for sprintf" ON)
-option(XASH_NO_INSTALL_RUNSCRIPT "Don't install xash3d.sh" OFF)
+option(XASH_NO_INSTALL_RUNSCRIPT "Don't install physic3d.sh" OFF)
 option(XASH_NO_INSTALL_VGUI_BIN "Don't bundle proprietary VGUI" OFF)
 
 # Installing
@@ -109,7 +109,7 @@ if(WIN32)
 	fwgs_string_option(BIN_INSTALL_DIR "Executables install directory" ${CMAKE_BINARY_DIR})
 else()
 	fwgs_string_option(LIB_INSTALL_DIR "Libraries install directory" "lib")
-	fwgs_string_option(LIB_INSTALL_SUBDIR "Libraries install subdirectory" "xash3d")
+	fwgs_string_option(LIB_INSTALL_SUBDIR "Libraries install subdirectory" "physic3d")
 	fwgs_string_option(BIN_INSTALL_DIR "Executables install directory" "bin")
 endif()
 
@@ -150,8 +150,8 @@ add_subdirectory(engine)
 
 if(WIN32)
 	if(XASH_SINGLE_BINARY)
-		set_property(DIRECTORY . PROPERTY VS_STARTUP_PROJECT xash) # Engine project
+		set_property(DIRECTORY . PROPERTY VS_STARTUP_PROJECT physic3d) # Engine project
 	else()
-		set_property(DIRECTORY . PROPERTY VS_STARTUP_PROJECT xash3d) # Game_launch project
+		set_property(DIRECTORY . PROPERTY VS_STARTUP_PROJECT physic3d) # Game_launch project
 	endif()
 endif()

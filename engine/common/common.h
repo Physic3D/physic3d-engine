@@ -210,7 +210,7 @@ extern "C" {
 #define XASH_VERSION	"0.19.4"		// engine current version
 
 // generic update page, see ShellExecute
-#define XASH_UPDATE_PAGE "https://github.com/hasandramali/xash3d-android-project/releases/latest"
+#define XASH_UPDATE_PAGE "https://github.com/Physic3D/physic3d-engine/releases/latest"
 
 // PERFORMANCE INFO
 #define MIN_FPS         	1.0		// host minimum fps value for maxfps.

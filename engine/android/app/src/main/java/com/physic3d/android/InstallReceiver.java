@@ -8,7 +8,7 @@ import java.io.InputStream;
 import android.content.SharedPreferences;
 
 public class InstallReceiver extends BroadcastReceiver {
-	private static final String TAG = "XASH3D";
+	private static final String TAG = "Physic3D";
 	@Override
 	public void onReceive(Context context, Intent arg1) {
 		String pkgname = arg1.getData().getEncodedSchemeSpecificPart();
