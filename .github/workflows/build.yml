@@ -33,7 +33,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: xash3d-windows-x86
-          path: build-x86-client/engine/xash_sdl.dll
+          path: build-x86-client/engine/*
 
   windows-dedicated:
     runs-on: windows-latest
@@ -56,7 +56,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: xash-dedicated-windows-x86
-          path: build-x86-dedicated/engine/xash_dedicated.exe
+          path: build-x86-dedicated/engine/*
 
   linux-client:
     runs-on: ubuntu-latest
@@ -65,14 +65,18 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install dependencies
+      - name: Install 32-bit dependencies
         run: |
+          sudo dpkg --add-architecture i386
           sudo apt-get update -qq
-          sudo apt-get install -y -qq cmake ninja-build libsdl2-dev libfontconfig-dev
+          sudo apt-get install -y -qq g++-multilib cmake ninja-build \
+            libsdl2-dev:i386 libfontconfig-dev:i386
 
-      - name: Configure (Linux Client)
+      - name: Configure (Linux 32-bit Client)
         run: >
           cmake --preset linux-release -B build-linux-client -G "Ninja"
+          -DCMAKE_CXX_FLAGS="-m32"
+          -DCMAKE_SYSTEM_LIBRARY_PATH="/usr/lib/i386-linux-gnu"
 
       - name: Build
         run: cmake --build build-linux-client --config RelWithDebInfo
@@ -80,8 +84,8 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: xash3d-linux
-          path: build-linux-client/engine/xash3d
+          name: xash3d-linux-x86
+          path: build-linux-client/engine/*
 
   linux-dedicated:
     runs-on: ubuntu-latest
@@ -90,14 +94,17 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install dependencies
+      - name: Install 32-bit dependencies
         run: |
+          sudo dpkg --add-architecture i386
           sudo apt-get update -qq
-          sudo apt-get install -y -qq cmake ninja-build
+          sudo apt-get install -y -qq g++-multilib cmake ninja-build
 
-      - name: Configure (Linux Dedicated)
+      - name: Configure (Linux 32-bit Dedicated)
         run: >
           cmake --preset linux-dedicated -B build-linux-dedicated -G "Ninja"
+          -DCMAKE_CXX_FLAGS="-m32"
+          -DCMAKE_SYSTEM_LIBRARY_PATH="/usr/lib/i386-linux-gnu"
 
       - name: Build
         run: cmake --build build-linux-dedicated --config RelWithDebInfo
@@ -105,8 +112,8 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: xash-dedicated-linux
-          path: build-linux-dedicated/engine/xash3d
+          name: xash-dedicated-linux-x86
+          path: build-linux-dedicated/engine/*
 
   lint:
     runs-on: ubuntu-latest
