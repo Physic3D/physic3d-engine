@@ -48,12 +48,22 @@ static UI_FUNCTIONS gFunctionTable =
 //=======================================================================
 extern "C" EXPORT int GetMenuAPI(UI_FUNCTIONS *pFunctionTable, ui_enginefuncs_t* pEngfuncsFromEngine, ui_globalvars_t *pGlobals)
 {
-	// DIAGNOSTIC: do nothing, return false.
-	// If crash still occurs, it's in DLL loading/CRT init, not in GetMenuAPI.
-	(void)pFunctionTable;
-	(void)pEngfuncsFromEngine;
-	(void)pGlobals;
-	return false;
+	if( !pFunctionTable || !pEngfuncsFromEngine )
+	{
+		return false;
+	}
+
+	// TEST 1: only copy UI_FUNCTIONS table (no engfuncs copy)
+	{
+		const unsigned long *src = (const unsigned long *)&gFunctionTable;
+		unsigned long *dst = (unsigned long *)pFunctionTable;
+		for( int i = 0; i < (int)(sizeof( UI_FUNCTIONS ) / sizeof( unsigned long )); i++ )
+			dst[i] = src[i];
+	}
+
+	gpGlobals = pGlobals;
+
+	return true;
 }
 
 static UI_EXTENDED_FUNCTIONS gExtendedTable =
