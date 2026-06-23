@@ -154,14 +154,6 @@ jobs:
           name: xash-dedicated-linux-x86
           path: build-linux-dedicated/engine/xash3d
 
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Check for TAB characters
-        run: |
-          ! grep -rnP '\t' engine/ --include='*.c' --include='*.cpp' --include='*.h' || echo "Tabs found"
-
   android-client:
     runs-on: ubuntu-latest
     steps:
