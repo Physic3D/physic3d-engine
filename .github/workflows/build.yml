@@ -29,6 +29,13 @@ jobs:
       - name: Build
         run: cmake --build build-x86-client --config RelWithDebInfo
 
+      - name: Download SDL2 DLL
+        run: |
+          curl -sLo sdl2.zip https://github.com/libsdl-org/SDL/releases/download/release-2.30.3/SDL2-devel-2.30.3-VC.zip
+          tar -xf sdl2.zip -C "%TEMP%"
+          copy "%TEMP%\SDL2-2.30.3\lib\x64\SDL2.dll" build-x86-client\engine\
+          del sdl2.zip
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -38,6 +45,7 @@ jobs:
             build-x86-client/engine/xash_sdl.dll
             build-x86-client/engine/mainui/libmenu.dll
             build-x86-client/engine/vgui_support/vgui_support.dll
+            build-x86-client/engine/SDL2.dll
 
   windows-dedicated:
     runs-on: windows-latest
@@ -116,6 +124,9 @@ jobs:
       - name: Build
         run: cmake --build build-linux-client --config RelWithDebInfo
 
+      - name: Copy SDL2 shared library
+        run: cp /tmp/sdl2-prefix/lib/libSDL2-2.0.so.0 build-linux-client/engine/
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -125,6 +136,7 @@ jobs:
             build-linux-client/engine/libxash.so
             build-linux-client/engine/mainui/libmenu.so
             build-linux-client/engine/vgui_support/libvgui_support.so
+            build-linux-client/engine/libSDL2-2.0.so.0
 
   linux-dedicated:
     runs-on: ubuntu-latest
