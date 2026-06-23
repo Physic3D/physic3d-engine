@@ -46,6 +46,7 @@ static UI_FUNCTIONS gFunctionTable =
 //=======================================================================
 //			GetApi
 //=======================================================================
+#pragma optimize("", off)
 extern "C" EXPORT int GetMenuAPI(UI_FUNCTIONS *pFunctionTable, ui_enginefuncs_t* pEngfuncsFromEngine, ui_globalvars_t *pGlobals)
 {
 	if( !pFunctionTable || !pEngfuncsFromEngine )
@@ -53,18 +54,14 @@ extern "C" EXPORT int GetMenuAPI(UI_FUNCTIONS *pFunctionTable, ui_enginefuncs_t*
 		return false;
 	}
 
-	// TEST 1: only copy UI_FUNCTIONS table (no engfuncs copy)
-	{
-		const unsigned long *src = (const unsigned long *)&gFunctionTable;
-		unsigned long *dst = (unsigned long *)pFunctionTable;
-		for( int i = 0; i < (int)(sizeof( UI_FUNCTIONS ) / sizeof( unsigned long )); i++ )
-			dst[i] = src[i];
-	}
+	// Use direct struct assignment to avoid any CRT calls
+	*pFunctionTable = gFunctionTable;
 
 	gpGlobals = pGlobals;
 
 	return true;
 }
+#pragma optimize("", on)
 
 static UI_EXTENDED_FUNCTIONS gExtendedTable =
 {
