@@ -18,9 +18,10 @@ LOCAL_C_INCLUDES := \
 	$(SDL_PATH)/include				\
 	$(LOCAL_PATH)/. 				\
 	$(LOCAL_PATH)/sdk_includes/public 		\
-	$(LOCAL_PATH)/../pm_shared 			\
+	$(LOCAL_PATH)/sdk_includes/pm_shared 		\
+	$(LOCAL_PATH)/sdk_includes/common 		\
+	$(LOCAL_PATH)/sdk_includes/engine 		\
 	$(LOCAL_PATH)/.. 				\
-	$(LOCAL_PATH)/../common 			\
 	$(LOCAL_PATH)/../utils/vgui/include 		\
 	$(LOCAL_PATH)/menus 				\
 	$(LOCAL_PATH)/controls 				\
