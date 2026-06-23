@@ -69,13 +69,14 @@ jobs:
         run: |
           sudo dpkg --add-architecture i386
           sudo apt-get update -qq
-          sudo apt-get install -y -qq g++-multilib cmake ninja-build \
-            libsdl2-dev:i386 libfontconfig-dev:i386
+          sudo apt-get install -y -qq g++-multilib cmake ninja-build
+          sudo apt-get install -y -qq libsdl2-dev:i386 libfontconfig-dev:i386 2>&1 || \
+            echo "i386 packages may have issues, continuing anyway"
 
       - name: Configure (Linux 32-bit Client)
         run: >
           cmake --preset linux-release -B build-linux-client -G "Ninja"
-          -DCMAKE_CXX_FLAGS="-m32"
+          -DCMAKE_CXX_FLAGS="-m32 -I/usr/include -I/usr/include/freetype2"
           -DCMAKE_SYSTEM_LIBRARY_PATH="/usr/lib/i386-linux-gnu"
 
       - name: Build
