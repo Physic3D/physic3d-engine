@@ -104,7 +104,8 @@ jobs:
           cmake --preset linux-release
           -B build-linux-client -G Ninja
           -DMAINUI_USE_STB=ON
-          -DSDL2_DIR=/tmp/sdl2-prefix/lib/cmake/SDL2
+          -DSDL2_PATH=/tmp/sdl2-prefix
+          -DCMAKE_LIBRARY_PATH=/tmp/sdl2-prefix/lib
 
       - name: Build
         run: cmake --build build-linux-client --config RelWithDebInfo
