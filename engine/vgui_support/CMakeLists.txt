@@ -28,7 +28,7 @@ fwgs_fix_default_msvc_settings()
 cmake_dependent_option(VGUI_SUPPORT_OLD_VGUI_BINARY "Build against old version of VGUI, from HLSDK2.3" OFF "MSVC" OFF)
 
 if(NOT MINGW)
-	file(GLOB VGUI_SUPPORT_SOURCES *.cpp *.c)
+	file(GLOB VGUI_SUPPORT_SOURCES *.cpp)
 else()
 	# Download prebuilt VGUI_support, as there is no way to have same C++ ABI for VC++ and MinGW.
 	# Also there is no way to have a target without source code, so let's just have custom install() rule
