@@ -14,15 +14,13 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 */
 
-#pragma once
 #ifndef MENU_BACKGROUNDBITMAP_H
 #define MENU_BACKGROUNDBITMAP_H
 
 #include "Bitmap.h"
+#include "utlvector.h"
 
 #define ART_BACKGROUND		"gfx/shell/splash.bmp"
-
-#define MAX_BACKGROUNDS 48 // SC 5.0 have 35 tiled backgrounds!
 
 // Ultimate class that support multiple types of background: fillColor, WON-style, GameUI-style
 class CMenuBackgroundBitmap: public CMenuBitmap
@@ -35,40 +33,42 @@ public:
 	void SetInactive(bool) override { }
 	void ToggleInactive() override { }
 
-	bool bForceWON; // if true, szPic will be drawn, instead of Steam-background
 	bool bForceColor; // dialogs should set this
 
 	static void LoadBackground();
 	static bool ShouldDrawLogoMovie() { return s_bEnableLogoMovie; }
 private:
-	void DrawBackgroundLayout( Point p, float xScale, float yScale );
-	// void DrawSplash( Point p, float xScale, float yScale );
+	struct bimage_t
+	{
+		HIMAGE hImage;
+		Point coord;
+		Size size;
+	};
+
+	enum bstate_e
+	{
+		DRAW_COLOR,
+		DRAW_WON,
+		DRAW_STEAM,
+	};
+
+	void DrawBackgroundPiece( const bimage_t &image, Point p, int xOffset, int yOffset, float xScale, float yScale );
+	void DrawSteamBackgroundLayout( Point p, int xOffset, int yOffset, float xScale, float yScale );
 	void DrawColor();
 	void DrawInGameBackground();
 
-	static bool LoadBackgroundImage( const bool gamedirOnly ); // Steam background loader
-	static bool CheckBackgroundSplash( const bool gamedirOnly ); // WON background loader
+	static bool LoadSteamBackground( const bool gamedirOnly ); // Steam background loader
+	static bool LoadWONBackground( const bool gamedirOnly ); // WON background loader
+	static void UpdatePreference();
 
+	static bool s_bEnableLogoMovie, s_bGameHasSteamBackground, s_bGameHasWONBackground;
 
-	//==========
-	// WON-style
-	//==========
-	static bool s_bEnableLogoMovie;
-	static Size s_BackgroundImageSize;
+	static bstate_e s_state;
 
-	//=============
-	// GameUI-style
-	//=============
-	typedef struct
-	{
-		HIMAGE	hImage;
-		Point coord;
-		Size size;
-	} bimage_t;
+	static bimage_t s_WONBackground;
 
-	static int s_iBackgroundCount;
-	static bimage_t s_Backgroudns[MAX_BACKGROUNDS];
-
+	static Size s_SteamBackgroundImageSize;
+	static CUtlVector<bimage_t> s_SteamBackground;
 };
 
 #endif // MENU_BACKGROUNDBITMAP_H

@@ -39,8 +39,7 @@ void CMenuPlayerModelView::VidInit()
 	colorStroke.SetDefault( uiInputFgColor );
 	colorFocus.SetDefault( uiInputTextColor );
 
-	if( iStrokeWidth == 0 )
-		iStrokeWidth = uiStatic.outlineWidth;
+	iStrokeWidth = uiStatic.outlineWidth;
 
 	CMenuBaseItem::VidInit();
 
@@ -84,10 +83,8 @@ bool CMenuPlayerModelView::KeyUp( int key )
 	if( !ent )
 		return true;
 
-	if( key == K_MOUSE1 && mouseYawControl )
-	{
+	if( UI::Key::IsLeftMouse( key ) && mouseYawControl )
 		mouseYawControl = false;
-	}
 
 	return false;
 }
@@ -97,7 +94,7 @@ bool CMenuPlayerModelView::KeyDown( int key )
 	if( !ent )
 		return true;
 
-	if( key == K_MOUSE1 && UI_CursorInRect( m_scPos, m_scSize )
+	if( UI::Key::IsLeftMouse( key ) && UI_CursorInRect( m_scPos, m_scSize )
 		&& !mouseYawControl )
 	{
 		mouseYawControl = true;
@@ -107,37 +104,21 @@ bool CMenuPlayerModelView::KeyDown( int key )
 
 	float yaw = ent->angles[1];
 
-	switch( key )
-	{
-	case K_LEFTARROW:
-	case K_KP_RIGHTARROW:
+	if( UI::Key::IsLeftArrow( key ))
 		yaw -= 10.0f;
-
-		if( yaw > 180.0f ) yaw -= 360.0f;
-		else if( yaw < -180.0f ) yaw += 360.0f;
-
-		ent->angles[1] = ent->curstate.angles[1] = yaw;
-		break;
-	case K_RIGHTARROW:
-	case K_KP_LEFTARROW:
+	else if( UI::Key::IsRightArrow( key ))
 		yaw += 10.0f;
-
-		if( yaw > 180.0f ) yaw -= 360.0f;
-		else if( yaw < -180.0f ) yaw += 360.0f;
-
-		ent->angles[1] = ent->curstate.angles[1] = yaw;
-		break;
-	case K_ENTER:
-	case K_AUX1:
-	case K_MOUSE2:
+	else if( UI::Key::IsEnter( key ))
 		ent->curstate.sequence++;
-		break;
-	default:
-		return CMenuBaseItem::KeyDown( key );
-	}
+	else return CMenuBaseItem::KeyDown( key );
 
-	PlayLocalSound( uiSoundLaunch );
-	return false;
+	if( yaw > 180.0f ) yaw -= 360.0f;
+	else if( yaw < -180.0f ) yaw += 360.0f;
+
+	ent->angles[1] = ent->curstate.angles[1] = yaw;
+
+	PlayLocalSound( uiStatic.sounds[SND_LAUNCH] );
+	return true;
 }
 
 
@@ -162,16 +143,15 @@ void CMenuPlayerModelView::Draw()
 		}
 		else
 		{
-			UI_DrawString( font, m_scPos, m_scSize, "No preview", colorBase, m_scChSize, QM_CENTER, ETF_SHADOW );
+			UI_DrawString( font, m_scPos, m_scSize, L( "No preview" ), colorBase, m_scChSize, QM_CENTER, ETF_SHADOW );
 		}
 	}
 	else
 	{
 		EngFuncs::ClearScene();
 
-		// update renderer timings
-		refdef.time = gpGlobals->time;
-		refdef.frametime = gpGlobals->frametime;
+		if( bDrawAsPlayer )
+			ent->curstate.body = 0; // reset body, so it will be changed by cl_himodels setting
 
 		if( uiStatic.enableAlphaFactor )
 		{

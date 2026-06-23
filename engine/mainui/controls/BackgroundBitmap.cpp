@@ -21,23 +21,28 @@ GNU General Public License for more details.
 #include "BaseWindow.h"
 
 bool CMenuBackgroundBitmap::s_bEnableLogoMovie = false;
-Size CMenuBackgroundBitmap::s_BackgroundImageSize;
-int CMenuBackgroundBitmap::s_iBackgroundCount = 0;
-CMenuBackgroundBitmap::bimage_t CMenuBackgroundBitmap::s_Backgroudns[MAX_BACKGROUNDS];
+bool CMenuBackgroundBitmap::s_bGameHasSteamBackground = false;
+bool CMenuBackgroundBitmap::s_bGameHasWONBackground = false;
+CMenuBackgroundBitmap::bstate_e CMenuBackgroundBitmap::s_state;
+
+CMenuBackgroundBitmap::bimage_t CMenuBackgroundBitmap::s_WONBackground;
+
+Size CMenuBackgroundBitmap::s_SteamBackgroundImageSize;
+CUtlVector<CMenuBackgroundBitmap::bimage_t> CMenuBackgroundBitmap::s_SteamBackground;
 
 CMenuBackgroundBitmap::CMenuBackgroundBitmap() : CMenuBitmap()
 {
 	szPic = 0;
 	iFlags = QMF_INACTIVE|QMF_DISABLESCAILING;
-	bForceWON = false;
 	bForceColor = false;
 }
 
 void CMenuBackgroundBitmap::VidInit()
 {
+	pos.x = pos.y = 0;
+
 	if( m_pParent )
 	{
-		pos.x = pos.y = 0;
 		// fill parent
 		if( m_pParent->iFlags & QMF_DISABLESCAILING )
 		{
@@ -47,6 +52,10 @@ void CMenuBackgroundBitmap::VidInit()
 		{
 			size = m_pParent->size.Scale();
 		}
+	}
+	else
+	{
+		size = Size( ScreenWidth, ScreenHeight );
 	}
 
 	colorBase.SetDefault( 0xFF505050 );
@@ -69,50 +78,24 @@ void CMenuBackgroundBitmap::DrawColor()
 	UI_FillRect( m_scPos, m_scSize, colorBase );
 }
 
-void CMenuBackgroundBitmap::DrawBackgroundLayout( Point p, float xScale, float yScale )
+void CMenuBackgroundBitmap::DrawBackgroundPiece( const bimage_t &image, Point p, int xOffset, int yOffset, float xScale, float yScale )
 {
-	// iterate and draw all the background pieces
-	for (int i = 0; i < s_iBackgroundCount; i++)
-	{
-		bimage_t &bimage = s_Backgroudns[i];
-		int dx = (int)ceil(bimage.coord.x * xScale);
-		int dy = (int)ceil(bimage.coord.y * yScale);
-		int dw = (int)ceil(bimage.size.w * xScale);
-		int dt = (int)ceil(bimage.size.h * yScale);
+	EngFuncs::PIC_Set( image.hImage, 255, 255, 255, 255 );
 
-		EngFuncs::PIC_Set( bimage.hImage, 255, 255, 255, 255 );
-		EngFuncs::PIC_Draw( p.x + dx, p.y + dy, dw, dt );
-	}
+	int dx = (int)ceil( image.coord.x * xScale );
+	int dy = (int)ceil( image.coord.y * yScale );
+	int dw = (int)ceil( image.size.w * xScale );
+	int dt = (int)ceil( image.size.h * yScale );
+
+	EngFuncs::PIC_Draw( p.x + dx + xOffset, p.y + dy + yOffset, dw, dt );
 }
 
-class OverrideAlphaFactor
+void CMenuBackgroundBitmap::DrawSteamBackgroundLayout( Point p, int xOffset, int yOffset, float xScale, float yScale )
 {
-public:
-	OverrideAlphaFactor()
-	{
-		bOverride = false;
-		flAlphaFactor = 1.0f;
-	}
-
-	~OverrideAlphaFactor()
-	{
-		if( bOverride )
-			UI_EnableAlphaFactor( flAlphaFactor );
-	}
-
-	void Override()
-	{
-		if( uiStatic.enableAlphaFactor )
-		{
-			bOverride = true;
-			flAlphaFactor = uiStatic.alphaFactor;
-			UI_DisableAlphaFactor();
-		}
-	}
-
-	bool bOverride;
-	float flAlphaFactor;
-};
+	// iterate and draw all the background pieces
+	for( int i = 0; i < s_SteamBackground.Count(); i++ )
+		DrawBackgroundPiece( s_SteamBackground[i], p, xOffset, yOffset, xScale, yScale );
+}
 
 /*
 =================
@@ -121,21 +104,6 @@ CMenuBackgroundBitmap::Draw
 */
 void CMenuBackgroundBitmap::Draw()
 {
-	// HACKHACK: Don't draw background for root windows, which goes out and in transition
-	// for window which is goes in and in transition, alpha factor should be ignored
-	OverrideAlphaFactor alphaFactor;
-	if( m_pParent && m_pParent->IsWindow() )
-	{
-		CMenuBaseWindow *window = (CMenuBaseWindow*)m_pParent;
-		if( window->IsRoot() && window->eTransitionType )
-		{
-			alphaFactor.Override();
-
-			if( window->eTransitionType == CMenuBaseWindow::ANIM_OUT )
-				return;
-		}
-	}
-
 	if( bForceColor )
 	{
 		DrawColor();
@@ -156,20 +124,34 @@ void CMenuBackgroundBitmap::Draw()
 		}
 	}
 
-	if( s_iBackgroundCount == 0 )
-	{
-		DrawColor();
-		return;
-	}
-
 	if( szPic )
 	{
 		UI_DrawPic( m_scPos, m_scSize, uiColorWhite, szPic );
 		return;
 	}
 
+	if( FBitSet( ui_prefer_won_background->flags, FCVAR_CHANGED ))
+	{
+		UpdatePreference();
+
+		// because the cvar is set by user, tell them if chosen background is not available
+		if( ui_prefer_won_background->value && s_state != DRAW_WON )
+			UI_ShowMessageBox( L( "WON background is not available" ));
+	}
+
 	Point p;
 	float xScale, yScale;
+	Size s;
+
+	if( s_state == DRAW_COLOR )
+	{
+		DrawColor();
+		return;
+	}
+	else if( s_state == DRAW_WON )
+		s = s_WONBackground.size;
+	else
+		s = s_SteamBackgroundImageSize;
 
 	// Disable parallax effect. It's just funny, but not really needed
 #if 0
@@ -179,67 +161,92 @@ void CMenuBackgroundBitmap::Draw()
 
 	// work out scaling factors
 	// work out scaling factors
-	if( ScreenWidth * s_BackgroundImageSize.h > ScreenHeight * s_BackgroundImageSize.w )
+	if( ScreenWidth * s.h > ScreenHeight * s.w )
 	{
-		xScale = ScreenWidth / s_BackgroundImageSize.w * (1 + flParallaxScale);
+		xScale = ScreenWidth / s.w * (1 + flParallaxScale);
 		yScale = xScale;
 	}
 	else
 	{
-		yScale = ScreenHeight / s_BackgroundImageSize.h * (1 + flParallaxScale);
+		yScale = ScreenHeight / s.h * (1 + flParallaxScale);
 		xScale = yScale;
 	}
 #else
 	p.x = p.y = 0;
 
-	// work out scaling factors
-	if( ScreenWidth * s_BackgroundImageSize.h > ScreenHeight * s_BackgroundImageSize.w )
+	// Stretch the background image if the user chose to do so
+	if( ui_background_stretch->value )
 	{
-		xScale = ScreenWidth / s_BackgroundImageSize.w;
-		yScale = xScale;
+		xScale = ScreenWidth / s.w;
+		yScale = ScreenHeight / s.h;
 	}
 	else
 	{
-		yScale = ScreenHeight / s_BackgroundImageSize.h;
-		xScale = yScale;
+		// work out scaling factors
+		if( ScreenWidth * s.h > ScreenHeight * s.w )
+		{
+			xScale = ScreenWidth / s.w;
+			yScale = xScale;
+		}
+		else
+		{
+			yScale = ScreenHeight / s.h;
+			xScale = yScale;
+		}
 	}
 #endif
 
-	DrawBackgroundLayout( p, xScale, yScale );
+	int xOffset = 0, yOffset = 0;
+	if( !ui_background_stretch->value )
+	{
+		// center wide background (for example if background is wider than our window)
+		if( s.w * xScale > ScreenWidth )
+			xOffset = ( ScreenWidth - s.w * xScale ) / 2;
+		else if( s.h * yScale > ScreenHeight )
+			yOffset = ( ScreenHeight - s.h * yScale ) / 2;
+	}
+
+	if( s_state == DRAW_WON )
+		DrawBackgroundPiece( s_WONBackground, p, xOffset, yOffset, xScale, yScale );
+	else
+		DrawSteamBackgroundLayout( p, xOffset, yOffset, xScale, yScale );
 }
 
-bool CMenuBackgroundBitmap::LoadBackgroundImage( bool gamedirOnly )
+bool CMenuBackgroundBitmap::LoadSteamBackground( bool gamedirOnly )
 {
 	char *afile = NULL, *pfile;
 	char token[4096];
 
 	bool loaded = false;
 
-	s_iBackgroundCount = 0;
-	s_bEnableLogoMovie = false; // no logos for Steam background
+	// try 25'th anniversary update background first
+	if( FBitSet( gMenu.m_gameinfo.flags, GFL_HD_BACKGROUND ))
+		afile = (char *)EngFuncs::COM_LoadFile( "resource/HD_BackgroundLayout.txt" );
 
-	afile = (char*)EngFuncs::COM_LoadFile( "resource/BackgroundLayout.txt" );
+	if( !afile )
+		afile = (char *)EngFuncs::COM_LoadFile( "resource/BackgroundLayout.txt" );
 
-	if( !afile ) return false;
+	if( !afile )
+		return false;
 
 	pfile = afile;
 
-	pfile = EngFuncs::COM_ParseFile( pfile, token );
+	pfile = EngFuncs::COM_ParseFile( pfile, token, sizeof( token ) );
 	if( !pfile || strcmp( token, "resolution" )) // resolution at first!
 		goto freefile;
 
-	pfile = EngFuncs::COM_ParseFile( pfile, token );
+	pfile = EngFuncs::COM_ParseFile( pfile, token, sizeof( token ) );
 	if( !pfile ) goto freefile;
 
-	s_BackgroundImageSize.w = atoi( token );
+	s_SteamBackgroundImageSize.w = atoi( token );
 
-	pfile = EngFuncs::COM_ParseFile( pfile, token );
+	pfile = EngFuncs::COM_ParseFile( pfile, token, sizeof( token ) );
 	if( !pfile ) goto freefile;
 
-	s_BackgroundImageSize.h = atoi( token );
+	s_SteamBackgroundImageSize.h = atoi( token );
 
 	// Now read all tiled background list
-	while(( pfile = EngFuncs::COM_ParseFile( pfile, token )))
+	while(( pfile = EngFuncs::COM_ParseFile( pfile, token, sizeof( token ) )))
 	{
 		bimage_t img;
 
@@ -251,22 +258,21 @@ bool CMenuBackgroundBitmap::LoadBackgroundImage( bool gamedirOnly )
 		if( !img.hImage ) goto freefile;
 
 		// ignore "scaled" attribute. What does it mean?
-		pfile = EngFuncs::COM_ParseFile( pfile, token );
+		pfile = EngFuncs::COM_ParseFile( pfile, token, sizeof( token ) );
 		if( !pfile ) goto freefile;
 
-		pfile = EngFuncs::COM_ParseFile( pfile, token );
+		pfile = EngFuncs::COM_ParseFile( pfile, token, sizeof( token ) );
 		if( !pfile ) goto freefile;
 		img.coord.x = atoi( token );
 
-		pfile = EngFuncs::COM_ParseFile( pfile, token );
+		pfile = EngFuncs::COM_ParseFile( pfile, token, sizeof( token ) );
 		if( !pfile ) goto freefile;
 		img.coord.y = atoi( token );
 
 		img.size.w = EngFuncs::PIC_Width( img.hImage );
 		img.size.h = EngFuncs::PIC_Height( img.hImage );
 
-		s_Backgroudns[s_iBackgroundCount] = img;
-		s_iBackgroundCount++;
+		s_SteamBackground.AddToTail( img );
 	}
 
 	loaded = true;
@@ -276,62 +282,90 @@ freefile:
 	return loaded;
 }
 
-bool CMenuBackgroundBitmap::CheckBackgroundSplash( bool gamedirOnly )
+bool CMenuBackgroundBitmap::LoadWONBackground( bool gamedirOnly )
 {
-	s_iBackgroundCount = 0; // not a steam background
-	s_bEnableLogoMovie = false;
-
 	if( EngFuncs::FileExists( ART_BACKGROUND, gamedirOnly ))
 	{
-		s_Backgroudns[0].hImage = EngFuncs::PIC_Load( ART_BACKGROUND );
+		bimage_t img;
 
-		if( !s_Backgroudns[0].hImage )
+		img.hImage = EngFuncs::PIC_Load( ART_BACKGROUND );
+
+		if( !img.hImage )
 			return false;
 
-		s_Backgroudns[0].coord.x = s_Backgroudns[0].coord.y = 0;
-		s_Backgroudns[0].size.w = EngFuncs::PIC_Width( s_Backgroudns[0].hImage );
-		s_Backgroudns[0].size.h = EngFuncs::PIC_Height( s_Backgroudns[0].hImage );
-		s_BackgroundImageSize = s_Backgroudns[0].size;
-		s_iBackgroundCount = 1;
-
-		if( gamedirOnly )
-		{
-			// if we doesn't have logo.avi in gamedir we don't want to draw it
-			s_bEnableLogoMovie = EngFuncs::FileExists( "media/logo.avi", TRUE );
-		}
+		img.coord.x = img.coord.y = 0;
+		img.size.w = EngFuncs::PIC_Width( img.hImage );
+		img.size.h = EngFuncs::PIC_Height( img.hImage );
+		s_WONBackground = img;
 
 		return true;
 	}
-	
+
 	return false;
+}
+
+void CMenuBackgroundBitmap::UpdatePreference()
+{
+	if( ui_prefer_won_background->value )
+	{
+		if( s_bGameHasWONBackground )
+			s_state = DRAW_WON;
+		else if( s_bGameHasSteamBackground )
+			s_state = DRAW_STEAM;
+		else if( s_WONBackground.hImage )
+			s_state = DRAW_WON;
+		else if( s_SteamBackground.Count() > 0 )
+			s_state = DRAW_STEAM;
+		else
+			s_state = DRAW_COLOR;
+	}
+	else
+	{
+		if( s_bGameHasSteamBackground )
+			s_state = DRAW_STEAM;
+		else if( s_bGameHasWONBackground )
+			s_state = DRAW_WON;
+		else if( s_SteamBackground.Count() > 0 )
+			s_state = DRAW_STEAM;
+		else if( s_WONBackground.hImage )
+			s_state = DRAW_WON;
+		else
+			s_state = DRAW_COLOR;
+	}
+
+	// Enable logo.avi only for WON background, disable otherwise
+	if( s_state == DRAW_WON )
+		s_bEnableLogoMovie = EngFuncs::FileExists( "media/logo.avi", true );
+	else
+		s_bEnableLogoMovie = false;
+
+	ClearBits( ui_prefer_won_background->flags, FCVAR_CHANGED );
 }
 
 void CMenuBackgroundBitmap::LoadBackground()
 {
-	if( s_iBackgroundCount != 0 )
+	s_bEnableLogoMovie = false;
+	s_bGameHasSteamBackground = false;
+	s_bGameHasWONBackground = false;
+
+	if( uiStatic.lowmemory )
 		return;
 
-	// try to load backgrounds from mod
-	if( LoadBackgroundImage( true ) )
+	if( LoadSteamBackground( true ))
 	{
-		Con_DPrintf( "Loading new-style background from game succeded\n" );
-		return; // at first check new gameui backgrounds
+		Con_DPrintf( "%s: found %s background in %s directory\n", __func__, "steam", "game" );
+		s_bGameHasSteamBackground = true;
 	}
-	if( CheckBackgroundSplash( true ) )
-	{
-		Con_DPrintf( "Loading old-style background from game succeded\n" );
-		return; // then check won-style
-	}
+	else if( LoadSteamBackground( false ))
+		Con_DPrintf( "%s: found %s background in %s directory\n", __func__, "steam", "base" );
 
-	// try from base directory
-	if( LoadBackgroundImage( false ) )
+	if( LoadWONBackground( true ))
 	{
-		Con_DPrintf( "Loading new-style background from base succeded\n" );
-		return; // gameui bgs are allowed to be inherited
+		Con_DPrintf( "%s: found %s background in %s directory\n", __func__, "won", "game" );
+		s_bGameHasWONBackground = true;
 	}
-	if( CheckBackgroundSplash( false ) )
-	{
-		Con_DPrintf( "Loading old-style background from base succeded\n" );
-		return;
-	}
+	else if( LoadWONBackground( false ))
+		Con_DPrintf( "%s: found %s background in %s directory\n", __func__, "won", "base" );
+
+	UpdatePreference();
 }

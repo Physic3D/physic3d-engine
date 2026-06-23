@@ -12,12 +12,12 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 */
-#pragma once
 #ifndef FRAMEWORK_H
 #define FRAMEWORK_H
 
 #include "BaseWindow.h"
 #include "PicButton.h"
+#include "Primitive.h"
 
 #define MAX_FRAMEWORK_PICBUTTONS 16
 
@@ -37,19 +37,39 @@ public:
 	void Init() final override;
 	void VidInit() final override;
 	void Hide() override;
-	bool IsRoot() override { return true; }
+	bool IsRoot() const override { return true; }
+
+	bool KeyDown( int key ) override;
 
 	CMenuPicButton *AddButton( const char *szName, const char *szStatus,
 		EDefaultBtns iButton, CEventCallback onReleased = CEventCallback(), int iFlags = 0 );
 
 	CMenuPicButton *AddButton( const char *szName, const char *szStatus,
-		const char *szButtonPath, CEventCallback onReleased = CEventCallback(), int iFlags = 0 );
+		const char *szButtonPath, CEventCallback onReleased = CEventCallback(), int iFlags = 0, int hotkey = 0 );
+
+	void RealignButtons();
 
 	bool DrawAnimation() override;
 
-	CMenuBannerBitmap banner;
+	void PrepareBannerAnimation( EAnimation direction, CMenuPicButton *initiator );
+
+	class CMenuBannerBitmap : public CMenuBaseItem
+	{
+	public:
+		CMenuBannerBitmap();
+		void Draw() override;
+		void SetPicture( const char *pic );
+
+		void Draw( Point pt, Size sz );
+
+	private:
+		CImage image;
+	} banner;
 
 protected:
+	EAnimation bannerAnimDirection;
+	Rect bannerRects[2];
+
 	CMenuPicButton *m_apBtns[MAX_FRAMEWORK_PICBUTTONS];
 	int m_iBtnsNum;
 };

@@ -20,13 +20,84 @@ GNU General Public License for more details.
 #include "PicButton.h"
 #include "Utils.h"
 #include "Scissor.h"
-#include "BtnsBMPTable.h"
+#include "Btns.h"
 #include <stdlib.h>
+#include "Framework.h"
 
-// Button stack
-CMenuPicButton *ButtonStack[UI_MAX_MENUDEPTH] = { 0 };
-int		ButtonStackDepth = 0;
-
+static int g_hotkeys[PC_BUTTONCOUNT] =
+{
+	'n', // PC_NEW_GAME = 0,
+	'r', // PC_RESUME_GAME,
+	'h', // PC_HAZARD_COURSE,
+	'c', // PC_CONFIG,
+	'l', // PC_LOAD_GAME,
+	's', // PC_SAVE_LOAD_GAME,
+	'v', // PC_VIEW_README,
+	'q', // PC_QUIT,
+	'm', // PC_MULTIPLAYER,
+	'e', // PC_EASY,
+	'm', // PC_MEDIUM,
+	'd', // PC_DIFFICULT,
+	's', // PC_SAVE_GAME,
+	'l', // PC_LOAD_GAME2,
+	'c', // PC_CANCEL,
+	'g', // PC_GAME_OPTIONS,
+	'v', // PC_VIDEO,
+	'a', // PC_AUDIO,
+	'c', // PC_CONTROLS,
+	'd', // PC_DONE,
+	'q', // PC_QUICKSTART,
+	'u', // PC_USE_DEFAULTS,
+	'o', // PC_OK,
+	'v', // PC_VID_OPT,
+	'm', // PC_VID_MODES,
+	'a', // PC_ADV_CONTROLS,
+	'o', // PC_ORDER_HL,
+	'd', // PC_DELETE,
+	'i', // PC_INET_GAME,
+	'h', // PC_CHAT_ROOMS,
+	'l', // PC_LAN_GAME,
+	'u', // PC_CUSTOMIZE,
+	's', // PC_SKIP,
+	'e', // PC_EXIT,
+	'c', // PC_CONNECT,
+	'r', // PC_REFRESH,
+	'f', // PC_FILTER,
+	'f', // PC_FILTER2,
+	'c', // PC_CREATE,
+	't', // PC_CREATE_GAME,
+	'h', // PC_CHAT_ROOMS2,
+	'l', // PC_LIST_ROOMS,
+	's', // PC_SEARCH,
+	's', // PC_SERVERS,
+	'j', // PC_JOIN,
+	'f', // PC_FIND,
+	'r', // PC_CREATE_ROOM,
+	'j', // PC_JOIN_GAME,
+	's', // PC_SEARCH_GAMES,
+	'f', // PC_FIND_GAME,
+	't', // PC_START_GAME,
+	'v', // PC_VIEW_GAME_INFO,
+	'u', // PC_UPDATE,
+	'a', // PC_ADD_SERVER,
+	'd', // PC_DISCONNECT,
+	'o', // PC_CONSOLE,	// a1ba: set to O
+	'o', // PC_CONTENT_CONTROL,
+	'u', // PC_UPDATE2,
+	'w', // PC_VISIT_WON,
+	'p', // PC_PREVIEWS,
+	'a', // PC_ADV_OPT,
+	0, // PC_3DINFO_SITE,
+	'u', // PC_CUSTOM_GAME,
+	'a', // PC_ACTIVATE,
+	'i', // PC_INSTALL,
+	'v', // PC_VISIT_WEB_SITE,
+	'r', // PC_REFRESH_LIST,
+	'e', // PC_DEACTIVATE,
+	'a', // PC_ADV_OPT2,
+	's', // PC_SPECTATE_GAME,
+	'p', // PC_SPECTATE_GAMES,
+};
 
 CMenuPicButton::CMenuPicButton() : BaseClass()
 {
@@ -36,22 +107,18 @@ CMenuPicButton::CMenuPicButton() : BaseClass()
 
 	iFocusStartTime = 0;
 
-	eTextAlignment = QM_TOPLEFT;
+	eTextAlignment = QM_LEFT;
 
 	hPic = 0;
-	button_id = 0;
+	hotkey = 0;
+	button_id = -1;
 	iOldState = BUTTON_NOFOCUS;
 	m_iLastFocusTime = -512;
 	bPulse = false;
 
-	SetSize( UI_BUTTONS_WIDTH, UI_BUTTONS_HEIGHT );
+	size = uiStatic.buttons_draw_size;
 
-#ifdef MAINUI_RENDER_PICBUTTON_TEXT
-	SetCharSize( QM_LIGHTBLUR );
-#endif
-
-	TransPic = 0;
-	for( auto &q : TitleLerpQuads ) q = Quad();
+	SetCharSize( QM_DEFAULTFONT );
 }
 
 /*
@@ -61,24 +128,69 @@ CMenuPicButton::Key
 */
 bool CMenuPicButton::KeyUp( int key )
 {
-	const char *sound = 0;
+	bool handled = false;
 
 	if( UI::Key::IsEnter( key ) && !(iFlags & QMF_MOUSEONLY) )
-		sound = uiSoundLaunch;
+		handled = true;
 	else if( UI::Key::IsLeftMouse( key ) && ( iFlags & QMF_HASMOUSEFOCUS ) )
-		sound = uiSoundLaunch;
+		handled = true;
 
-	if( sound )
-	{
-		temp = this;
+	if( handled )
 		_Event( QM_RELEASED );
-#if !defined(TA_ALT_MODE2)
-		SetTransPicForLast( hPic );
-#endif
-		PlayLocalSound( sound );
-	}
 
-	return sound != NULL;
+	return handled;
+}
+
+void CMenuPicButton::_Event( int ev )
+{
+	BaseClass::_Event( ev );
+	if( ev == QM_RELEASED )
+	{
+		PlayLocalSound( uiStatic.sounds[SND_LAUNCH] );
+		CheckWindowChanged( );
+	}
+}
+
+void CMenuPicButton::CheckWindowChanged()
+{
+	// parent is not a window, ignore
+	if( !m_pParent->IsWindow())
+		return;
+
+	CMenuBaseWindow *parentWindow = (CMenuBaseWindow*)m_pParent;
+	CMenuBaseWindow *newWindow = parentWindow->WindowStack()->Current();
+
+	// menu is closed, ignore
+	if( !newWindow )
+		return;
+
+	// no change, ignore
+	if( parentWindow == newWindow )
+		return;
+
+	// parent and new are not a root windows, ignore
+	if( !parentWindow->IsRoot() || !newWindow->IsRoot() )
+		return;
+
+	// decide transition direction
+	if( FBitSet( parentWindow->iFlags, QMF_CLOSING ))
+	{
+		// our parent window is closing right now
+		// play backward animation
+		// Con_NPrintf( 10, "%s banner down", parentWindow->szName );
+
+		CMenuFramework *f = (CMenuFramework*)parentWindow;
+		f->PrepareBannerAnimation( CMenuFramework::ANIM_CLOSING, nullptr );
+	}
+	else
+	{
+		// new window overlaps parent window
+		// play forward animation
+		// Con_NPrintf( 10, "%s banner up", newWindow->szName );
+
+		CMenuFramework *f = (CMenuFramework*)newWindow;
+		f->PrepareBannerAnimation( CMenuFramework::ANIM_OPENING, this );
+	}
 }
 
 bool CMenuPicButton::KeyDown( int key )
@@ -96,25 +208,15 @@ bool CMenuPicButton::KeyDown( int key )
 	return handled;
 }
 
-
-// #define ALT_PICBUTTON_FOCUS_ANIM
-
 /*
 =================
 CMenuPicButton::DrawButton
 =================
 */
-void CMenuPicButton::DrawButton(int r, int g, int b, int a, wrect_t *rects, int state)
+void CMenuPicButton::DrawButton( int r, int g, int b, int a, wrect_t *rects, int state )
 {
 	EngFuncs::PIC_Set( hPic, r, g, b, a );
-#ifdef ALT_PICBUTTON_FOCUS_ANIM
-	UI::PushScissor( m_scPos.x, m_scPos.y, uiStatic.buttons_draw_width * flFill, uiStatic.buttons_draw_height );
-#endif
-	EngFuncs::PIC_DrawAdditive( m_scPos.x, m_scPos.y, uiStatic.buttons_draw_width, uiStatic.buttons_draw_height, &rects[state] );
-
-#ifdef ALT_PICBUTTON_FOCUS_ANIM
-	UI::PopScissor();
-#endif
+	EngFuncs::PIC_DrawAdditive( m_scPos, uiStatic.buttons_draw_size.Scale(), &rects[state] );
 }
 
 /*
@@ -125,23 +227,6 @@ CMenuPicButton::Draw
 void CMenuPicButton::Draw( )
 {
 	int state = BUTTON_NOFOCUS;
-
-#ifdef CS16CLIENT
-	if( UI_CursorInRect( m_scPos, m_scSize ) &&
-		m_pParent && m_pParent->IsVisible() )
-	{
-		if( !bRollOver )
-		{
-			PlayLocalSound( uiSoundRollOver );
-			bRollOver = true;
-		}
-	}
-	else
-	{
-		if( bRollOver )
-			bRollOver = false;
-	}
-#endif // CS16CLIENT
 
 	if( iFlags & (QMF_HASMOUSEFOCUS|QMF_HASKEYBOARDFOCUS))
 	{
@@ -155,12 +240,11 @@ void CMenuPicButton::Draw( )
 	if( iOldState == BUTTON_NOFOCUS && state != BUTTON_NOFOCUS )
 		iFocusStartTime = uiStatic.realTime;
 
-#ifndef CS16CLIENT
-	if( szStatusText && iFlags & QMF_NOTIFY )
+	if( szStatusText && FBitSet( iFlags, QMF_NOTIFY ) && !FBitSet( gMenu.m_gameinfo.flags, GFL_NOSKILLS ))
 	{
 		Point coord;
 
-		coord.x = m_scPos.x + 290 * uiStatic.scaleX;
+		coord.x = m_scPos.x + ( uiStatic.buttons_draw_size.w + 40 ) * uiStatic.scaleX;
 		coord.y = m_scPos.y + m_scSize.h / 2 - EngFuncs::ConsoleCharacterHeight() / 2;
 
 		int	r, g, b;
@@ -169,25 +253,35 @@ void CMenuPicButton::Draw( )
 		EngFuncs::DrawSetTextColor( r, g, b );
 		EngFuncs::DrawConsoleString( coord, szStatusText );
 	}
-#endif
 
 	int a = (512 - (uiStatic.realTime - m_iLastFocusTime)) >> 1;
 
-	if( hPic )
+	if( hPic && !uiStatic.renderPicbuttonText )
 	{
-		if( ButtonStackDepth && ButtonStack[ButtonStackDepth-1] == this )
-			return;
-
 		int r, g, b;
 
 		UnpackRGB( r, g, b, iFlags & QMF_GRAYED ? uiColorDkGrey : uiColorWhite );
 
-		wrect_t rects[] =
+		wrect_t rects[3];
+		for( int i = 0; i < 3; i++ )
 		{
-		{ 0, uiStatic.buttons_width, 0,  26 },
-		{ 0, uiStatic.buttons_width, 26, 52 },
-		{ 0, uiStatic.buttons_width, 52, 78 },
-		};
+			if( button_id >= 0 )
+			{
+				rects[i].left = uiStatic.btns.GetX( button_id );
+				rects[i].right = uiStatic.btns.GetX( button_id ) + uiStatic.btns.GetWidth();
+				rects[i].top = uiStatic.btns.GetY( button_id ) + i * uiStatic.btns.GetTexStride();
+				rects[i].bottom = rects[i].top + uiStatic.btns.GetTexH();
+			}
+			else
+			{
+				rects[i].left = 0;
+				rects[i].right = EngFuncs::PIC_Width( hPic );
+				rects[i].top = round( EngFuncs::PIC_Height( hPic ) * i / 3.0f );
+				rects[i].bottom = round( EngFuncs::PIC_Height( hPic ) * ( i + 1 ) / 3.0f );
+			}
+		}
+
+		// decay
 		if( state == BUTTON_NOFOCUS && a > 0 )
 		{
 			DrawButton( r, g, b, a, rects, BUTTON_FOCUS );
@@ -197,88 +291,90 @@ void CMenuPicButton::Draw( )
 		if( ( state == BUTTON_NOFOCUS && bPulse ) ||
 			( state == BUTTON_FOCUS   && eFocusAnimation == QM_PULSEIFFOCUS ) )
 		{
-			EngFuncs::PIC_Set( hPic, r, g, b, 255 *(0.5 + 0.5 * sin( (float)uiStatic.realTime / ( UI_PULSE_DIVISOR * 2 ))));
-			EngFuncs::PIC_DrawAdditive( m_scPos.x, m_scPos.y, uiStatic.buttons_draw_width, uiStatic.buttons_draw_height, &rects[BUTTON_FOCUS] );
+			a = 255 * (0.5f + 0.5f * sin( (float)uiStatic.realTime / ( UI_PULSE_DIVISOR * 2 )));
 
-			EngFuncs::PIC_DrawAdditive( m_scPos.x, m_scPos.y, uiStatic.buttons_draw_width, uiStatic.buttons_draw_height, &rects[BUTTON_NOFOCUS] );
+			DrawButton( r, g, b, a, rects, BUTTON_FOCUS );
+			DrawButton( r, g, b, 255, rects, BUTTON_NOFOCUS );
+		}
+		// special handling for focused
+		else if( state == BUTTON_FOCUS )
+		{
+			DrawButton( r, g, b, 255, rects, BUTTON_FOCUS );
+			DrawButton( r, g, b, 255, rects, BUTTON_NOFOCUS );
 		}
 		else
 		{
-			// special handling for focused
-			if( state == BUTTON_FOCUS )
-			{
-				EngFuncs::PIC_Set( hPic, r, g, b, 255 );
-				EngFuncs::PIC_DrawAdditive( m_scPos.x, m_scPos.y, uiStatic.buttons_draw_width, uiStatic.buttons_draw_height, &rects[BUTTON_FOCUS] );
+			// just draw
+			DrawButton( r, g, b, 255, rects, state );
+		}
+	}
+	else if( !uiStatic.lowmemory )
+	{
+		const uint heavy_blur_flags = ETF_NOSIZELIMIT | ETF_FORCECOL;
+		const uint light_blur_flags = ETF_NOSIZELIMIT | ETF_FORCECOL | ETF_ADDITIVE;
+		CColor light_blur_color, heavy_blur_color = colorBase;
+		Point pos = m_scPos;
 
-				EngFuncs::PIC_Set( hPic, r, g, b, 255 ); // set colors again
-				EngFuncs::PIC_DrawAdditive( m_scPos.x, m_scPos.y, uiStatic.buttons_draw_width, uiStatic.buttons_draw_height, &rects[BUTTON_NOFOCUS] );
-			}
-			else
+		if( iFlags & QMF_GRAYED )
+			light_blur_color = InterpColor( uiColorBlack, colorBase, 0.333f ); // because additive, tone down all channels
+		else
+			light_blur_color = colorBase;
+
+		pos.x += 7 * uiStatic.scaleX;
+		pos.y -= uiStatic.scaleY;
+
+		if( this != m_pParent->ItemAtCursor() )
+		{
+			if( a > 0 )
 			{
-				// just draw
-				EngFuncs::PIC_Set( hPic, r, g, b, 255 );
-				EngFuncs::PIC_DrawAdditive( m_scPos.x, m_scPos.y, uiStatic.buttons_draw_width, uiStatic.buttons_draw_height, &rects[state] );
+				UI_DrawString( uiStatic.hHeavyBlur, pos, m_scSize, szName,
+					PackAlpha( heavy_blur_color, a ), m_scChSize, eTextAlignment, heavy_blur_flags );
 			}
+			UI_DrawString( uiStatic.hLightBlur, pos, m_scSize, szName, light_blur_color, m_scChSize, eTextAlignment, light_blur_flags );
+		}
+		else if( m_bPressed )
+		{
+			UI_DrawString( uiStatic.hHeavyBlur, pos, m_scSize, szName, heavy_blur_color, m_scChSize, eTextAlignment, heavy_blur_flags );
+			UI_DrawString( uiStatic.hLightBlur, pos, m_scSize, szName, 0xFF000000, m_scChSize, eTextAlignment, light_blur_flags & ( ~ETF_ADDITIVE ));
+		}
+		else if( eFocusAnimation == QM_HIGHLIGHTIFFOCUS )
+		{
+			UI_DrawString( uiStatic.hHeavyBlur, pos, m_scSize, szName, heavy_blur_color, m_scChSize, eTextAlignment, heavy_blur_flags );
+			UI_DrawString( uiStatic.hLightBlur, pos, m_scSize, szName, light_blur_color, m_scChSize, eTextAlignment, light_blur_flags );
+		}
+		else if( eFocusAnimation == QM_PULSEIFFOCUS )
+		{
+			float pulsar = 0.5f + 0.5f * sin( (float)uiStatic.realTime / UI_PULSE_DIVISOR );
+
+			UI_DrawString( uiStatic.hHeavyBlur, pos, m_scSize, szName,
+				InterpColor( uiColorBlack, heavy_blur_color, pulsar ), m_scChSize, eTextAlignment, heavy_blur_flags );
+			UI_DrawString( uiStatic.hLightBlur, pos, m_scSize, szName, light_blur_color, m_scChSize, eTextAlignment, light_blur_flags );
 		}
 	}
 	else
 	{
-		uint textflags = 0;
-#ifndef MAINUI_RENDER_PICBUTTON_TEXT
-		textflags |= ((iFlags & QMF_DROPSHADOW) ? ETF_SHADOW : 0 );
-#else
-		textflags |= ETF_ADDITIVE;
-#endif
+		uint textflags = ETF_NOSIZELIMIT | ETF_FORCECOL;
 
-		textflags |= ETF_NOSIZELIMIT | ETF_FORCECOL;
+		SetBits( textflags, (iFlags & QMF_DROPSHADOW) ? ETF_SHADOW : 0 );
 
 		if( iFlags & QMF_GRAYED )
 		{
-#ifdef MAINUI_RENDER_PICBUTTON_TEXT
-			if( a > 0 )
-			{
-				UI_DrawString( uiStatic.hHeavyBlur, m_scPos, m_scSize, szName,
-					InterpColor( uiColorBlack, uiColorDkGrey, a / 255.0f ), m_scChSize, eTextAlignment, textflags );
-			}
-#endif
 			UI_DrawString( font, m_scPos, m_scSize, szName, uiColorDkGrey, m_scChSize, eTextAlignment, textflags );
-			return; // grayed
 		}
-
-		if(this != m_pParent->ItemAtCursor())
+		else if( this != m_pParent->ItemAtCursor() )
 		{
-#ifdef MAINUI_RENDER_PICBUTTON_TEXT
-			if( a > 0 )
-			{
-				UI_DrawString( uiStatic.hHeavyBlur, m_scPos, m_scSize, szName,
-					InterpColor( uiColorBlack, colorBase, a / 255.0f ), m_scChSize, eTextAlignment, textflags );
-			}
-#endif
 			UI_DrawString( font, m_scPos, m_scSize, szName, colorBase, m_scChSize, eTextAlignment, textflags );
-			return; // no focus
 		}
-
-		if( eFocusAnimation == QM_HIGHLIGHTIFFOCUS )
+		else if( eFocusAnimation == QM_HIGHLIGHTIFFOCUS )
 		{
-#ifdef MAINUI_RENDER_PICBUTTON_TEXT
-			UI_DrawString( uiStatic.hHeavyBlur, m_scPos, m_scSize, szName, colorBase, m_scChSize, eTextAlignment, textflags );
-			UI_DrawString( font, m_scPos, m_scSize, szName, colorBase, m_scChSize, eTextAlignment, textflags );
-#else
 			UI_DrawString( font, m_scPos, m_scSize, szName, colorFocus, m_scChSize, eTextAlignment, textflags );
-#endif
 		}
 		else if( eFocusAnimation == QM_PULSEIFFOCUS )
 		{
-			float pulsar = 0.5 + 0.5 * sin( (float)uiStatic.realTime / UI_PULSE_DIVISOR );
-#ifdef MAINUI_RENDER_PICBUTTON_TEXT
+			float pulsar = 0.5f + 0.5f * sin( (float)uiStatic.realTime / UI_PULSE_DIVISOR );
 
-			UI_DrawString( uiStatic.hHeavyBlur, m_scPos, m_scSize, szName,
-				InterpColor( uiColorBlack, colorBase, pulsar ), m_scChSize, eTextAlignment, textflags );
-			UI_DrawString( font, m_scPos, m_scSize, szName, colorBase, m_scChSize, eTextAlignment, textflags );
-#else
 			UI_DrawString( font, m_scPos, m_scSize, szName,
 				InterpColor( colorBase, colorFocus, pulsar ), m_scChSize, eTextAlignment, textflags );
-#endif
 		}
 	}
 
@@ -287,237 +383,21 @@ void CMenuPicButton::Draw( )
 
 void CMenuPicButton::SetPicture( EDefaultBtns ID )
 {
-#ifndef MAINUI_RENDER_PICBUTTON_TEXT
 	if( ID < 0 || ID > PC_BUTTONCOUNT )
 		return; // bad id
 
-	hPic = uiStatic.buttonsPics[ID];
-
+	hPic = uiStatic.btns.GetPic( ID );
 	button_id = ID;
-#endif
+	hotkey = g_hotkeys[ID];
 }
 
-void CMenuPicButton::SetPicture( const char *filename )
+void CMenuPicButton::SetPicture( const char *filename, int hk )
 {
-#ifndef MAINUI_RENDER_PICBUTTON_TEXT
 	hPic = EngFuncs::PIC_Load( filename );
-#endif
+	hotkey = hk;
 }
 
-// =========================== Animations ===========================
-
-
-// Pressed cancel, done or ESC in menu
-void CMenuPicButton::PopPButtonStack()
+bool CMenuPicButton::HotKey( int key )
 {
-	if( ButtonStackDepth )
-	{
-		if( ButtonStack[ButtonStackDepth-1] )
-		{
-			ButtonStack[ButtonStackDepth-1]->SetTitleAnim( AS_TO_BUTTON );
-		}
-
-		ButtonStackDepth--;
-	}
-}
-
-const char *CMenuPicButton::GetLastButtonText()
-{
-	if( ButtonStackDepth )
-	{
-		if( ButtonStack[ButtonStackDepth-1] )
-		{
-			return ButtonStack[ButtonStackDepth-1]->szName;
-		}
-	}
-	return NULL;
-}
-
-// Opened new menu, awaiting Quad from Banner
-void CMenuPicButton::PushPButtonStack()
-{
-	if( ButtonStackDepth && ButtonStack[ButtonStackDepth-1] == this )
-		return;
-
-	ButtonStack[ButtonStackDepth++] = this;
-}
-
-int	CMenuPicButton::transition_state = CMenuPicButton::AS_TO_TITLE;
-int	CMenuPicButton::transition_initial_time;
-CMenuPicButton* CMenuPicButton::temp = NULL;
-HIMAGE CMenuPicButton::s_hCurrentTransPic = 0;
-wrect_t CMenuPicButton::s_pCurrentTransRect = { 0, 0, 0, 0 };
-CMenuPicButton::Quad CMenuPicButton::s_CurrentLerpQuads[2];
-
-float CMenuPicButton::GetTitleTransFraction( void )
-{
-	float fraction = (float)(uiStatic.realTime - transition_initial_time ) / TTT_PERIOD;
-
-	if( fraction > 1.0f )
-		fraction = 1.0f;
-
-	return fraction;
-}
-
-void CMenuPicButton::SetTitleAnim( int anim_state )
-{
-	static wrect_t r = { 0, 0, 26, 51 };
-	CMenuPicButton *button = NULL;
-
-	r.right = uiStatic.buttons_width;
-
-	// choose target button
-	if( anim_state == AS_TO_TITLE )
-	{
-		if( temp )
-			temp->PushPButtonStack();
-
-		button = temp;
-	}
-	else
-	{
-		if( !ButtonStackDepth )
-			return;
-
-		button = ButtonStack[ButtonStackDepth-1];
-	}
-
-	if(	!button )
-		return;
-
-	if( !button->hPic )
-		return;
-
-	if( !button->bEnableTransitions )
-		return;
-
-	transition_state = anim_state;
-
-	button->TitleLerpQuads[0].x = button->m_scPos.x;
-	button->TitleLerpQuads[0].y = button->m_scPos.y;
-	button->TitleLerpQuads[0].lx = button->m_scSize.w;
-	button->TitleLerpQuads[0].ly = button->m_scSize.h;
-
-	transition_initial_time = uiStatic.realTime;
-	s_hCurrentTransPic = button->TransPic;
-	s_pCurrentTransRect = r;
-	memcpy( s_CurrentLerpQuads, button->TitleLerpQuads, sizeof( s_CurrentLerpQuads ));
-}
-
-void CMenuPicButton::RootChanged( bool isForward )
-{
-	// A guarantee, that we have changed root active menu
-	if( isForward )
-	{
-		SetTitleAnim( AS_TO_TITLE );
-	}
-	else
-	{
-		SetTitleAnim( AS_TO_BUTTON );
-		PopPButtonStack();
-	}
-}
-
-CMenuPicButton::Quad CMenuPicButton::LerpQuad( Quad a, Quad b, float frac )
-{
-	Quad c;
-
-	c.x = a.x + (b.x - a.x) * frac;
-	c.y = a.y + (b.y - a.y) * frac;
-	c.lx = a.lx + (b.lx - a.lx) * frac;
-	c.ly = a.ly + (b.ly - a.ly) * frac;
-
-	return c;
-}
-
-void CMenuPicButton::SetupTitleQuadForLast(int x, int y, int w, int h)
-{
-	if( !ButtonStackDepth )
-		return;
-
-	if( !ButtonStack[ButtonStackDepth-1] )
-		return;
-
-	ButtonStack[ButtonStackDepth-1]->SetupTitleQuad( x, y, w, h );
-
-}
-
-void CMenuPicButton::SetTransPicForLast( HIMAGE pic )
-{
-	if( !ButtonStackDepth )
-		return;
-
-	if( !ButtonStack[ButtonStackDepth-1] )
-		return;
-
-	ButtonStack[ButtonStackDepth-1]->SetTransPic( pic );
-}
-
-// TODO: Find CMenuBannerBitmap in next menu page and correct
-void CMenuPicButton::SetupTitleQuad( int x, int y, int w, int h )
-{
-	TitleLerpQuads[1].x  = x * uiStatic.scaleX;
-	TitleLerpQuads[1].y  = y * uiStatic.scaleY;
-	TitleLerpQuads[1].lx = w;
-	TitleLerpQuads[1].ly = h;
-
-	s_CurrentLerpQuads[1] = TitleLerpQuads[1];
-}
-
-void CMenuPicButton::SetTransPic(HIMAGE pic)
-{
-	TransPic = pic;
-
-	s_hCurrentTransPic = TransPic;
-}
-
-bool CMenuPicButton::DrawTitleAnim( CMenuBaseWindow::EAnimation state )
-{
-#if 1
-	float frac = GetTitleTransFraction();
-#else
-	float frac = (sin(gpGlobals->time*4)+1)/2;
-#endif
-
-#ifdef TA_ALT_MODE
-	if( frac >= 1.0f && transition_state == AS_TO_BUTTON )
-#else
-	if( frac >= 1.0f )
-#endif
-	{
-		s_hCurrentTransPic = 0;
-		return true;
-	}
-
-	if( state == CMenuBaseWindow::ANIM_OUT )
-		return false; // but request more frame for animation
-
-	if( !s_hCurrentTransPic )
-		return false; // wait for transition pic
-
-	Quad c;
-
-	if( transition_state == AS_TO_TITLE )
-		c = LerpQuad( s_CurrentLerpQuads[0], s_CurrentLerpQuads[1], frac );
-	else if( transition_state == AS_TO_BUTTON )
-		c = LerpQuad( s_CurrentLerpQuads[1], s_CurrentLerpQuads[0], frac );
-
-	//UI_FillRect( c.x, c.y, c.lx, c.ly, 0xFF0F00FF );
-
-	EngFuncs::PIC_Set( s_hCurrentTransPic, 255, 255, 255 );
-#if !defined(TA_ALT_MODE2)
-	wrect_t rect = { 0, uiStatic.buttons_width, 26, 52 };
-	EngFuncs::PIC_DrawAdditive( c.x, c.y, c.lx, c.ly, &rect );
-#else
-	EngFuncs::PIC_DrawAdditive( c.x, c.y, c.lx, c.ly );
-#endif
-
-	return false;
-
-}
-
-void CMenuPicButton::ClearButtonStack()
-{
-	ButtonStackDepth = 0;
-	memset( ButtonStack, 0, sizeof( ButtonStack ));
+	return hotkey == key;
 }

@@ -17,6 +17,8 @@ GNU General Public License for more details.
 #define FONTMANAGER_H
 
 #include "utlvector.h"
+#include "utlhashmap.h"
+#include "utlstring.h"
 #include "Primitive.h"
 #include "FontRenderer.h"
 
@@ -67,6 +69,9 @@ public:
 	CBaseFont *GetIFontFromHandle( HFont font );
 
 	int GetEllipsisWide( HFont font ); // cached wide of "..."
+
+	bool FindFontDataFile( const char *name, int tall, int weight, int flags, char *dataFile, size_t dataFileChars );
+	unsigned char *LoadFontDataFile( const char *virtualpath, int *length = nullptr );
 private:
 	int  GetCharacterWidth( HFont font, int ch );
 	int  GetTextWide( HFont font, const char *text, int size = -1 );
@@ -74,13 +79,19 @@ private:
 	void UploadTextureForFont(CBaseFont *font );
 
 	CUtlVector<CBaseFont*> m_Fonts;
+	struct font_file
+	{
+		int length;
+		unsigned char *data;
+	};
+	CUtlHashMap<CUtlString, font_file> m_FontFiles;
 
 	friend class CFontBuilder;
 };
 
 // lazy to fix code everywhere
 #ifndef CLIENT_DLL
-extern CFontManager g_FontMgr;
+extern CFontManager *g_FontMgr;
 #endif
 
 #endif // FONTMANAGER_H

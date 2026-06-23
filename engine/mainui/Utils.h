@@ -16,21 +16,11 @@ GNU General Public License for more details.
 #ifndef UTILS_H
 #define UTILS_H
 
-//extern ui_enginefuncs_t g_engfuncs;
-//extern ui_textfuncs_t g_textfuncs;
-
 #include "enginecallback_menu.h"
 #include "gameinfo.h"
 #include "FontManager.h"
 #include "BMPUtils.h"
-
-#define FILE_GLOBAL	static
-#define DLL_GLOBAL
-
-#define MAX_INFO_STRING	256	// engine limit
-
-#define RAD2DEG( x )	((float)(x) * (float)(180.f / M_PI))
-#define DEG2RAD( x )	((float)(x) * (float)(M_PI / 180.f))
+#include "miniutl.h"
 
 //
 // How did I ever live without ASSERT?
@@ -38,10 +28,8 @@ GNU General Public License for more details.
 #ifdef _DEBUG
 void DBG_AssertFunction( bool fExpr, const char* szExpr, const char* szFile, int szLine, const char* szMessage );
 #define ASSERT( f )		DBG_AssertFunction( f, #f, __FILE__, __LINE__, NULL )
-#define ASSERTSZ( f, sz )	DBG_AssertFunction( f, #f, __FILE__, __LINE__, sz )
 #else
 #define ASSERT( f )
-#define ASSERTSZ( f, sz )
 #endif
 
 extern ui_globalvars_t		*gpGlobals;
@@ -80,8 +68,6 @@ void UI_ConnectionProgress_ParseServerInfo( const char *server );
 // defined as exported to keep compatibility with old interface
 extern "C" EXPORT void AddTouchButtonToList( const char *name, const char *texture, const char *command, unsigned char *color, int flags );
 
-#include "cvardef.h"
-
 // ScreenHeight returns the height of the screen, in ppos.xels
 #define ScreenHeight	((float)(gpGlobals->scrHeight))
 // ScreenWidth returns the width of the screen, in ppos.xels
@@ -117,12 +103,12 @@ inline void UnpackRGBA( int &r, int &g, int &b, int &a, const unsigned int ulRGB
 
 inline unsigned int PackAlpha( const unsigned int ulRGB, const unsigned int ulAlpha )
 {
-	return (ulRGB)|(ulAlpha<<24);
+	return (ulRGB & 0x00FFFFFF)|(ulAlpha<<24);
 }
 
 inline unsigned int UnpackAlpha( const unsigned int ulRGBA )
 {
-	return ((ulRGBA & 0xFF000000) >> 24);	
+	return ((ulRGBA & 0xFF000000) >> 24);
 }
 
 inline float InterpVal( const float from, const float to, const float frac )
@@ -144,77 +130,48 @@ inline float RemapVal( const float val, const float A, const float B, const floa
 	return C + (D - C) * (val - A) / (B - A);
 }
 
+extern const unsigned int g_iColorTable[8];
+
 int colorstricmp( const char *a, const char *b );
 int colorstrcmp( const char *a, const char *b );
-extern int ColorStrlen( const char *str );	// returns string length without color symbols
-extern int ColorPrexfixCount( const char *str );
-extern const unsigned int g_iColorTable[8];
-extern void COM_FileBase( const char *in, char *out );		// ripped out from hlsdk 2.3
-extern int UI_FadeAlpha( int starttime, int endtime );
-extern const char *Info_ValueForKey( const char *s, const char *key );
-extern int KEY_GetKey( const char *binding );			// ripped out from engine
-extern char *StringCopy( const char *input );			// copy string into new memory
-extern int COM_CompareSaves( const void **a, const void **b );
-extern void Com_EscapeCommand( char *newCommand, const char *oldCommand, int len );
-extern void UI_EnableTextInput( bool enable );
+int ColorStrlen( const char *str );	// returns string length without color symbols
+void COM_FileBase( const char *in, char *out, size_t size );
+int UI_FadeAlpha( int starttime, int endtime );
+const char *Info_ValueForKey( const char *s, const char *key );
+int KEY_GetKey( const char *binding );			// ripped out from engine
+char *StringCopy( const char *input );			// copy string into new memory
+void Com_EscapeCommand( char *newCommand, const char *oldCommand, int len );
+void UI_EnableTextInput( bool enable );
 
 void UI_LoadCustomStrings( void );
+#if defined( __GNUC__ ) || defined( __clang__ )
+const char *L( const char *szStr ) __attribute__(( format_arg( 1 ))); // L means Localize!
+#else
 const char *L( const char *szStr ); // L means Localize!
+#endif
 void UI_FreeCustomStrings( void );
-
-#ifdef __APPLE__
-#define register
-#endif // __APPLE__
 
 inline size_t Q_strncpy( char *dst, const char *src, size_t size )
 {
-	char	*d = dst;
-	const char	*s = src;
-	size_t	n = size;
-
-	if( !dst || !src || !size )
+	size_t len;
+	if( unlikely( !dst || !src || !size ))
 		return 0;
 
-	// copy as many bytes as will fit
-	if( n != 0 && --n != 0 )
+	len = strlen( src );
+	if( len + 1 > size ) // check if truncate
 	{
-		do
-		{
-			if(( *d++ = *s++ ) == 0 )
-				break;
-		} while( --n != 0 );
+		memcpy( dst, src, size - 1 );
+		dst[size - 1] = 0;
 	}
+	else memcpy( dst, src, len + 1 );
 
-	// not enough room in dst, add NULL and traverse rest of src
-	if( n == 0 )
-	{
-		if( size != 0 )
-			*d = '\0'; // NULL-terminate dst
-		while( *s++ );
-	}
-	return ( s - src - 1 ); // count does not include NULL
+	return len; // count does not include NULL
 }
-
-#ifdef ARRAYSIZE
-#undef ARRAYSIZE
-#endif
-#define ARRAYSIZE( x ) ( sizeof( x ) / sizeof( x[0] ) )
-#ifdef _MSC_VER
-#pragma warning(disable : 4005)	// winnt.h may redefine ARRAYSIZE later
-#endif
-
-#ifdef register
-#undef register
-#endif // register
 
 #define CS_SIZE			64	// size of one config string
 #define CS_TIME			16	// size of time string
 
 #define MAX_SCOREBOARDNAME	32 // engine and dlls allows only 32 chars
-
-// color strings
-#define ColorIndex( c )		((( c ) - '0' ) & 7 )
-#define IsColorString( p )		( p && *( p ) == '^' && *(( p ) + 1) && *(( p ) + 1) >= '0' && *(( p ) + 1 ) <= '9' )
 
 // stringize utilites
 #define STR( x ) #x
@@ -225,6 +182,11 @@ namespace UI
 
 namespace Key
 {
+#ifndef K_A_BUTTON
+#define K_A_BUTTON	K_AUX1
+#define K_B_BUTTON	K_AUX2
+#endif // K_A_BUTTON
+
 inline bool IsEscape( int key )
 {
 	switch( key )
@@ -248,14 +210,51 @@ inline bool IsEnter( int key )
 	return false;
 }
 
-inline bool IsLeftMouse( int key )
+inline bool IsBackspace( int key )
 {
 	switch( key )
 	{
-	case K_MOUSE1:
+	case K_BACKSPACE:
+	case K_X_BUTTON:
 		return true;
 	}
 	return false;
+}
+
+inline bool IsDelete( int key, bool ignoreBackspace = false )
+{
+	if( key == K_DEL )
+		return true;
+	if( !ignoreBackspace )
+		return UI::Key::IsBackspace( key );
+	return false;
+}
+
+inline bool IsHome( int key )
+{
+	switch( key )
+	{
+	case K_HOME:
+	case K_KP_HOME:
+		return true;
+	}
+	return false;
+}
+
+inline bool IsEnd( int key )
+{
+	switch( key )
+	{
+	case K_END:
+	case K_KP_END:
+		return true;
+	}
+	return false;
+}
+
+inline bool IsLeftMouse( int key )
+{
+	return key == K_MOUSE1;
 }
 
 inline bool IsMouse( int key )
@@ -271,6 +270,115 @@ inline bool IsMouse( int key )
 	}
 	return false;
 }
+
+inline bool IsUpArrow( int key )
+{
+	switch( key )
+	{
+	case K_UPARROW:
+	case K_KP_UPARROW:
+	case K_DPAD_UP:
+		return true;
+	}
+	return false;
+}
+
+inline bool IsDownArrow( int key )
+{
+	switch( key )
+	{
+	case K_DOWNARROW:
+	case K_KP_DOWNARROW:
+	case K_DPAD_DOWN:
+		return true;
+	}
+	return false;
+}
+
+inline bool IsLeftArrow( int key )
+{
+	switch( key )
+	{
+	case K_LEFTARROW:
+	case K_KP_LEFTARROW:
+	case K_DPAD_LEFT:
+		return true;
+	}
+	return false;
+}
+
+inline bool IsRightArrow( int key )
+{
+	switch( key )
+	{
+	case K_RIGHTARROW:
+	case K_KP_RIGHTARROW:
+	case K_DPAD_RIGHT:
+		return true;
+	}
+	return false;
+}
+
+inline bool IsNavigationKey( int key )
+{
+	return IsUpArrow( key ) ||
+			IsDownArrow( key ) ||
+			IsLeftArrow( key ) ||
+			IsRightArrow( key ) ||
+			key == K_TAB;
+}
+
+inline bool IsPageUp( int key )
+{
+	switch( key )
+	{
+	case K_PGUP:
+	case K_KP_PGUP:
+	case K_L1_BUTTON:
+		return true;
+	}
+	return false;
+}
+
+inline bool IsPageDown( int key )
+{
+	switch( key )
+	{
+	case K_PGDN:
+	case K_KP_PGDN:
+	case K_R1_BUTTON:
+		return true;
+	}
+	return false;
+}
+
+inline bool IsConsole( int key )
+{
+	switch( key )
+	{
+	case '`':
+	case '~':
+		return true;
+	}
+	return false;
+}
+
+inline bool IsInsert( int key )
+{
+	switch( key )
+	{
+	case K_INS:
+	case K_KP_INS:
+		return true;
+	}
+	return false;
+}
+
+inline bool IsAlphaNum( int key )
+{
+	return ( key >= '0' && key <= '9' ) || ( key >= 'a' && key <= 'z' );
+}
+
 }
 
 namespace Names
@@ -278,9 +386,10 @@ namespace Names
 bool CheckIsNameValid( const char *name );
 }
 }
-extern const int table_cp1251[64];
-int Con_UtfProcessChar(int in );
 int Con_UtfMoveLeft( const char *str, int pos );
 int Con_UtfMoveRight( const char *str, int pos, int length );
+
+char *Q_pretifymem( float value, int digitsafterdecimal );
+#define Q_memprint( val ) Q_pretifymem( val, 2 )
 
 #endif//UTILS_H

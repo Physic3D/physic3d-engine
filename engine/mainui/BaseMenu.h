@@ -1,5 +1,5 @@
 /*
-basemenu.h - menu basic header 
+basemenu.h - menu basic header
 Copyright (C) 2010 Uncle Mike
 
 This program is free software: you can redistribute it and/or modify
@@ -15,33 +15,26 @@ GNU General Public License for more details.
 
 #ifndef BASEMENU_H
 #define BASEMENU_H
-#ifdef CS16CLIENT
-#include "../public/cl_dll/IGameClientExports.h"
-#endif
 #include "enginecallback_menu.h"
 #include "keydefs.h"
 #include "Primitive.h"
 #include "EventSystem.h"
 #include "Utils.h"
 #include "FontManager.h"
-#include "BtnsBMPTable.h"
+#include "Btns.h"
 #include "WindowSystem.h"
-
-#define UI_MAX_MENUDEPTH		64
-#define UI_MAX_MENUITEMS		64
+#include "Image.h"
+#include "utlstring.h"
 
 #define UI_PULSE_DIVISOR		75.0f
 
 #define UI_OUTLINE_WIDTH		uiStatic.outlineWidth	// outline thickness
 
-#define UI_MAXGAMES			512	// slots for savegame/demos
-#define UI_MAX_BGMAPS		32
-
 #define MAX_HINT_TEXT		512
 
-// menu buttons dims
-#define UI_BUTTONS_WIDTH		240
-#define UI_BUTTONS_HEIGHT		40
+// menu buttons default dims
+#define UI_BUTTONS_WIDTH  250 // ( 156 / 640 ) * 1024
+#define UI_BUTTONS_HEIGHT 42  // ( 26 / 480 ) * 768
 
 #define UI_DESCEND			"gfx/shell/down"
 #define UI_ASCEND			"gfx/shell/up"
@@ -62,21 +55,37 @@ GNU General Public License for more details.
 // =====================================================================
 // Main menu interface
 
-#ifdef CS16CLIENT
-extern IGameClientExports *g_pClient;
-#endif
 extern cvar_t	*ui_precache;
 extern cvar_t	*ui_showmodels;
 extern cvar_t   *ui_show_window_stack;
 extern cvar_t	*ui_borderclip;
-extern cvar_t	*ui_language;
+extern cvar_t	*ui_prefer_won_background;
+extern cvar_t	*ui_background_stretch;
+extern cvar_t	*ui_logohorizontal;
+
+enum EUISounds
+{
+	SND_IN = 0,
+	SND_OUT,
+	SND_LAUNCH,
+	SND_ROLLOVER,
+	SND_GLOW,
+	SND_BUZZ,
+	SND_KEY,
+	SND_REMOVEKEY,
+	SND_MOVE,
+	SND_NULL,
+	SND_COUNT
+};
+
+class CMenuBackgroundBitmap;
 
 typedef struct
 {
+	CMenuBackgroundBitmap *background;
 	CWindowStack menu;
 	CWindowStack client; // separate window stack for client windows
-	char	bgmaps[UI_MAX_BGMAPS][80];
-	int		bgmapcount;
+	CUtlVector<CUtlString> bgmaps;
 
 	HIMAGE	hFont;		// legacy qfont
 
@@ -85,10 +94,9 @@ typedef struct
 	HFont hBigFont;
 	HFont hConsoleFont;
 	HFont hBoldFont;
-#ifdef MAINUI_RENDER_PICBUTTON_TEXT
 	HFont hLightBlur;
 	HFont hHeavyBlur;
-#endif
+
 	bool	m_fDemosPlayed;
 	bool	m_fNoOldBackground;
 	int 	m_iOldMenuDepth;
@@ -101,20 +109,13 @@ typedef struct
 	int		cursorY;
 	int		realTime;
 	int		firstDraw;
-	float	enterSound;
 	int		mouseInRect;
 	int		hideCursor;
-	int		framecount;	// how many frames menu visible
 	int		initialized;
 
 	// btns_main.bmp stuff
-	HIMAGE	buttonsPics[PC_BUTTONCOUNT];
-
-	int		buttons_width;	// btns_main.bmp global width
-	int		buttons_height;	// per one button with all states (inactive, focus, pressed)
-
-	int		buttons_draw_width;	// scaled image what we drawing
-	int		buttons_draw_height;
+	CBtnsManager btns;
+	Size		buttons_draw_size; // scaled image what we drawing
 	int		width;
 	bool	textInput;
 	bool	enableAlphaFactor;
@@ -122,8 +123,12 @@ typedef struct
 	int xOffset, yOffset;
 
 	bool needMapListUpdate;
-
 	bool nextFrameActive;
+	bool renderPicbuttonText;
+
+	int lowmemory;
+
+	char sounds[SND_COUNT][40];
 } uiStatic_t;
 
 extern float	cursorDY;			// use for touch scroll
@@ -131,17 +136,6 @@ extern bool g_bCursorDown;
 extern uiStatic_t		uiStatic;
 
 #define DLG_X ((uiStatic.width - 640) / 2 - 192) // Dialogs are 640px in width
-
-extern const char		*uiSoundIn;
-extern const char		*uiSoundRollOver;
-extern const char		*uiSoundOut;
-extern const char		*uiSoundKey;
-extern const char		*uiSoundRemoveKey;
-extern const char		*uiSoundLaunch;
-extern const char		*uiSoundBuzz;
-extern const char		*uiSoundGlow;
-extern const char		*uiSoundMove;
-extern const char		*uiSoundNull;
 
 extern unsigned int	uiColorHelp;
 extern unsigned int	uiPromptBgColor;
@@ -175,7 +169,8 @@ enum ETextFlags
 	ETF_FORCECOL    = BIT( 0 ),
 	ETF_SHADOW      = BIT( 1 ),
 	ETF_NOSIZELIMIT = BIT( 2 ),
-	ETF_ADDITIVE    = BIT( 3 )
+	ETF_ADDITIVE    = BIT( 3 ),
+	ETF_NO_WRAP     = BIT( 4 )
 };
 
 int  UI_DrawString( HFont font, int x, int y, int w, int h, const char *str, const unsigned int col, int charH, uint justify, uint flags = 0 );
@@ -184,10 +179,20 @@ inline int UI_DrawString( HFont font, Point pos, Size size, const char *str, con
 	return UI_DrawString( font, pos.x, pos.y, size.w, size.h, str, col, charH, justify, flags );
 }
 
-void UI_DrawPic(int x, int y, int w, int h, const unsigned int color, const char *pic, const ERenderMode eRenderMode = QM_DRAWNORMAL );
-inline void UI_DrawPic( Point pos, Size size, const unsigned int color, const char *pic, const ERenderMode eRenderMode = QM_DRAWNORMAL )
+void UI_DrawPic( int x, int y, int w, int h, const unsigned int color, CImage &pic, const ERenderMode eRenderMode = QM_DRAWNORMAL );
+inline void UI_DrawPic( Point pos, Size size, const unsigned int color, CImage &pic, const ERenderMode eRenderMode = QM_DRAWNORMAL )
 {
 	UI_DrawPic( pos.x, pos.y, size.w, size.h, color, pic, eRenderMode );
+}
+inline void UI_DrawPic( int x, int y, int w, int h, const unsigned int color, const char *pic, const ERenderMode eRenderMode = QM_DRAWNORMAL )
+{
+	CImage img = pic;
+	UI_DrawPic( x, y, w, h, color, img, eRenderMode );
+}
+inline void UI_DrawPic( Point pos, Size size, const unsigned int color, const char *pic, const ERenderMode eRenderMode = QM_DRAWNORMAL )
+{
+	CImage img = pic;
+	UI_DrawPic( pos, size, color, img, eRenderMode );
 }
 void UI_FillRect( int x, int y, int w, int h, const unsigned int color );
 inline void UI_FillRect( Point pos, Size size, const unsigned int color )
@@ -210,7 +215,6 @@ inline void UI_DrawRectangleExt( Point pos, Size size, const unsigned int color,
 }
 
 void UI_StartSound( const char *sound );
-void UI_LoadBmpButtons( void );
 
 int UI_CreditsActive( void );
 void UI_DrawFinalCredits( void );
@@ -219,19 +223,45 @@ void UI_CloseMenu( void );
 
 // SCR support
 void UI_LoadScriptConfig( void );
+void UI_SaveScriptConfig( void );
+void UI_ApplyServerSettings( void );
+const char *UI_GetScriptCvar( const char *name );
+void UI_SetScriptCvar( const char *name, const char *value );
 
 class CMenuEntry
 {
 public:
-	CMenuEntry( const char *cmd, void (*pfnPrecache)( void ), void (*pfnShow)( void ));
+	CMenuEntry( const char *cmd, void (*pfnPrecache)( void ), void (*pfnShow)( void ), void (*pfnShutdown)( void ) = NULL);
 	const char *m_szCommand;
 	void (*m_pfnPrecache)( void );
 	void (*m_pfnShow)( void );
+	void (*m_pfnShutdown)( void );
 	CMenuEntry *m_pNext;
 };
 
-#define ADD_MENU( cmd, precachefunc, showfunc ) \
-	static CMenuEntry cmd( #cmd, precachefunc, showfunc )
+#define ADD_MENU4( cmd, precachefunc, showfunc, shutdownfunc ) \
+	void showfunc( void ); \
+	static CMenuEntry entry_##cmd( #cmd, precachefunc, showfunc, shutdownfunc )
+
+#define ADD_MENU3( cmd, type, showfunc ) \
+	static type * cmd = NULL; \
+	static void cmd##_Precache( void ) \
+	{ \
+		cmd = new type(); \
+	} \
+	static void cmd##_Shutdown( void ) \
+	{ \
+		delete cmd; \
+	} \
+	ADD_MENU4( cmd, cmd##_Precache, showfunc, cmd##_Shutdown )
+
+#define ADD_MENU( cmd, type, showfunc ) \
+	void showfunc( void ); \
+	ADD_MENU3( cmd, type, showfunc ); \
+	void showfunc( void ) \
+	{ \
+		cmd->Show(); \
+	}
 
 #define ADD_COMMAND( cmd, showfunc ) \
 	static CMenuEntry cmd( #cmd, NULL, showfunc )
@@ -264,8 +294,11 @@ void UI_TouchButtons_Menu( void );
 void UI_TouchEdit_Menu( void );
 void UI_FileDialog_Menu( void );
 void UI_TouchButtons_GetButtonList();
+void UI_MobileGyro_Menu( void );
 void UI_GamePad_Menu( void );
+void UI_GamePadGyro_Menu( void );
 void UI_Zoo_Menu( void );
+void UI_ServerInfo_Menu( netadr_t adr, const char *hostname );
 
 bool UI_AdvUserOptions_IsAvailable( void );
 void UI_AdvUserOptions_Menu( void );
@@ -275,9 +308,6 @@ void UI_InputDevices_Menu( void );
 
 void UI_OpenUpdatePage(bool engine , bool preferstore);
 
-// time
-double Sys_DoubleTime( void );
-
 //
 //-----------------------------------------------------
 //
@@ -285,7 +315,7 @@ class CMenu
 {
 public:
 	// Game information
-	GAMEINFO		m_gameinfo;
+	gameinfo2_t m_gameinfo;
 };
 
 typedef struct

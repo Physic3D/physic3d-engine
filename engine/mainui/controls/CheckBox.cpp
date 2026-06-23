@@ -47,10 +47,10 @@ void CMenuCheckBox::VidInit( void )
 {
 	colorText.SetDefault( uiColorHelp );
 	BaseClass::VidInit();
-	m_scTextPos.x = m_scPos.x + (m_scSize.w * 1.5f );
+	m_scTextPos.x = m_scPos.x + ( m_scSize.w * 1.25f );
 	m_scTextPos.y = m_scPos.y;
 
-	m_scTextSize.w = g_FontMgr.GetTextWideScaled( font, szName, m_scChSize );
+	m_scTextSize.w = g_FontMgr->GetTextWideScaled( font, szName, m_scChSize );
 	m_scTextSize.h = m_scChSize;
 }
 
@@ -58,22 +58,10 @@ bool CMenuCheckBox::KeyUp( int key )
 {
 	const char	*sound = 0;
 
-	switch( key )
-	{
-	case K_MOUSE1:
-		if(!( iFlags & QMF_HASMOUSEFOCUS ))
-			break;
-		sound = uiSoundGlow;
-		break;
-	case K_ENTER:
-	case K_KP_ENTER:
-	case K_AUX1:
-		//if( !down ) return sound;
-		if( iFlags & QMF_MOUSEONLY )
-			break;
-		sound = uiSoundGlow;
-		break;
-	}
+	if( UI::Key::IsLeftMouse( key ) && FBitSet( iFlags, QMF_HASMOUSEFOCUS ))
+		sound = uiStatic.sounds[SND_GLOW];
+	else if( UI::Key::IsEnter( key ) && !FBitSet( iFlags, QMF_MOUSEONLY ))
+		sound = uiStatic.sounds[SND_GLOW];
 
 	if( sound )
 	{
@@ -83,8 +71,8 @@ bool CMenuCheckBox::KeyUp( int key )
 			bChecked = !bChecked;	// apply on release
 			SetCvarValue( bChecked );
 			_Event( QM_CHANGED );
-			PlayLocalSound( sound ); // emit sound only when changed
 		}
+		PlayLocalSound( sound );
 	}
 
 	return sound != NULL;
@@ -94,22 +82,10 @@ bool CMenuCheckBox::KeyDown( int key )
 {
 	const char	*sound = 0;
 
-	switch( key )
-	{
-	case K_MOUSE1:
-		if(!( iFlags & QMF_HASMOUSEFOCUS ))
-			break;
-		sound = uiSoundGlow;
-		break;
-	case K_ENTER:
-	case K_KP_ENTER:
-	case K_AUX1:
-		//if( !down ) return sound;
-		if( iFlags & QMF_MOUSEONLY )
-			break;
-		sound = uiSoundGlow;
-		break;
-	}
+	if( UI::Key::IsLeftMouse( key ) && FBitSet( iFlags, QMF_HASMOUSEFOCUS ))
+		sound = uiStatic.sounds[SND_GLOW];
+	else if( UI::Key::IsEnter( key ) && !FBitSet( iFlags, QMF_MOUSEONLY ))
+		sound = uiStatic.sounds[SND_GLOW];
 
 	if( sound )
 	{
@@ -119,8 +95,8 @@ bool CMenuCheckBox::KeyDown( int key )
 			bChecked = !bChecked;	// apply on release
 			SetCvarValue( bChecked );
 			_Event( QM_CHANGED );
-			PlayLocalSound( sound ); // emit sound only when changed
 		}
+		PlayLocalSound( sound );
 	}
 
 	return sound != NULL;
@@ -143,7 +119,7 @@ void CMenuCheckBox::Draw( void )
 		Point coord;
 
 		if( szName[0] )
-			coord.x = 290 * uiStatic.scaleX;
+			coord.x = ( uiStatic.buttons_draw_size.w + 40 ) * uiStatic.scaleX;
 		else
 			coord.x = m_scSize.w + 16 * uiStatic.scaleX;
 		coord.x += m_scPos.x;
@@ -200,5 +176,5 @@ void CMenuCheckBox::Draw( void )
 
 void CMenuCheckBox::UpdateEditable()
 {
-	bChecked = !!EngFuncs::GetCvarFloat( m_szCvarName );
+	bChecked = !!CvarValue();
 }

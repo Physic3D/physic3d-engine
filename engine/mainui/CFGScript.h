@@ -30,48 +30,54 @@ typedef enum
 	T_COUNT
 } cvartype_t;
 
-typedef struct scrvarlistentry_s
+struct scrvarlistentry_t
 {
+	scrvarlistentry_t() : szName( NULL ), flValue( 0 ), next( NULL ) {}
+
 	char *szName;
 	float flValue;
-	struct scrvarlistentry_s *next;
-} scrvarlistentry_t;
 
-typedef struct scrvarlist_s
+	scrvarlistentry_t *next;
+};
+
+struct scrvarlist_t
 {
+	scrvarlist_t() : iCount( 0 ), pEntries( NULL ), pLast( NULL ), pArray( NULL ), pModel( NULL ) {}
+
 	int iCount;
 	scrvarlistentry_t *pEntries;
 	scrvarlistentry_t *pLast;
 	const char **pArray;
 	CStringArrayModel *pModel; // ready model for use in UI
-} scrvarlist_t;
+};
 
-typedef struct
+struct scrvarnumber_t
 {
+	scrvarnumber_t() : fMin( 0 ), fMax( 0 ) {}
+
 	float fMin;
 	float fMax;
-} scrvarnumber_t;
+};
 
 struct scrvardef_t
 {
-	scrvardef_t() :
-		flags(0), name(), value(), desc(),
-		type(T_NONE), next(0) {}
+	scrvardef_t() : flags( 0 ), number(), list(), type( T_NONE ), next( NULL )
+	{
+		name[0] = value[0] = desc[0] = 0;
+	}
 
 	int flags;
 	char name[MAX_STRING];
 	char value[MAX_STRING];
 	char desc[MAX_STRING];
-	union
-	{
-		scrvarnumber_t number;
-		scrvarlist_t list;
-	};
+	scrvarnumber_t number;
+	scrvarlist_t list;
 	cvartype_t type;
 	struct scrvardef_t *next;
 };
 
 scrvardef_t *CSCR_LoadDefaultCVars( const char *scriptfilename, int *count );
+void CSCR_SaveToFile( const char *filename, const char *description, scrvardef_t *list );
 void CSCR_FreeList( scrvardef_t *list );
 
 #endif // CFGSCRIPT_H

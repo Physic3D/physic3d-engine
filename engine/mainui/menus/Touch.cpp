@@ -24,15 +24,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define ART_BANNER		"gfx/shell/head_touch"
 
-/*
-=================
-UI_Touch_Precache
-=================
-*/
-void UI_Touch_Precache( void )
+class CMenuTouch : public CMenuFramework
 {
-	EngFuncs::PIC_Load( ART_BANNER );
-}
+public:
+	CMenuTouch() : CMenuFramework ( "CMenuTouch" ) { }
+};
+
+ADD_MENU3( menu_touch, CMenuTouch, UI_Touch_Menu );
 
 /*
 =================
@@ -41,23 +39,22 @@ UI_Touch_Menu
 */
 void UI_Touch_Menu( void )
 {
-	static CMenuFramework touch("CMenuTouch");
-
-	if( !touch.WasInit() )
+	if( !menu_touch->WasInit() )
 	{
-		touch.banner.SetPicture( ART_BANNER );
-		touch.AddItem( touch.background );
-		touch.AddItem( touch.banner );
+		menu_touch->banner.SetPicture( ART_BANNER );
+		menu_touch->AddItem( menu_touch->banner );
 
-		touch.AddButton( L( "Touch options" ), NULL, "gfx/shell/btn_touch_options",
-			UI_TouchOptions_Menu, QMF_NOTIFY );
+		menu_touch->AddButton( L( "Touch options" ), L( "Touch sensitivity and profile options" ), PC_TOUCH_OPTIONS,
+			UI_TouchOptions_Menu, QMF_NOTIFY, 'o' );
 
-		touch.AddButton( L( "Touch buttons" ), NULL, "gfx/shell/btn_touch_buttons",
-			UI_TouchButtons_Menu, QMF_NOTIFY );
+		menu_touch->AddButton( L( "Touch buttons" ), L( "Add, remove, edit touch buttons" ), PC_TOUCH_BUTTONS,
+			UI_TouchButtons_Menu, QMF_NOTIFY, 'b' );
 
-		touch.AddButton( L( "Done" ),  NULL, PC_DONE, VoidCb( &CMenuFramework::Hide ), QMF_NOTIFY );
+		menu_touch->AddButton( L( "Gyroscope" ), L( "Built-in device gyroscope options" ), PC_GYRO,
+			UI_MobileGyro_Menu, QMF_NOTIFY, 'g' );
+
+		menu_touch->AddButton( L( "Done" ),  L( "Go back to the previous menu" ), PC_DONE, VoidCb( &CMenuFramework::Hide ), QMF_NOTIFY );
 	}
 
-	touch.Show();
+	menu_touch->Show();
 }
-ADD_MENU( menu_touch, UI_Touch_Precache, UI_Touch_Menu );

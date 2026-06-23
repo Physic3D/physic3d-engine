@@ -14,6 +14,7 @@ GNU General Public License for more details.
 */
 
 
+#include <time.h>
 #include "extdll_menu.h"
 #include "BaseMenu.h"
 #include "enginecallback_menu.h"
@@ -26,7 +27,7 @@ const char *cvartypes[] = { NULL, "BOOL" , "NUMBER", "LIST", "STRING" };
 
 struct parserstate_t
 {
-	parserstate_t() : buf( NULL ), token(), filename( NULL ) {}
+	parserstate_t() : buf( NULL ), filename( NULL ) { token[0] = 0;}
 	char *buf;
 	char token[MAX_STRING];
 	const char *filename;
@@ -41,7 +42,7 @@ Return true if next token is pExpext and skip it
 */
 bool CSCR_ExpectString( parserstate_t *ps, const char *pExpect, bool skip, bool error )
 {
-	char *tmp = EngFuncs::COM_ParseFile( ps->buf, ps->token );
+	char *tmp = EngFuncs::COM_ParseFile( ps->buf, ps->token, sizeof( ps->token ));
 
 	if( !stricmp( ps->token, pExpect ) )
 	{
@@ -94,13 +95,13 @@ bool CSCR_ParseSingleCvar( parserstate_t *ps, scrvardef_t *result )
 	result->list.pArray = NULL;
 
 	// read the name
-	ps->buf = EngFuncs::COM_ParseFile( ps->buf, result->name );
+	ps->buf = EngFuncs::COM_ParseFile( ps->buf, result->name, sizeof( result->name ));
 
 	if( !CSCR_ExpectString( ps, "{", false, true ) )
 		goto error;
 
 	// read description
-	ps->buf = EngFuncs::COM_ParseFile( ps->buf, result->desc );
+	ps->buf = EngFuncs::COM_ParseFile( ps->buf, result->desc, sizeof( result->desc ));
 
 	if( !CSCR_ExpectString( ps, "{", false, true ) )
 		goto error;
@@ -116,11 +117,11 @@ bool CSCR_ParseSingleCvar( parserstate_t *ps, scrvardef_t *result )
 		break;
 	case T_NUMBER:
 		// min
-		ps->buf = EngFuncs::COM_ParseFile( ps->buf, ps->token );
+		ps->buf = EngFuncs::COM_ParseFile( ps->buf, ps->token, sizeof( ps->token ));
 		result->number.fMin = atof( ps->token );
 
 		// max
-		ps->buf = EngFuncs::COM_ParseFile( ps->buf, ps->token );
+		ps->buf = EngFuncs::COM_ParseFile( ps->buf, ps->token, sizeof( ps->token ));
 		result->number.fMax = atof( ps->token );
 
 		if( !CSCR_ExpectString( ps, "}", false, true ) )
@@ -141,18 +142,17 @@ bool CSCR_ParseSingleCvar( parserstate_t *ps, scrvardef_t *result )
 			// Read token for each item here
 
 			// ExpectString already moves buffer pointer, so just read from ps->token
-			// ps->buf = EngFuncs::COM_ParseFile( ps->buf, szName );
+			// ps->buf = EngFuncs::COM_ParseFile( ps->buf, szName, sizeof( szName ));
 			if( !szName[0] )
 				goto error;
 
-			ps->buf = EngFuncs::COM_ParseFile( ps->buf, szValue );
+			ps->buf = EngFuncs::COM_ParseFile( ps->buf, szValue, sizeof( szValue ));
 			if( !szValue[0] )
 				goto error;
 
 			entry = new scrvarlistentry_t;
 			entry->next = NULL;
-			entry->szName = new char[strlen( szName ) + 1];
-			strcpy( entry->szName, szName );
+			entry->szName = StringCopy( szName );
 			entry->flValue = atof( szValue );
 
 			if( !result->list.pEntries )
@@ -172,7 +172,7 @@ bool CSCR_ParseSingleCvar( parserstate_t *ps, scrvardef_t *result )
 		goto error;
 
 	// default value
-	ps->buf = EngFuncs::COM_ParseFile( ps->buf, result->value );
+	ps->buf = EngFuncs::COM_ParseFile( ps->buf, result->value, sizeof( result->value ));
 
 	if( !CSCR_ExpectString( ps, "}", false, true ) )
 		goto error;
@@ -207,7 +207,7 @@ error:
 
 		while( result->list.pEntries )
 		{
-			scrvarlistentry_s *next = result->list.pEntries->next;
+			scrvarlistentry_t *next = result->list.pEntries->next;
 			delete[] result->list.pEntries->szName;
 			delete result->list.pEntries;
 
@@ -231,7 +231,7 @@ bool CSCR_ParseHeader( parserstate_t *ps )
 
 	// Parse in the version #
 	// Get the first token.
-	ps->buf = EngFuncs::COM_ParseFile( ps->buf, ps->token );
+	ps->buf = EngFuncs::COM_ParseFile( ps->buf, ps->token, sizeof( ps->token ));
 
 	if( atof( ps->token ) != 1 )
 	{
@@ -242,7 +242,7 @@ bool CSCR_ParseHeader( parserstate_t *ps )
 	if( !CSCR_ExpectString( ps, "DESCRIPTION", false, true ) )
 		return false;
 
-	ps->buf = EngFuncs::COM_ParseFile( ps->buf, ps->token );
+	ps->buf = EngFuncs::COM_ParseFile( ps->buf, ps->token, sizeof( ps->token ));
 
 	if( stricmp( ps->token, "INFO_OPTIONS") && stricmp( ps->token, "SERVER_OPTIONS" ) )
 	{
@@ -301,7 +301,6 @@ scrvardef_t *CSCR_LoadDefaultCVars( const char *scriptfilename, int *count )
 		// Create a new object
 		if( CSCR_ParseSingleCvar( &state, &var ) )
 		{
-			// Cvar_Get( var.name, var.value, var.flags, var.desc );
 			scrvardef_t *entry = new scrvardef_t;
 			*entry = var;
 
@@ -322,7 +321,7 @@ scrvardef_t *CSCR_LoadDefaultCVars( const char *scriptfilename, int *count )
 			break;
 	}
 
-	if( EngFuncs::COM_ParseFile( state.buf, state.token ) )
+	if( EngFuncs::COM_ParseFile( state.buf, state.token, sizeof( state.token )))
 		Con_DPrintf( "Got extra tokens!\n" );
 	else
 		success = true;
@@ -342,6 +341,133 @@ finish:
 	return list;
 }
 
+/*
+======================
+CSCR_SaveToFile
+
+Save cvars to script file with specific formatting
+======================
+*/
+void CSCR_SaveToFile( const char *filename, const char *description, scrvardef_t *list )
+{
+	if( !filename || !list ) return;
+
+	CUtlString buffer;
+
+	// Write current time in header
+	char timeBuf[64];
+	time_t now = time( NULL );
+	strftime( timeBuf, sizeof(timeBuf), "%a %b %d %I:%M:%S %p", localtime( &now ) );
+
+	buffer.AppendFormat( "// NOTE:  THIS FILE IS AUTOMATICALLY REGENERATED, \n" );
+	buffer.AppendFormat( "//DO NOT EDIT THIS HEADER, YOUR COMMENTS WILL BE LOST IF YOU DO\n" );
+	
+	if( !stricmp( description, "INFO_OPTIONS" ) )
+		buffer.AppendFormat( "// User options script\n" );
+	else
+		buffer.AppendFormat( "// Multiplayer options script\n" );
+
+	buffer.AppendFormat( "//\n" );
+	buffer.AppendFormat( "// Format:\n" );
+	buffer.AppendFormat( "//  Version [float]\n" );
+	buffer.AppendFormat( "//  Options description followed by \n" );
+	buffer.AppendFormat( "//  Options defaults\n" );
+	buffer.AppendFormat( "//\n" );
+	buffer.AppendFormat( "// Option description syntax:\n" );
+	buffer.AppendFormat( "//\n" );
+	buffer.AppendFormat( "//  \"cvar\" { \"Prompt\" { type [ type info ] } { default } }\n" );
+	buffer.AppendFormat( "//\n" );
+	buffer.AppendFormat( "//  type = \n" );
+	buffer.AppendFormat( "//   BOOL   (a yes/no toggle)\n" );
+	buffer.AppendFormat( "//   STRING\n" );
+	buffer.AppendFormat( "//   NUMBER\n" );
+	buffer.AppendFormat( "//   LIST\n" );
+	buffer.AppendFormat( "//\n" );
+	buffer.AppendFormat( "// type info:\n" );
+	buffer.AppendFormat( "// BOOL                 no type info\n" );
+	buffer.AppendFormat( "// NUMBER       min max range, use -1 -1 for no limits\n" );
+	buffer.AppendFormat( "// STRING       no type info\n" );
+	buffer.AppendFormat( "// LIST          delimited list of options value pairs\n" );
+	buffer.AppendFormat( "//\n" );
+	buffer.AppendFormat( "//\n" );
+	buffer.AppendFormat( "// default depends on type\n" );
+	buffer.AppendFormat( "// BOOL is \"0\" or \"1\"\n" );
+	buffer.AppendFormat( "// NUMBER is \"value\"\n" );
+	buffer.AppendFormat( "// STRING is \"value\"\n" );
+	buffer.AppendFormat( "// LIST is \"index\", where index \"0\" is the first element of the list\n" );
+	buffer.AppendFormat( "\n\n" );
+
+	if( !stricmp( description, "INFO_OPTIONS" ) )
+		buffer.AppendFormat( "// Half-Life User Info Configuration Layout Script (stores last settings chosen, too)\n" );
+	else
+		buffer.AppendFormat( "// Half-Life Server Configuration Layout Script (stores last settings chosen, too)\n" );
+	
+	buffer.AppendFormat( "// File generated:  %s\n", timeBuf );
+	buffer.AppendFormat( "//\n" );
+	buffer.AppendFormat( "//\n" );
+	buffer.AppendFormat( "// Cvar	-	Setting\n" );
+	buffer.AppendFormat( "\n" );
+
+	buffer.AppendFormat( "VERSION 1.0\n" );
+	buffer.AppendFormat( "\n" );
+	buffer.AppendFormat( "DESCRIPTION %s\n", description );
+	buffer.AppendFormat( "{\n" );
+
+	for( scrvardef_t *var = list; var; var = var->next )
+	{
+		const char *currentValue = var->value;
+
+		buffer.AppendFormat( "\t\"%s\"\n", var->name );
+		buffer.AppendFormat( "\t{\n" );
+		buffer.AppendFormat( "\t\t\"%s\"\n", var->desc );
+		
+		// Type info
+		buffer.AppendFormat( "\t\t{ " );
+		switch( var->type )
+		{
+		case T_BOOL:
+			buffer.AppendFormat( "BOOL" );
+			break;
+		case T_STRING:
+			buffer.AppendFormat( "STRING" );
+			break;
+		case T_NUMBER:
+			buffer.AppendFormat( "NUMBER %g %g", var->number.fMin, var->number.fMax );
+			break;
+		case T_LIST:
+			buffer.AppendFormat( "\n\t\t\tLIST" );
+			for( scrvarlistentry_t *entry = var->list.pEntries; entry; entry = entry->next )
+			{
+				buffer.AppendFormat( "\n\t\t\t\"%s\" \"%g\"", entry->szName, entry->flValue );
+			}
+			break;
+		default:
+			break;
+		}
+		
+		if( var->type != T_LIST )
+			buffer.AppendFormat( " }" );
+		else
+			buffer.AppendFormat( "\n\t\t}" );
+
+		buffer.AppendFormat( "\n" );
+
+		// Value
+		buffer.AppendFormat( "\t\t{ \"%s\" }\n", currentValue );
+
+		if( var->flags & CVAR_USERINFO )
+		{
+			buffer.AppendFormat( "\t\tSetInfo\n" );
+		}
+		
+		buffer.AppendFormat( "\t}\n\n" );
+	}
+
+	buffer.AppendFormat( "}\n" );
+	
+	EngFuncs::COM_SaveFile( filename, buffer.Get(), buffer.Length() );
+}
+
 void CSCR_FreeList( scrvardef_t *list )
 {
 	scrvardef_t *i = list;
@@ -358,7 +484,7 @@ void CSCR_FreeList( scrvardef_t *list )
 
 			while( i->list.pEntries )
 			{
-				scrvarlistentry_s *next = i->list.pEntries->next;
+				scrvarlistentry_t *next = i->list.pEntries->next;
 				delete[] i->list.pEntries->szName;
 				delete i->list.pEntries;
 

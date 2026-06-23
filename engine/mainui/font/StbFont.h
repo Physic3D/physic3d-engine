@@ -20,16 +20,6 @@ GNU General Public License for more details.
 #include "utlrbtree.h"
 #include "stb_truetype.h"
 
-struct abc_t
-{
-	int ch;
-	int a, b, c;
-
-	bool operator< (const abc_t &a) const
-	{
-		return ch < a.ch;
-	}
-};
 
 class CStbFont : public CBaseFont
 {
@@ -44,20 +34,15 @@ public:
 		int scanlineOffset, float scanlineScale,
 		int flags) override;
 	void GetCharRGBA(int ch, Point pt, Size sz, unsigned char *rgba, Size &drawSize) override;
-	void GetCharABCWidths( int ch, int &a, int &b, int &c ) override;
+	void GetCharABCWidthsNoCache( int ch, int &a, int &b, int &c ) override;
 	bool HasChar( int ch ) const override;
+	const char *GetBackendName() const override { return "stb"; }
 
 private:
-	CUtlRBTree<abc_t, int> m_ABCCache;
-
-	char m_szRealFontFile[4096];
-	bool FindFontDataFile(const char *name, int tall, int weight, int flags, char *dataFile, int dataFileChars);
-
 	byte *m_pFontData;
 	stbtt_fontinfo m_fontInfo;
 
-	float scale;
-
+	double scale;
 
 	friend class CFontManager;
 };

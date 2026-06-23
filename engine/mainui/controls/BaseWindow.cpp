@@ -19,12 +19,12 @@ GNU General Public License for more details.
 #include "ItemsHolder.h"
 #include "BaseWindow.h"
 
-CMenuBaseWindow::CMenuBaseWindow(const char *name) : BaseClass()
+CMenuBaseWindow::CMenuBaseWindow( const char *name, CWindowStack *pStack ) : BaseClass()
 {
 	bAllowDrag = false; // UNDONE
 	m_bHolding = false;
 	szName = name;
-	m_pStack = &uiStatic.menu;
+	m_pStack = pStack;
 	DisableTransition();
 }
 
@@ -58,18 +58,18 @@ void CMenuBaseWindow::Show()
 		break;
 	}
 #endif
-	EnableTransition( ANIM_IN );
+	EnableTransition( ANIM_OPENING );
 }
 
 void CMenuBaseWindow::Hide()
 {
 	if( m_pStack == &uiStatic.menu ) // hack!
 	{
-		EngFuncs::PlayLocalSound( uiSoundOut );
+		EngFuncs::PlayLocalSound( uiStatic.sounds[SND_OUT] );
 	}
 
 	m_pStack->Remove( this );
-	EnableTransition( ANIM_OUT );
+	EnableTransition( ANIM_CLOSING );
 }
 
 bool CMenuBaseWindow::IsVisible() const
@@ -79,7 +79,7 @@ bool CMenuBaseWindow::IsVisible() const
 
 void CMenuBaseWindow::SaveAndPopMenu()
 {
-	EngFuncs::ClientCmd( FALSE, "trysaveconfig\n" );
+	EngFuncs::ClientCmd( false, "host_writeconfig\n" );
 	Hide();
 }
 
@@ -92,7 +92,7 @@ void CMenuBaseWindow::DragDrop( int down )
 
 bool CMenuBaseWindow::KeyDown( int key )
 {
-	if( key == K_MOUSE1 && bAllowDrag )
+	if( UI::Key::IsLeftMouse( key ) && bAllowDrag )
 		DragDrop( true );
 
 	if( UI::Key::IsEscape( key ) )
@@ -106,7 +106,7 @@ bool CMenuBaseWindow::KeyDown( int key )
 
 bool CMenuBaseWindow::KeyUp( int key )
 {
-	if( key == K_MOUSE1 && bAllowDrag )
+	if( UI::Key::IsLeftMouse( key ) && bAllowDrag )
 		DragDrop( false );
 
 	return BaseClass::KeyUp( key );
@@ -132,17 +132,17 @@ bool CMenuBaseWindow::DrawAnimation()
 {
 	float alpha;
 
-	if( eTransitionType == ANIM_IN )
+	if( eTransitionType == ANIM_OPENING )
 	{
 		alpha = ( uiStatic.realTime - m_iTransitionStartTime ) / TTT_PERIOD;
 	}
-	else if( eTransitionType == ANIM_OUT )
+	else if( eTransitionType == ANIM_CLOSING )
 	{
 		alpha = 1.0f - ( uiStatic.realTime - m_iTransitionStartTime ) / TTT_PERIOD;
 	}
 
-	if(        ( eTransitionType == ANIM_IN  && alpha < 1.0f )
-		|| ( eTransitionType == ANIM_OUT && alpha > 0.0f ) )
+	if(        ( eTransitionType == ANIM_OPENING  && alpha < 1.0f )
+		|| ( eTransitionType == ANIM_CLOSING && alpha > 0.0f ) )
 	{
 		UI_EnableAlphaFactor( alpha );
 
@@ -159,23 +159,9 @@ bool CMenuBaseWindow::DrawAnimation()
 bool CMenuBaseWindow::KeyValueData(const char *key, const char *data)
 {
 	if( !strcmp( key, "enabled" ) || !strcmp( key, "visible" ) )
-	{
+		return true;
 
-	}
-	else
-	{
-		if( !strcmp( key, "xpos" ) ||
-		!strcmp( key, "ypos" ) ||
-		!strcmp( key, "wide" ) ||
-		!strcmp( key, "tall" ) )
-		{
-			background.KeyValueData( key, data );
-		}
-
-		return CMenuBaseItem::KeyValueData(key, data);
-	}
-
-	return true;
+	return CMenuBaseItem::KeyValueData(key, data);
 }
 
 void CMenuBaseWindow::EnableTransition( EAnimation type )

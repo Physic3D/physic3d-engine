@@ -27,106 +27,20 @@ FT_Library CFreeTypeFont::m_Library;
 
 
 CFreeTypeFont::CFreeTypeFont() : CBaseFont(),
-	m_ABCCache(0, 0), face(), m_szRealFontFile()
+	face()
 {
-	SetDefLessFunc( m_ABCCache );
+
 }
 
 CFreeTypeFont::~CFreeTypeFont()
 {
 }
 
-/**
- * Find a matching font where @type (one of FC_*) is equal to @value. For a
- * list of types, see http://fontconfig.org/fontconfig-devel/x19.html#AEN27.
- * The variable arguments are a list of triples, just like the first three
- * arguments, and must be NULL terminated.
- *
- * For example,
- *   FontMatchString(FC_FILE, FcTypeString, "/usr/share/fonts/myfont.ttf", NULL);
- *
- * Ripped from skia source code
- */
-FcPattern* FontMatch(const char* type, FcType vtype, const void* value, ...)
-{
-	va_list ap;
-	va_start(ap, value);
-
-	FcPattern* pattern = FcPatternCreate();
-
-	for (;;) {
-		FcValue fcvalue;
-		fcvalue.type = vtype;
-		switch (vtype) {
-			case FcTypeString:
-				fcvalue.u.s = (FcChar8*) value;
-				break;
-			case FcTypeInteger:
-				fcvalue.u.i = (int)(intptr_t)value;
-				break;
-			default:
-				ASSERT(("FontMatch unhandled type"));
-		}
-		FcPatternAdd(pattern, type, fcvalue, FcFalse);
-
-		type = va_arg(ap, const char *);
-		if (!type)
-			break;
-		// FcType is promoted to int when passed through ...
-		vtype = static_cast<FcType>(va_arg(ap, int));
-		value = va_arg(ap, const void *);
-	};
-	va_end(ap);
-
-	FcConfigSubstitute(NULL, pattern, FcMatchPattern);
-	FcDefaultSubstitute(pattern);
-
-	FcResult result;
-	FcPattern* match = FcFontMatch(NULL, pattern, &result);
-	FcPatternDestroy(pattern);
-
-	return match;
-}
-
-bool CFreeTypeFont::FindFontDataFile( const char *name, int tall, int weight, int flags, char *dataFile, int dataFileChars )
-{
-	int nFcWeight = weight / 5;
-	FcPattern *pattern;
-	FcChar8 *filename;
-
-	bool bRet;
-
-	if( !FcInit() )
-		return false;
-
-	int slant = FC_SLANT_ROMAN;
-	if( flags & ( FONT_ITALIC ))
-		slant = FC_SLANT_ITALIC;
-
-	pattern = FontMatch(
-		FC_FAMILY, FcTypeString,  name,
-		FC_WEIGHT, FcTypeInteger, nFcWeight,
-		FC_SLANT,  FcTypeInteger, slant,
-		NULL );
-
-	if( !pattern )
-		return false;
-
-	if( !FcPatternGetString( pattern, "file", 0, &filename ) )
-	{
-		bRet = true;
-		Q_strncpy( dataFile, (char*)filename, dataFileChars );
-	}
-	else bRet = false;
-
-	Con_DPrintf( "fontconfig: %s -> %s\n", name, dataFile );
-
-	FcPatternDestroy( pattern );
-	return bRet;
-}
-
 bool CFreeTypeFont::Create(const char *name, int tall, int weight, int blur, float brighten, int outlineSize, int scanlineOffset, float scanlineScale, int flags)
 {
+	char font_face_path[256];
+	int font_face_length;
+
 	Q_strncpy( m_szName, name, sizeof( m_szName ) );
 	m_iTall = tall;
 	m_iWeight = weight;
@@ -140,16 +54,24 @@ bool CFreeTypeFont::Create(const char *name, int tall, int weight, int blur, flo
 	m_iScanlineOffset = scanlineOffset;
 	m_fScanlineScale = scanlineScale;
 
-
-	if( !FindFontDataFile( name, tall, weight, flags, m_szRealFontFile, sizeof( m_szRealFontFile ) ) )
+	if( !g_FontMgr->FindFontDataFile( name, tall, weight, flags, font_face_path, sizeof( font_face_path )))
 	{
-		Con_DPrintf( "Unable to find font named %s\n", name );
+		Con_Printf( "Unable to find font named %s\n", name );
 		m_szName[0] = 0;
 		return false;
 	}
 
-	if( FT_New_Face( m_Library, m_szRealFontFile, 0, &face ))
+	m_pFontData = g_FontMgr->LoadFontDataFile( font_face_path, &font_face_length );
+
+	if( !m_pFontData )
 	{
+		Con_Printf( "Unable to read font file %s!\n", font_face_path );
+		return false;
+	}
+
+	if( FT_New_Memory_Face( m_Library, m_pFontData, font_face_length, 0, &face ))
+	{
+		Con_Printf( "Unable to create font %s!\n", font_face_path );
 		return false;
 	}
 
@@ -165,26 +87,24 @@ void CFreeTypeFont::GetCharRGBA(int ch, Point pt, Size sz, unsigned char *rgba, 
 {
 	FT_UInt idx = FT_Get_Char_Index( face, ch );
 	FT_Error error;
-	FT_GlyphSlot slot;
-	byte *buf, *dst;
-	int a, b, c;
 
-	GetCharABCWidths( ch, a, b, c );
-
-	if( ( error = FT_Load_Glyph( face, idx, FT_LOAD_RENDER | FT_LOAD_TARGET_NORMAL ) ) )
 	{
-		Con_DPrintf( "Error in FT_Load_Glyph: %x\n", error );
+		int a, b, c;
+		GetCharABCWidths( ch, a, b, c );
+	}
+
+	if(( error = FT_Load_Glyph( face, idx, FT_LOAD_RENDER | FT_LOAD_TARGET_NORMAL )))
+	{
+		Con_Printf( "Error in FT_Load_Glyph: %x\n", error );
 		return;
 	}
 
-
-	slot = face->glyph;
-	buf = slot->bitmap.buffer;
-	dst = rgba;
+	const FT_GlyphSlot slot = face->glyph;
 
 	// see where we should start rendering
 	const int pushDown = m_iAscent - slot->bitmap_top;
 	const int pushLeft = slot->bitmap_left;
+	const int bitmap_pitch = slot->bitmap.pitch < 0 ? -slot->bitmap.pitch : slot->bitmap.pitch;
 
 	// set where we start copying from
 	int ystart = 0;
@@ -203,24 +123,31 @@ void CFreeTypeFont::GetCharRGBA(int ch, Point pt, Size sz, unsigned char *rgba, 
 	if( pushLeft + xend > sz.w )
 		xend += sz.w - ( pushLeft + xend );
 
-	buf = &slot->bitmap.buffer[ ystart * slot->bitmap.width ];
-	dst = rgba + 4 * sz.w * ( ystart + pushDown );
+	const uint8_t *buf = &slot->bitmap.buffer[ ystart * bitmap_pitch ];
+	uint8_t *dst = rgba + 4 * sz.w * ( ystart + pushDown );
 
-	// iterate through copying the generated dib into the texture
-	for (int j = ystart; j < yend; j++, dst += 4 * sz.w, buf += slot->bitmap.width )
+	for( int j = ystart; j < yend; j++, dst += 4 * sz.w, buf += bitmap_pitch )
 	{
 		uint32_t *xdst = (uint32_t*)(dst + 4 * ( m_iBlur + m_iOutlineSize ));
-		for (int i = xstart; i < xend; i++, xdst++)
+		for( int i = xstart; i < xend; i++, xdst++ )
 		{
-			if( buf[i] > 0 )
+			*xdst = 0; // initialize with black and null alpha
+			if( slot->bitmap.pixel_mode == FT_PIXEL_MODE_MONO )
 			{
-				// paint white and alpha
-				*xdst = PackRGBA( 0xFF, 0xFF, 0xFF, buf[i] );
+				if( buf[i >> 3] & ( 0x80 >> ( i & 7 )))
+					*xdst = PackRGBA( 0xFF, 0xFF, 0xFF, 0xFF );
+			}
+			else if( slot->bitmap.pixel_mode == FT_PIXEL_MODE_GRAY )
+			{
+				if( buf[i] > 0 ) // paint white and alpha
+					*xdst = PackRGBA( 0xFF, 0xFF, 0xFF, buf[i] );
 			}
 			else
 			{
-				// paint black and null alpha
-				*xdst = 0;
+				if(( i & 1 ) ^ ( j & 1 )) // small emo texture for unsupported modes
+					*xdst = PackRGBA( 0xFF, 0x00, 0xFF, 0xFF );
+				else
+					*xdst = PackRGBA( 0x00, 0x00, 0x00, 0xFF );
 			}
 		}
 	}
@@ -234,54 +161,22 @@ void CFreeTypeFont::GetCharRGBA(int ch, Point pt, Size sz, unsigned char *rgba, 
 	ApplyStrikeout( sz, rgba );
 }
 
-void CFreeTypeFont::GetCharABCWidths(int ch, int &a, int &b, int &c)
+void CFreeTypeFont::GetCharABCWidthsNoCache(int ch, int &a, int &b, int &c)
 {
-	abc_t find;
-	find.ch = ch;
-
-	unsigned short i = m_ABCCache.Find( find );
-	if( i != 65535 && m_ABCCache.IsValidIndex(i) )
-	{
-		a = m_ABCCache[i].a;
-		b = m_ABCCache[i].b;
-		c = m_ABCCache[i].c;
-		return;
-	}
-
-	// not found in cache
-
 	if( FT_Load_Char( face, ch, FT_LOAD_DEFAULT ) )
 	{
-		find.a = 0;
-		find.b = PIXEL(face->bbox.xMax);
-		find.c = 0;
+		a = 0;
+		b = PIXEL(face->bbox.xMax);
+		c = 0;
 	}
 	else
 	{
-		find.a = PIXEL(face->glyph->metrics.horiBearingX);
-		find.b = PIXEL(face->glyph->metrics.width);
-		find.c = PIXEL(face->glyph->metrics.horiAdvance -
+		a = PIXEL(face->glyph->metrics.horiBearingX);
+		b = PIXEL(face->glyph->metrics.width);
+		c = PIXEL(face->glyph->metrics.horiAdvance -
 			 face->glyph->metrics.horiBearingX -
 			 face->glyph->metrics.width);
 	}
-	
-	find.a -= m_iBlur + m_iOutlineSize;
-	find.b += m_iBlur + m_iOutlineSize;
-	
-	if( m_iOutlineSize )
-	{
-		if( find.a < 0 )
-			find.a += m_iOutlineSize;
-
-		if( find.c < 0 )
-			find.c += m_iOutlineSize;
-	}
-
-	a = find.a;
-	b = find.b;
-	c = find.c;
-
-	m_ABCCache.Insert(find);
 }
 
 bool CFreeTypeFont::HasChar(int ch) const

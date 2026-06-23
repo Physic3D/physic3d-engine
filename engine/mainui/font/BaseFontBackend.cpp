@@ -16,15 +16,18 @@ GNU General Public License for more details.
 #include "FontManager.h"
 #include <math.h>
 #include "Utils.h"
+#include "miniutl/utlbuffer.h"
 
 CBaseFont::CBaseFont()
-	: m_szName( ), m_iTall(), m_iWeight(), m_iFlags(),
+	: m_iTall(), m_iWeight(), m_iFlags(),
 	m_iHeight(), m_iMaxCharWidth(), m_iAscent(),
 	m_iBlur(), m_fBrighten(),
 	m_iEllipsisWide( 0 ),
-	m_glyphs(0, 0)
+	m_glyphs(0, 0), m_ABCCache( 0, 0 )
 {
+	m_szTextureName[0] = m_szName[0] = 0;
 	SetDefLessFunc( m_glyphs );
+	SetDefLessFunc( m_ABCCache );
 }
 
 
@@ -35,7 +38,7 @@ CBaseFont::GetTextureName
 Mangle texture name, so using same font names with different attributes will not confuse engine or font renderer
 =========================
 +*/
-void CBaseFont::GetTextureName(char *dst, size_t len) const
+void CBaseFont::GetTextureName( char *dst, size_t len ) const
 {
 	char attribs[256];
 	int i = 0;
@@ -58,15 +61,16 @@ void CBaseFont::GetTextureName(char *dst, size_t len) const
 	}
 	attribs[i] = 0;
 
+	// faster loading: don't query filesystem, tell engine to skip everything and load only from buffer
 	if( i == 0 )
 	{
-		snprintf( dst, len - 1, "%s_%i_%i_font.bmp", GetName(), GetTall(), GetWeight() );
+		snprintf( dst, len - 1, "#%s_%i_%i_%s_font.bmp", GetName(), GetTall(), GetWeight(), GetBackendName( ));
 		dst[len - 1] = 0;
 	}
 	else
 	{
 		attribs[i] = 0;
-		snprintf( dst, len - 1, "%s_%i_%i_%s_font.bmp", GetName(), GetTall(), GetWeight(), attribs );
+		snprintf( dst, len - 1, "#%s_%i_%i_%s_%s_font.bmp", GetName(), GetTall(), GetWeight(), attribs, GetBackendName( ));
 		dst[len - 1] = 0;
 	}
 }
@@ -79,7 +83,17 @@ void CBaseFont::UploadGlyphsForRanges(charRange_t *range, int rangeSize)
 	const int height = GetHeight();
 	const int tempSize = maxWidth * height * 4; // allocate temporary buffer for max possible glyph size
 	const Point nullPt( 0, 0 );
-	char name[256];
+
+	GetTextureName( m_szTextureName, sizeof( m_szTextureName ));
+
+	if( ReadFromCache( m_szTextureName, range, rangeSize ))
+	{
+		int dotWideA, dotWideB, dotWideC;
+		GetCharABCWidths( '.', dotWideA, dotWideB, dotWideC );
+		m_iEllipsisWide = ( dotWideA + dotWideB + dotWideC ) * 3;
+
+		return;
+	}
 
 	CBMP bmp( MAX_PAGE_SIZE, MAX_PAGE_SIZE );
 	byte *rgbdata = bmp.GetTextureData();
@@ -96,20 +110,11 @@ void CBaseFont::UploadGlyphsForRanges(charRange_t *range, int rangeSize)
 	int xstart = 0, ystart = hdr->height-1;
 	for( int iRange = 0; iRange < rangeSize; iRange++ )
 	{
-		int size;
+		size_t size = range[iRange].Length();
 
-		if( range[iRange].sequence )
-			size = range[iRange].size;
-		else
-			size = range[iRange].chMax - range[iRange].chMin;
-
-		for( int i = 0; i < size; i++ )
+		for( size_t i = 0; i < size; i++ )
 		{
-			int ch;
-
-			if( range[iRange].sequence )
-				ch = range[iRange].sequence[i];
-			else ch = range[iRange].chMin + i;
+			int ch = range[iRange].Character( i );
 
 			// clear temporary buffer
 			memset( temp, 0, tempSize );
@@ -201,18 +206,15 @@ void CBaseFont::UploadGlyphsForRanges(charRange_t *range, int rangeSize)
 		}
 	}
 
-	GetTextureName( name, sizeof( name ) );
-	// bmp.Increase( hdr->width * 2, hdr->height );
-	// bmp.Increase( hdr->width, hdr->height * 2 );
-	HIMAGE hImage = EngFuncs::PIC_Load( name, bmp.GetBitmap(), bmp.GetBitmapHdr()->fileSize, 0 );
-	Con_DPrintf( "Uploaded %s to %i\n", name, hImage );
-	//delete[] bmp;
+	SaveToCache( m_szTextureName, range, rangeSize, &bmp );
+
+	HIMAGE hImage = bmp.Upload( m_szTextureName );
+
 	delete[] temp;
 
 	for( int i = m_glyphs.FirstInorder();; i = m_glyphs.NextInorder( i ) )
 	{
-		if( !m_glyphs[i].texture )
-			m_glyphs[i].texture = hImage;
+		m_glyphs[i].texture = hImage;
 		if( i == m_glyphs.LastInorder() )
 			break;
 	}
@@ -225,9 +227,36 @@ void CBaseFont::UploadGlyphsForRanges(charRange_t *range, int rangeSize)
 
 CBaseFont::~CBaseFont()
 {
-	char name[256];
-	GetTextureName( name, sizeof( name ) );
-	EngFuncs::PIC_Free( name );
+	if( m_szTextureName[0] != 0 )
+		EngFuncs::PIC_Free( m_szTextureName );
+}
+
+void CBaseFont::GetCharABCWidths( int ch, int &a, int &b, int &c )
+{
+	abc_t find;
+	find.ch = ch;
+
+	const int i = m_ABCCache.Find( find );
+	if( m_ABCCache.IsValidIndex( i ))
+	{
+		find = m_ABCCache[i];
+		a = find.a;
+		b = find.b;
+		c = find.c;
+		return;
+	}
+
+	// not found in cache
+	GetCharABCWidthsNoCache( ch, find.a, find.b, find.c );
+
+	find.a -= m_iBlur;
+	find.b += m_iBlur + m_iOutlineSize;
+
+	a = find.a;
+	b = find.b;
+	c = find.c;
+
+	m_ABCCache.Insert( find );
 }
 
 bool CBaseFont::IsEqualTo(const char *name, int tall, int weight, int blur, int flags)  const
@@ -252,53 +281,41 @@ bool CBaseFont::IsEqualTo(const char *name, int tall, int weight, int blur, int 
 
 void CBaseFont::DebugDraw()
 {
-	HIMAGE hImage;
-	char name[256];
+	HIMAGE const hImage = EngFuncs::PIC_Load( m_szTextureName );
+	const int w = EngFuncs::PIC_Width( hImage );
+	const int h = EngFuncs::PIC_Height( hImage );
 
+	int x = 0;
+	EngFuncs::PIC_Set( hImage, 255, 255, 255 );
+	EngFuncs::PIC_DrawTrans( Point( x, 0 ), Size( w, h ));
+
+	for( int i = m_glyphs.FirstInorder();; i = m_glyphs.NextInorder( i ) )
 	{
-		GetTextureName( name, sizeof( name ) );
-
-		hImage = EngFuncs::PIC_Load( name );
-		int w, h;
-		w = EngFuncs::PIC_Width( hImage );
-		h = EngFuncs::PIC_Height( hImage );
-		int x = 0;
-		EngFuncs::PIC_Set( hImage, 255, 255, 255 );
-		EngFuncs::PIC_DrawTrans( Point(x, 0), Size( w, h ) );
-
-		for( int i = m_glyphs.FirstInorder();; i = m_glyphs.NextInorder( i ) )
+		if( m_glyphs[i].texture == hImage )
 		{
-			if( m_glyphs[i].texture == hImage )
-			{
-				Point pt;
-				Size sz;
-				pt.x = x + m_glyphs[i].rect.left;
-				pt.y = m_glyphs[i].rect.top;
+			Point pt;
+			Size sz;
+			pt.x = x + m_glyphs[i].rect.left;
+			pt.y = m_glyphs[i].rect.top;
+			sz.w = m_glyphs[i].rect.right - m_glyphs[i].rect.left;
+			sz.h = m_glyphs[i].rect.bottom - pt.y;
+			UI_DrawRectangleExt( pt, sz, PackRGBA( 255, 0, 0, 255 ), 1 );
 
-				sz.w = m_glyphs[i].rect.right - m_glyphs[i].rect.left;
-				sz.h = m_glyphs[i].rect.bottom - pt.y;
+			int a, b, c;
+			GetCharABCWidths( m_glyphs[i].ch, a, b, c );
 
-				UI_DrawRectangleExt( pt, sz, PackRGBA( 255, 0, 0, 255 ), 1 );
+			pt.x -= a;
+			sz.w += c + a;
+			UI_DrawRectangleExt( pt, sz, PackRGBA( 0, 255, 0, 255 ), 1, QM_LEFT | QM_RIGHT );
 
-				int a, b, c;
-				GetCharABCWidths( m_glyphs[i].ch, a, b, c );
-
-				pt.x -= a;
-				sz.w += c + a;
-
-				UI_DrawRectangleExt( pt, sz, PackRGBA( 0, 255, 0, 255 ), 1, QM_LEFT | QM_RIGHT );
-
-				int ascender = GetAscent();
-
-				pt.y += ascender;
-				UI_DrawRectangleExt( pt, sz, PackRGBA( 0, 0, 255, 255 ), 1, QM_TOP );
-			}
-
-			if( i == m_glyphs.LastInorder() )
-				break;
+			const int ascender = GetAscent();
+			pt.y += ascender;
+			UI_DrawRectangleExt( pt, sz, PackRGBA( 0, 0, 255, 255 ), 1, QM_TOP );
 		}
-	}
 
+		if( i == m_glyphs.LastInorder() )
+			break;
+	}
 }
 
 void CBaseFont::ApplyBlur(Size rgbaSz, byte *rgba)
@@ -313,11 +330,12 @@ void CBaseFont::ApplyBlur(Size rgbaSz, byte *rgba)
 
 	sigma2 = 0.5 * m_iBlur;
 	sigma2 *= sigma2;
-	float * distribution = new float[m_iBlur * 2 + 1];
+	double *distribution = new double[m_iBlur * 2 + 1];
 	for( int x = 0; x <= m_iBlur * 2; x++ )
 	{
 		int val = x - m_iBlur;
-		distribution[x] = (float)(1.0f / sqrt(2 * 3.14 * sigma2)) * pow(2.7, -1 * (val * val) / (2 * sigma2));
+
+		distribution[x] = (1.0 / sqrt(2 * 3.14 * sigma2)) * pow(2.7, -1 * (val * val) / (2 * sigma2));
 
 		// brightening factor
 		distribution[x] *= m_fBrighten;
@@ -338,9 +356,9 @@ void CBaseFont::ApplyBlur(Size rgbaSz, byte *rgba)
 	delete[] src;
 }
 
-void CBaseFont::GetBlurValueForPixel(float *distribution, byte *src, Point srcPt, Size srcSz, byte *dest)
+void CBaseFont::GetBlurValueForPixel( double *distribution, const byte *src, Point srcPt, Size srcSz, byte *dest )
 {
-	float accum = 0.0f;
+	double accum = 0.0f;
 
 	// scan the positive x direction
 	int maxX = Q_min( srcPt.x + m_iBlur, srcSz.w );
@@ -351,18 +369,18 @@ void CBaseFont::GetBlurValueForPixel(float *distribution, byte *src, Point srcPt
 		int minY = Q_max( srcPt.y - m_iBlur, 0);
 		for (int y = minY; y < maxY; y++)
 		{
-			byte *srcPos = src + ((x + (y * srcSz.w)) * 4);
+			const byte *srcPos = src + ((x + (y * srcSz.w)) * 4);
 
 			// muliply by the value matrix
-			float weight = distribution[(x - srcPt.x) + m_iBlur];
-			float weight2 = distribution[(y - srcPt.y) + m_iBlur];
+			double weight = distribution[(x - srcPt.x) + m_iBlur];
+			double weight2 = distribution[(y - srcPt.y) + m_iBlur];
 			accum += ( srcPos[3] ) * (weight * weight2);
 		}
 	}
 
 	// all the values are the same for fonts, just use the calculated alpha
 	dest[0] = dest[1] = dest[2] = 255;
-	dest[3] = Q_min( (int)(accum + 0.5f), 255);
+	dest[3] = Q_min( (int)(accum + 0.5), 255);
 }
 
 void CBaseFont::ApplyOutline(Point pt, Size rgbaSz, byte *rgba)
@@ -370,41 +388,63 @@ void CBaseFont::ApplyOutline(Point pt, Size rgbaSz, byte *rgba)
 	if( !m_iOutlineSize )
 		return;
 
-	int x, y;
+	uint *tmp = new uint[rgbaSz.w * rgbaSz.h]; // matrix where we accumulate alpha values
+	memset( tmp, 0, sizeof( *tmp ) * rgbaSz.w * rgbaSz.h );
 
-	for( y = pt.x; y < rgbaSz.h; y++ )
+	for( int y = pt.x; y < rgbaSz.h; y++ )
 	{
-		for( x = pt.y; x < rgbaSz.w; x++ )
+		for( int x = pt.y; x < rgbaSz.w; x++ )
 		{
 			byte *src = &rgba[(x + (y * rgbaSz.w)) * 4];
 
-			if( src[3] != 0 )
-				continue;
-
-			int shadowX, shadowY;
-
-			for( shadowX = -m_iOutlineSize; shadowX <= m_iOutlineSize; shadowX++ )
+			for( int shadowX = -m_iOutlineSize; shadowX <= m_iOutlineSize; shadowX++ )
 			{
-				for( shadowY = -m_iOutlineSize; shadowY <= m_iOutlineSize; shadowY++ )
+				for( int shadowY = -m_iOutlineSize; shadowY <= m_iOutlineSize; shadowY++ )
 				{
-					if( !shadowX && !shadowY )
-						continue;
-
 					int testX = shadowX + x, testY = shadowY + y;
-					if( testX < 0 || testX >= rgbaSz.w ||
-						testY < 0 || testY >= rgbaSz.h )
+					if( testX < 0 || testX >= rgbaSz.w || testY < 0 || testY >= rgbaSz.h )
 						continue;
 
-					byte *test = &rgba[(testX + (testY * rgbaSz.w)) * 4];
-					if( test[0] == 0 || test[1] == 0 || test[3] == 0 )
-						continue;
-
-					src[0] = src[1] = src[2] = 0;
-					src[3] = -1;
+					uint *dst = &tmp[(testX + (testY * rgbaSz.w))];
+					*dst += src[3];
 				}
 			}
 		}
 	}
+
+	// find total amount of adjacent pixels
+	int total = m_iOutlineSize * 4 + m_iOutlineSize * m_iOutlineSize * 4;
+
+	for( int y = pt.x; y < rgbaSz.h; y++ )
+	{
+		for( int x = pt.y; x < rgbaSz.w; x++ )
+		{
+			byte *src = &rgba[(x + (y * rgbaSz.w)) * 4];
+			uint *dst = &tmp[(x + (y * rgbaSz.w))];
+
+			if( *dst == 0 )
+				continue;
+
+			uint val = *dst / (double)total;
+
+			val *= ( m_iOutlineSize + 1 ); // make it darker
+
+			// is this pixel painted by font renderer
+			if( src[3] > 0 )
+			{
+				// blend it with outline
+				src[0] = src[1] = src[2] = src[3];
+				src[3] = Q_min( src[3] + val, 255 );
+			}
+			else
+			{
+				src[0] = src[1] = src[2] = 0; // black outline
+				src[3] = Q_min( val, 255 );
+			}
+		}
+	}
+
+	delete[] tmp;
 }
 
 void CBaseFont::ApplyScanline(Size rgbaSz, byte *rgba)
@@ -510,4 +550,230 @@ int CBaseFont::DrawCharacter(int ch, Point pt, int charH, const unsigned int col
 	}
 #endif
 	return width;
+}
+
+#define CACHED_FONT_IDENT \
+	(('T'<<24)+('F'<<16)+('I'<<8)+'U') // little-endian "UIFT"
+
+// Version 2. Font blur has been changed, force font regeneration
+#define CACHED_FONT_VERSION 2
+
+struct char_data_t
+{
+	uint32_t ch;
+	int32_t a, b, c;
+	uint32_t left, right, top, bottom;
+};
+
+struct cached_font_t
+{
+	uint32_t ident;
+	uint32_t version;
+	uint32_t charsCount;
+};
+
+bool CBaseFont::ReadFromCache( const char *filename, charRange_t *range, size_t rangeSize )
+{
+	char path[512];
+	int size, i, j, charsCount = 0;
+	byte *data;
+	cached_font_t *hdr;
+	char_data_t *ch;
+	bmp_t *bmp;
+
+	// skip special symbol used for engine
+	V_snprintf( path, sizeof( path ), ".fontcache/%s", filename[0] == '#' ? filename + 1 : filename );
+
+	if( !EngFuncs::FileExists( path ))
+		return false;
+
+	data = EngFuncs::COM_LoadFile( path, &size );
+
+	if( !data )
+	{
+		Con_Printf( "Failed to load font cache file\n" );
+		return false;
+	}
+
+	for( i = 0; i < rangeSize; i++ )
+		charsCount += range[i].Length();
+
+	hdr = reinterpret_cast<cached_font_t *>( data );
+
+	if( size < sizeof( cached_font_t ) )
+	{
+		Con_Printf( "Font cache file is too short\n" );
+		EngFuncs::COM_FreeFile( data );
+		EngFuncs::DeleteFile( filename );
+		return false;
+	}
+
+	if( hdr->ident != CACHED_FONT_IDENT )
+	{
+		Con_Printf( "Wrong font cache file format\n" );
+		EngFuncs::COM_FreeFile( data );
+		EngFuncs::DeleteFile( filename );
+		return false;
+	}
+
+	if( hdr->version != CACHED_FONT_VERSION )
+	{
+		Con_Printf( "Wrong font cache file version. Expected %d, got %d\n", CACHED_FONT_VERSION, hdr->version );
+		EngFuncs::COM_FreeFile( data );
+		EngFuncs::DeleteFile( filename );
+		return false;
+	}
+
+	if( hdr->charsCount != charsCount )
+	{
+		Con_Printf( "Font cache file has different character set. Expected %d characters in set, got %d\n", charsCount, hdr->charsCount );
+		EngFuncs::COM_FreeFile( data );
+		EngFuncs::DeleteFile( filename );
+		return false;
+	}
+
+	if( size < sizeof( cached_font_t ) + hdr->charsCount * sizeof( char_data_t ))
+	{
+		Con_Printf( "Font cache file is too short (2nd check)\n" );
+		EngFuncs::COM_FreeFile( data );
+		EngFuncs::DeleteFile( filename );
+		return false;
+	}
+
+	bmp = reinterpret_cast<bmp_t *>(data + sizeof( cached_font_t ) + hdr->charsCount * sizeof( char_data_t ));
+
+	if( bmp->id[0] != 'B' && bmp->id[1] != 'M' )
+	{
+		Con_Printf( "Font cache BMP file id check failed\n" );
+		EngFuncs::COM_FreeFile( data );
+		EngFuncs::DeleteFile( filename );
+		return false;
+	}
+
+	if( size != sizeof( cached_font_t ) + hdr->charsCount * sizeof( char_data_t ) + bmp->fileSize )
+	{
+		Con_Printf( "Font cache file is too short or too long (3rd check)\n" );
+		EngFuncs::COM_FreeFile( data );
+		EngFuncs::DeleteFile( filename );
+		return false;
+	}
+
+	uint bmpFileSize = bmp->fileSize;
+	CBMP::SwapBmpHdrToLE( bmp );
+	HIMAGE hImage = EngFuncs::PIC_Load( filename, (const byte*)bmp, bmpFileSize, 0 );
+
+	if( !hImage )
+	{
+		Con_Printf( "Failed to load font cache BMP\n" );
+		EngFuncs::COM_FreeFile( data );
+		EngFuncs::DeleteFile( filename );
+		return false;
+	}
+
+	ch = reinterpret_cast<char_data_t *>(data + sizeof( cached_font_t ));
+
+	for( i = 0; i < rangeSize; i++ )
+	{
+		charsCount = range[i].Length();
+
+		for( j = 0; j < charsCount; j++ )
+		{
+			if( ch->ch != range[i].Character( j ))
+			{
+				Con_Printf( "Font cache file has different character set. Expected %d, got %d", range[i].Character( j ), ch->ch );
+				EngFuncs::COM_FreeFile( data );
+				EngFuncs::PIC_Free( filename );
+				EngFuncs::DeleteFile( filename );
+				return false;
+			}
+
+			glyph_t glyph( ch->ch );
+			abc_t abc;
+
+			glyph.rect.left = ch->left;
+			glyph.rect.bottom = ch->bottom;
+			glyph.rect.right = ch->right;
+			glyph.rect.top = ch->top;
+			glyph.texture = hImage;
+
+			m_glyphs.Insert( glyph );
+
+			abc.ch = ch->ch;
+			abc.a = ch->a;
+			abc.b = ch->b;
+			abc.c = ch->c;
+
+			m_ABCCache.Insert( abc );
+
+			ch++;
+		}
+	}
+
+	EngFuncs::COM_FreeFile( data );
+	return true;
+}
+
+void CBaseFont::SaveToCache( const char *filename, charRange_t *range, size_t rangeSize, CBMP *bmp )
+{
+	char path[512];
+	int i, j;
+	uint32_t charsCount = 0;
+	byte *data, *buf_p;
+	size_t size = 0, bmpSize = bmp->GetBitmapHdr()->fileSize;
+
+	// skip special symbol used for engine
+	if( filename[0] == '#' )
+		filename++;
+
+	for( i = 0; i < rangeSize; i++ )
+		charsCount += range[i].Length();
+
+	size = sizeof( cached_font_t ) +
+			charsCount * sizeof( char_data_t ) +
+			bmpSize;
+
+	buf_p = data = new byte[size];
+
+	((cached_font_t *)buf_p)->ident = CACHED_FONT_IDENT;
+	((cached_font_t *)buf_p)->version = CACHED_FONT_VERSION;
+	((cached_font_t *)buf_p)->charsCount = charsCount;
+
+	buf_p += sizeof( cached_font_t );
+
+	for( i = 0; i < rangeSize; i++ )
+	{
+		charsCount = range[i].Length();
+
+		for( j = 0; j < charsCount; j++ )
+		{
+			char_data_t ch;
+
+
+			ch.ch = range[i].Character( j );
+			GetCharABCWidths( ch.ch, ch.a, ch.b, ch.c );
+
+			glyph_t glyph( ch.ch );
+			int idx = m_glyphs.Find( glyph );
+
+			glyph = m_glyphs[idx];
+
+			ch.left   = glyph.rect.left;
+			ch.right  = glyph.rect.right;
+			ch.bottom = glyph.rect.bottom;
+			ch.top    = glyph.rect.top;
+
+			memcpy( buf_p, &ch, sizeof( ch ));
+			buf_p += sizeof( ch );
+		}
+	}
+
+	memcpy( buf_p, bmp->GetBitmapHdr(), bmpSize );
+
+	if( buf_p + bmpSize - data != size )
+		Host_Error( "%s: %i: buf_p + bmpSize - data != size", __FILE__, __LINE__ );
+
+	V_snprintf( path, sizeof( path ), ".fontcache/%s", filename );
+	EngFuncs::COM_SaveFile( path, data, size );
+
+	delete[] data;
 }

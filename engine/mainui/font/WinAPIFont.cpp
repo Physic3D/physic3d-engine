@@ -21,9 +21,8 @@ GNU General Public License for more details.
 #include "WinAPIFont.h"
 
 
-CWinAPIFont::CWinAPIFont( ) : CBaseFont( ), m_ABCCache( 0, 0 )
+CWinAPIFont::CWinAPIFont( ) : CBaseFont( )
 {
-	SetDefLessFunc( m_ABCCache );
 }
 
 CWinAPIFont::~CWinAPIFont( )
@@ -68,7 +67,7 @@ bool CWinAPIFont::Create( const char *name, int tall, int weight, int blur, floa
 	::EnumFontFamiliesExA( m_hDC, &font, &FontEnumProc, (LPARAM)this, 0 );
 	if( !m_bFound )
 	{
-		Con_DPrintf( "Couldn't create windows font %s: no font found\n", name );
+		Con_Printf( "Couldn't create windows font %s: no font found\n", name );
 		return false;
 	}
 
@@ -81,7 +80,7 @@ bool CWinAPIFont::Create( const char *name, int tall, int weight, int blur, floa
 
 	if( !m_hFont )
 	{
-		Con_DPrintf( "Couldn't create windows font %s: CreateFont failed\n", name );
+		Con_Printf( "Couldn't create windows font %s: CreateFont failed\n", name );
 		return false;
 	}
 
@@ -93,7 +92,7 @@ bool CWinAPIFont::Create( const char *name, int tall, int weight, int blur, floa
 	::TEXTMETRIC tm = { 0 };
 	if( !GetTextMetrics( m_hDC, &tm ) )
 	{
-		Con_DPrintf( "Couldn't create windows font %s: GetTextMetrics failed\n", name );
+		Con_Printf( "Couldn't create windows font %s: GetTextMetrics failed\n", name );
 		return false;
 	}
 
@@ -276,55 +275,24 @@ void CWinAPIFont::GetCharRGBA( int ch, Point pt, Size sz, unsigned char *rgba, S
 	ApplyStrikeout( sz, rgba );
 }
 
-void CWinAPIFont::GetCharABCWidths( int ch, int &a, int &b, int &c )
+void CWinAPIFont::GetCharABCWidthsNoCache( int ch, int &a, int &b, int &c )
 {
-	// look for it in the cache
-	abc_t finder = { ch };
-	int i = m_ABCCache.Find( finder );
-	if( m_ABCCache.IsValidIndex( i ) )
-	{
-		a = m_ABCCache[i].a;
-		b = m_ABCCache[i].b;
-		c = m_ABCCache[i].c;
-		return;
-	}
-
 	// not in the cache, get from windows (this call is a little slow)
 	::SelectObject( m_hDC, m_hFont );
 	ABC abc;
 	if( ::GetCharABCWidthsW( m_hDC, ch, ch, &abc ) || ::GetCharABCWidthsA( m_hDC, ch, ch, &abc ) )
 	{
-		finder.a = abc.abcA;
-		finder.b = abc.abcB;
-		finder.c = abc.abcC;
+		a = abc.abcA;
+		b = abc.abcB;
+		c = abc.abcC;
 	}
 	else
 	{
 		// failed to get width, just use the max width
-		finder.a = 0;
-		finder.b = m_iMaxCharWidth;
-		finder.c = 0;
+		a = 0;
+		b = m_iMaxCharWidth;
+		c = 0;
 	}
-	
-	finder.a -= m_iBlur + m_iOutlineSize;
-	finder.b += m_iBlur + m_iOutlineSize;
-
-	if( m_iOutlineSize )
-	{
-		if( finder.a < 0 )
-			finder.a += m_iOutlineSize;
-
-		if( finder.c < 0 )
-			finder.c += m_iOutlineSize;
-	}
-
-	a = finder.a;
-	b = finder.b;
-	c = finder.c;
-
-
-	// add to the cache
-	m_ABCCache.Insert( finder );
 }
 
 bool CWinAPIFont::HasChar( int ch ) const

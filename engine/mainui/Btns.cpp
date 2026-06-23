@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -21,133 +21,170 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "extdll_menu.h"
 #include "BaseMenu.h"
-#include "Utils.h"
-#include "BtnsBMPTable.h"
+#include "Btns.h"
 #include <string.h>
 
-#define ART_BUTTONS_MAIN		"gfx/shell/btns_main.bmp"	// we support bmp only
+#define ART_BUTTONS_MAIN "gfx/shell/btns_main.bmp" // we support bmp only
+#define BTN_GUARD_SIZE   2 // guard pixels between buttons and states in atlas
 
-typedef unsigned char	BYTE;
-typedef short int	    WORD;
-typedef unsigned int    DWORD;
-typedef int				LONG;
-
-#pragma pack(push, 1)
-typedef struct tagBITMAPFILEHEADER {
-  WORD  bfType;
-  DWORD bfSize;
-  WORD  bfReserved1;
-  WORD  bfReserved2;
-  DWORD bfOffBits;
-} BITMAPFILEHEADER, *PBITMAPFILEHEADER;
-
-typedef struct tagBITMAPINFOHEADER {
-  DWORD biSize;
-  LONG  biWidth;
-  LONG  biHeight;
-  WORD  biPlanes;
-  WORD  biBitCount;
-  DWORD biCompression;
-  DWORD biSizeImage;
-  LONG  biXPelsPerMeter;
-  LONG  biYPelsPerMeter;
-  DWORD biClrUsed;
-  DWORD biClrImportant;
-} BITMAPINFOHEADER, *PBITMAPINFOHEADER;
-
-typedef struct tagRGBQUAD {
-  BYTE rgbBlue;
-  BYTE rgbGreen;
-  BYTE rgbRed;
-  BYTE rgbReserved;
-} RGBQUAD;
-#pragma pack(pop)
 /*
 =================
-UI_LoadBmpButtons
+CBtnsManager::LoadBmpButtons
 =================
 */
-void UI_LoadBmpButtons( void )
+void CBtnsManager::LoadBmpButtons()
 {
-	memset( uiStatic.buttonsPics, 0, sizeof( uiStatic.buttonsPics ));
+	if( uiStatic.lowmemory || uiStatic.renderPicbuttonText )
+		return;
 
-	int bmp_filesize, palette_sz = 0;
-	byte *bmp_buffer = EngFuncs::COM_LoadFile( ART_BUTTONS_MAIN, &bmp_filesize );
+	CBMP *bmp = CBMP::LoadFile( ART_BUTTONS_MAIN );
 
-	if( !bmp_buffer || !bmp_filesize )
+	if( bmp == nullptr )
+		return;
+
+	const bmp_t *hdr = bmp->GetBitmapHdr();
+	const int bpp = hdr->bitsPerPixel / 8;
+
+	width = hdr->width;
+	height = 26; // virtual button height for layout
+
+	const int button_w = hdr->width;
+	const int button_tex_h = height; // WON buttons are always 26px in height
+	const int src_cell_h = button_tex_h * 3;
+	const int pic_count = Q_min( hdr->height / button_tex_h / 3, PC_BUTTONCOUNT );
+
+	if( bpp == 0 || button_w == 0 || pic_count <= 0 )
 	{
-		Con_Printf( "UI_LoadBmpButtons: btns_main.bmp not found\n" );
+		delete bmp;
 		return;
 	}
 
-	BITMAPFILEHEADER *pFileHdr = (BITMAPFILEHEADER *)bmp_buffer;
-	BITMAPINFOHEADER *pInfoHdr = (BITMAPINFOHEADER *)&bmp_buffer[sizeof( BITMAPFILEHEADER )];
+	const int src_stride = (( hdr->width * bpp ) + 3 ) & ~3;
 
-	BITMAPINFOHEADER NewInfoHdr;
-	BITMAPFILEHEADER NewFileHdr;
+	// atlas cell dimensions including guard pixels
+	const int state_step = button_tex_h + BTN_GUARD_SIZE;
+	const int cell_w = button_w + BTN_GUARD_SIZE;
+	const int cell_h = state_step * 3;
 
-	if( pInfoHdr->biBitCount == 8 && pInfoHdr->biClrUsed == 0 )
-		pInfoHdr->biClrUsed = 256; // all colors used
+	tex_h = button_tex_h;
+	tex_stride = state_step;
 
-	memcpy( &NewFileHdr, pFileHdr, sizeof( BITMAPFILEHEADER ));
-	memcpy( &NewInfoHdr, pInfoHdr, sizeof( BITMAPINFOHEADER ));
+	// find the smallest POT atlas that fits all buttons in a single page
+	const int pot_sizes[] = { 256, 512, 1024 };
+	int atlas_w = 0, atlas_h = 0;
+	int cols = 0, rows = 0;
+	int best_area = 0x7FFFFFFF;
 
-	byte *palette = bmp_buffer + sizeof( BITMAPFILEHEADER ) + sizeof( BITMAPINFOHEADER );
-	if( pInfoHdr->biBitCount <= 8 )
+	for( int wi = 0; wi < ARRAYSIZE( pot_sizes ); wi++ )
 	{
-		// figure out how many entries are actually in the table
-		if( pInfoHdr->biClrUsed == 0 )
+		for( int hi = 0; hi < ARRAYSIZE( pot_sizes ); hi++ )
 		{
-			pInfoHdr->biClrUsed = 256;
-			palette_sz = ((size_t)1 << pInfoHdr->biBitCount) * sizeof( RGBQUAD );
+			int w = pot_sizes[wi];
+			int h = pot_sizes[hi];
+			int c = w / cell_w;
+			int r = h / cell_h;
+
+			if( c > 0 && r > 0 && c * r >= pic_count && w * h < best_area )
+			{
+				atlas_w = w;
+				atlas_h = h;
+				cols = c;
+				rows = r;
+				best_area = w * h;
+			}
 		}
-		else palette_sz = pInfoHdr->biClrUsed * sizeof( RGBQUAD );
 	}
 
-	uiStatic.buttons_width = pInfoHdr->biWidth;
-	uiStatic.buttons_height = 78;	// fixed height (26 * 3)
-
-	// determine buttons count by image height...
-	int pic_count = ( pInfoHdr->biHeight / uiStatic.buttons_height );
-
-	int stride = (pInfoHdr->biWidth * pInfoHdr->biBitCount / 8);
-	int cutted_img_sz = ((stride + 3 ) & ~3) * uiStatic.buttons_height;
-	int CuttedBmpSize = sizeof( BITMAPFILEHEADER ) + sizeof( BITMAPINFOHEADER ) + palette_sz + cutted_img_sz;
-	byte *img_data = &bmp_buffer[pFileHdr->bfOffBits + cutted_img_sz * ( pic_count - 1 )];
-
-	NewFileHdr.bfSize = CuttedBmpSize;
-	NewFileHdr.bfOffBits = sizeof( BITMAPFILEHEADER ) + sizeof( BITMAPINFOHEADER ) + palette_sz;
-	NewInfoHdr.biHeight = uiStatic.buttons_height;
-	NewInfoHdr.biSizeImage = cutted_img_sz;
-
-	char fname[256];
-	byte *raw_img_buff = (byte *)MALLOC( CuttedBmpSize );
-
-	for( int i = 0; i < pic_count; i++ )
+	// if no single texture fits, use 1024x1024 pages
+	if( atlas_w == 0 )
 	{
-		sprintf( fname, "#btns_%d.bmp", i );
+		atlas_w = 1024;
+		atlas_h = 1024;
+		cols = atlas_w / cell_w;
+		rows = atlas_h / cell_h;
 
-		int offset = 0;
-		memcpy( &raw_img_buff[offset], &NewFileHdr, sizeof( BITMAPFILEHEADER ));
-		offset += sizeof( BITMAPFILEHEADER );
-
-		memcpy( &raw_img_buff[offset], &NewInfoHdr, NewInfoHdr.biSize );
-		offset += NewInfoHdr.biSize;
-
-		if( NewInfoHdr.biBitCount <= 8 )
+		if( cols == 0 || rows == 0 )
 		{
-			memcpy( &raw_img_buff[offset], palette, palette_sz );
-			offset += palette_sz;
+			delete bmp;
+			return;
 		}
-
-		memcpy( &raw_img_buff[offset], img_data, cutted_img_sz );
-
-		// upload image into video memory
-		uiStatic.buttonsPics[i] = EngFuncs::PIC_Load( fname, raw_img_buff, CuttedBmpSize );
-
-		img_data -= cutted_img_sz;
 	}
 
-	FREE( raw_img_buff );
-	EngFuncs::COM_FreeFile( bmp_buffer );
+	const int per_page = cols * rows;
+	const int num_pages = ( pic_count + per_page - 1 ) / per_page;
+	const int dst_stride = (( atlas_w * bpp ) + 3 ) & ~3;
+	const int atlas_img_sz = dst_stride * atlas_h;
+	const int src_height = hdr->height;
+
+	byte *src = bmp->GetTextureData();
+
+	for( int page = 0; page < num_pages; page++ )
+	{
+		CBMP atlas_bmp( bmp->GetBitmapHdr(), atlas_img_sz );
+		atlas_bmp.GetBitmapHdr()->width = atlas_w;
+		atlas_bmp.GetBitmapHdr()->height = atlas_h;
+
+		byte *dst = atlas_bmp.GetTextureData();
+		memset( dst, 0, atlas_img_sz );
+
+		for( int slot = 0; slot < per_page; slot++ )
+		{
+			int btn = page * per_page + slot;
+			if( btn >= pic_count )
+				break;
+
+			int col = slot % cols;
+			int row = slot / cols;
+
+			x[btn] = col * cell_w;
+			y[btn] = row * cell_h;
+
+			// copy 3 button states into the atlas cell
+			for( int state = 0; state < 3; state++ )
+			{
+				for( int line = 0; line < button_tex_h; line++ )
+				{
+					int src_visual_y = btn * src_cell_h + state * button_tex_h + line;
+					int src_row = src_height - 1 - src_visual_y;
+
+					int dst_visual_y = row * cell_h + state * state_step + line;
+					int dst_row = atlas_h - 1 - dst_visual_y;
+
+					byte *s = &src[src_row * src_stride];
+					byte *d = &dst[dst_row * dst_stride + col * cell_w * bpp];
+
+					memcpy( d, s, button_w * bpp );
+
+					// fixup alpha for half-life infected mod
+					if( bpp == 4 )
+					{
+						for( int px = 0; px < button_w; px++ )
+							d[px * 4 + 3] = 255;
+					}
+				}
+
+				// fix misaligned gearbox btns: clear bottom visual row of each state
+				int dst_visual_y2 = row * cell_h + state * state_step + button_tex_h - 1;
+				int dst_row2 = atlas_h - 1 - dst_visual_y2;
+				byte *d2 = &dst[dst_row2 * dst_stride + col * cell_w * bpp];
+				memset( d2, 0, button_w * bpp );
+			}
+		}
+
+		CUtlString fname;
+		fname.Format( "#btns_atlas_%d.bmp", page );
+
+		HIMAGE hAtlas = atlas_bmp.Upload( fname.String() );
+
+		for( int slot = 0; slot < per_page; slot++ )
+		{
+			int btn = page * per_page + slot;
+			if( btn >= pic_count )
+				break;
+
+			pics[btn] = hAtlas;
+		}
+	}
+
+	delete bmp;
 }

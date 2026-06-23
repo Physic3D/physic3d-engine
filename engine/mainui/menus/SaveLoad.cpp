@@ -36,9 +36,6 @@ private:
 	char		hintText[MAX_HINT_TEXT];
 };
 
-static CMenuSaveLoad	uiSaveLoad;
-
-
 /*
 =================
 UI_SaveLoad_Init
@@ -47,8 +44,7 @@ UI_SaveLoad_Init
 void CMenuSaveLoad::_Init( void )
 {
 	snprintf( hintText, sizeof( hintText ),
-		L( "During play, you can quickly save your game by pressing %s.\n"
-		"Load this game again by pressing %s." ),
+		L( "During play, you can quickly save your game by pressing %s.\nLoad this game again by pressing %s." ),
 		EngFuncs::KeynumToString( KEY_GetKey( "save quick" ) ),
 		EngFuncs::KeynumToString( KEY_GetKey( "load quick" ) ) );
 
@@ -60,7 +56,6 @@ void CMenuSaveLoad::_Init( void )
 	hintMessage.szName = hintText;
 	hintMessage.SetCoord( 360, 480 );
 
-	AddItem( background );
 	AddItem( banner );
 	AddButton( L( "GameUI_LoadGame" ), L( "GameUI_LoadGameHelp" ), PC_LOAD_GAME, UI_LoadGame_Menu, QMF_NOTIFY );
 	AddButton( L( "GameUI_SaveGame" ), L( "GameUI_SaveGameHelp" ), PC_SAVE_GAME, UI_SaveGame_Menu, QMF_NOTIFY );
@@ -68,29 +63,4 @@ void CMenuSaveLoad::_Init( void )
 	AddItem( hintMessage );
 }
 
-/*
-=================
-UI_SaveLoad_Precache
-=================
-*/
-void UI_SaveLoad_Precache( void )
-{
-	EngFuncs::PIC_Load( ART_BANNER );
-}
-
-/*
-=================
-UI_SaveLoad_Menu
-=================
-*/
-void UI_SaveLoad_Menu( void )
-{
-	if( gMenu.m_gameinfo.gamemode == GAME_MULTIPLAYER_ONLY )
-	{
-		// completely ignore save\load menus for multiplayer_only
-		return;
-	}
-
-	uiSaveLoad.Show();
-}
-ADD_MENU( menu_saveload, UI_SaveLoad_Precache, UI_SaveLoad_Menu );
+ADD_MENU( menu_saveload, CMenuSaveLoad, UI_SaveLoad_Menu );

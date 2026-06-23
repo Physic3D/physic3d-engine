@@ -17,7 +17,6 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
-#pragma once
 #ifndef SWITCH_H
 #define SWITCH_H
 
@@ -39,9 +38,10 @@ public:
 	{
 		CMenuEditable::LinkCvar( name, CMenuEditable::CVAR_VALUE );
 	}
-	void AddSwitch( const char *text );
+	void AddSwitch( const char *text, bool hidden = false );
 
 	int GetState() { return m_iState; }
+	void SetState( int state );
 
 	bool bMouseToggle;
 	bool bKeepToggleWidth;
@@ -56,12 +56,17 @@ public:
 	float fTextOffsetY;
 private:
 	int IsNewStateByMouseClick( void );
-	int m_iSwitches;
 	int m_iState;
 
-	const char *m_szNames[UI_MAX_MENUITEMS];
-	Point m_Points[UI_MAX_MENUITEMS];
-	Size m_Sizes[UI_MAX_MENUITEMS];
+	struct switch_t
+	{
+		const char *name;
+		Point pt;
+		Size sz;
+		bool hidden;
+	};
+
+	CUtlVector<switch_t> m_switches;
 	Point m_scTextPos;
 	Size m_scTextSize;
 };

@@ -39,15 +39,13 @@ private:
 	float saveTouchEnable;
 };
 
-static CMenuTouchEdit uiTouchEdit;
-
 void CMenuTouchEdit::Show()
 {
 	saveTouchEnable = EngFuncs::GetCvarFloat( "touch_enable" );
 
 	EngFuncs::CvarSetValue( "touch_enable", 1 );
 	EngFuncs::CvarSetValue( "touch_in_menu", 1 );
-	EngFuncs::ClientCmd(FALSE, "touch_enableedit");
+	EngFuncs::ClientCmd(false, "touch_enableedit");
 
 	CMenuFramework::Show();
 }
@@ -56,7 +54,7 @@ void CMenuTouchEdit::Hide()
 {
 	EngFuncs::CvarSetValue( "touch_enable", saveTouchEnable );
 	EngFuncs::CvarSetValue( "touch_in_menu", 0 );
-	EngFuncs::ClientCmd(FALSE, "touch_disableedit");
+	EngFuncs::ClientCmd(false, "touch_disableedit");
 
 	CMenuFramework::Hide();
 }
@@ -90,29 +88,10 @@ bool CMenuTouchEdit::KeyDown( int key )
 	if( UI::Key::IsEscape( key ) )
 	{
 		Hide();
-		PlayLocalSound( uiSoundOut );
+		PlayLocalSound( uiStatic.sounds[SND_OUT] );
 		return true;
 	}
 	return false;
 }
 
-/*
-=================
-UI_TouchEdit_Precache
-=================
-*/
-void UI_TouchEdit_Precache( void )
-{
-
-}
-
-/*
-=================
-UI_TouchEdit_Menu
-=================
-*/
-void UI_TouchEdit_Menu( void )
-{
-	uiTouchEdit.Show();
-}
-ADD_MENU( menu_touchedit, UI_TouchEdit_Precache, UI_TouchEdit_Menu );
+ADD_MENU( menu_touchedit, CMenuTouchEdit, UI_TouchEdit_Menu );

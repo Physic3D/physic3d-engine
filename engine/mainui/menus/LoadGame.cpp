@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -31,25 +31,82 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define LEVELSHOT_X		72
 #define LEVELSHOT_Y		400
-#define LEVELSHOT_W		192
+#define LEVELSHOT_W		260
 #define LEVELSHOT_H		160
 
-#define MAX_CELLSTRING 64
+#define MAX_CELLSTRING CS_SIZE
+
+class CMenuLoadGame;
+
+struct save_t
+{
+	char name[CS_SIZE];
+
+private:
+	friend class CMenuSavesListModel;
+	char date[CS_SIZE];
+	char comment[256];
+	char elapsed_time[CS_SIZE];
+};
+
+/*
+============
+COM_CompareSaves
+============
+*/
+static int COM_CompareSaves( const void *a, const void *b )
+{
+	const char *file1 = *((const char **)a);
+	const char *file2 = *((const char **)b);
+	int bResult = 0;
+
+	EngFuncs::CompareFileTime( file2, file1, &bResult );
+
+	return bResult;
+}
 
 class CMenuSavePreview : public CMenuBaseItem
 {
 public:
-	CMenuSavePreview() : CMenuBaseItem()
+	CMenuSavePreview() : CMenuBaseItem(), fallback( "{GRAF001" )
 	{
 		iFlags = QMF_INACTIVE;
 	}
 
 	void Draw() override;
+
+	void SetSaveName( const char *name )
+	{
+		if( name == nullptr )
+			saveshot.ForceUnload();
+		else
+		{
+			char path[128];
+			snprintf( path, sizeof( path ), "save/%s.bmp", name );
+			saveshot.ForceUnload();
+			if( EngFuncs::FileExists( path, true ) )
+				saveshot.Load( path );
+
+			if( saveshot.IsValid( ))
+			{
+				double w = EngFuncs::PIC_Width( saveshot.Handle( ));
+				double h = EngFuncs::PIC_Height( saveshot.Handle( ));
+
+				size.h = round( size.w / ( w / h ));
+				CalcSizes();
+			}
+		}
+	}
+
+	CImage fallback;
+	CImage saveshot;
 };
 
-class CMenuSavesListModel : public CMenuBaseModel
+class CMenuSavesListModel : public CMenuBaseModel, public CUtlVector<save_t>
 {
 public:
+	CMenuSavesListModel( CMenuLoadGame *parent ) : parent( parent ) { }
+
 	void Update() override;
 	int GetColumns() const override
 	{
@@ -58,32 +115,33 @@ public:
 	}
 	int GetRows() const override
 	{
-		return m_iNumItems;
+		return Count();
 	}
 	const char *GetCellText( int line, int column ) override
 	{
-		return m_szCells[line][column];
+		switch( column )
+		{
+		case 0: return Element( line ).date;
+		case 1: return Element( line ).comment;
+		case 2: return Element( line ).elapsed_time;
+		}
+		ASSERT( 0 );
+		return NULL;
 	}
 	unsigned int GetAlignmentForColumn(int column) const override
 	{
-		if( column == 2 )
-			return QM_RIGHT;
-		return QM_LEFT;
+		return column == 2 ? QM_RIGHT : QM_LEFT;
 	}
+
 	void OnDeleteEntry( int line ) override;
-
-	char		saveName[UI_MAXGAMES][CS_SIZE];
-	char		delName[UI_MAXGAMES][CS_SIZE];
-
 private:
-	char		m_szCells[UI_MAXGAMES][3][MAX_CELLSTRING];
-	int			m_iNumItems;
+	CMenuLoadGame *parent;
 };
 
-static class CMenuLoadGame : public CMenuFramework
+class CMenuLoadGame : public CMenuFramework
 {
 public:
-	CMenuLoadGame() : CMenuFramework( "CMenuLoadGame" ) { }
+	CMenuLoadGame() : CMenuFramework( "CMenuLoadGame" ), savesListModel( this ) { }
 
 	// true to turn this menu into save mode, false to turn into load mode
 	void SetSaveMode( bool saveMode );
@@ -114,24 +172,12 @@ private:
 	CMenuSavesListModel savesListModel;
 
 	friend class CMenuSavesListModel;
-} uiLoadGame;
+};
 
 void CMenuSavePreview::Draw()
 {
-	const char *fallback = "{GRAF001";
-
-	if( szName && *szName )
-	{
-		char saveshot[128];
-
-		snprintf( saveshot, sizeof( saveshot ),
-				  "save/%s.bmp", szName );
-
-		if( EngFuncs::FileExists( saveshot ))
-			UI_DrawPic( m_scPos, m_scSize, uiColorWhite, saveshot );
-		else
-			UI_DrawPic( m_scPos, m_scSize, uiColorWhite, fallback, QM_DRAWADDITIVE );
-	}
+	if( saveshot.IsValid( ))
+		UI_DrawPic( m_scPos, m_scSize, uiColorWhite, saveshot );
 	else
 		UI_DrawPic( m_scPos, m_scSize, uiColorWhite, fallback, QM_DRAWADDITIVE );
 
@@ -146,79 +192,134 @@ CMenuSavesListModel::Update
 */
 void CMenuSavesListModel::Update( void )
 {
-	char	comment[256];
-	char	**filenames;
-	int	i = 0, j, numFiles;
+	char **filenames;
+	int numFiles;
 
-	filenames = EngFuncs::GetFilesList( "save/*.sav", &numFiles, TRUE );
+	RemoveAll();
+	filenames = EngFuncs::GetFilesList( "save/*.sav", &numFiles, true );
 
 	// sort the saves in reverse order (oldest past at the end)
-	qsort( filenames, numFiles, sizeof( char* ), (cmpfunc)COM_CompareSaves );
+	qsort( filenames, numFiles, sizeof( *filenames ), COM_CompareSaves );
 
-	if ( uiLoadGame.IsSaveMode() && CL_IsActive() )
+	if( parent->IsSaveMode( ) && CL_IsActive( ))
 	{
 		// create new entry for current save game
-		Q_strncpy( saveName[i], L( "GameUI_SaveGame_New" ), CS_SIZE );
-		Q_strncpy( delName[i], "", CS_SIZE );
-		strcpy( m_szCells[i][0], L( "GameUI_SaveGame_Current" ) );
-		strcpy( m_szCells[i][1], L( "GameUI_SaveGame_NewSavedGame" ) );
-		strcpy( m_szCells[i][2], L( "GameUI_SaveGame_New" ) );
-		i++;
+		save_t save;
+		Q_strncpy( save.name, "new", sizeof( save.name )); // special name, handled in SV_Save_f
+		Q_strncpy( save.date, L( "GameUI_SaveGame_Current" ), sizeof( save.date ));
+		Q_strncpy( save.comment, L( "GameUI_SaveGame_NewSavedGame" ), sizeof( save.comment ));
+		Q_strncpy( save.elapsed_time, L( "GameUI_SaveGame_New" ), sizeof( save.elapsed_time ));
+
+		AddToTail( save );
 	}
 
-	for ( j = 0; j < numFiles; i++, j++ )
+	for( int i = 0; i < numFiles; i++ )
 	{
-		if( i >= UI_MAXGAMES ) break;
-		
-		if( !EngFuncs::GetSaveComment( filenames[j], comment ))
+		save_t save;
+		char comment[256];
+		char time[CS_TIME];
+		char date[CS_TIME];
+
+		// strip path, leave only filename (empty slots doesn't have savename)
+		COM_FileBase( filenames[i], save.name, sizeof( save.name ));
+
+		if( !EngFuncs::GetSaveComment( filenames[i], comment ))
 		{
 			if( comment[0] )
 			{
 				// get name string even if not found - SV_GetComment can be mark saves
 				// as <CORRUPTED> <OLD VERSION> etc
-				Q_strncpy( m_szCells[i][0], comment, MAX_CELLSTRING );
-				m_szCells[i][1][0] = 0;
-				m_szCells[i][2][0] = 0;
-				COM_FileBase( filenames[j], saveName[i] );
-				COM_FileBase( filenames[j], delName[i] );
+				Q_strncpy( save.date, comment, sizeof( save.date ));
+				save.elapsed_time[0] = 0;
+				save.comment[0] = 0;
+
+				AddToTail( save );
 			}
 			continue;
 		}
 
-		// strip path, leave only filename (empty slots doesn't have savename)
-		COM_FileBase( filenames[j], saveName[i] );
-		COM_FileBase( filenames[j], delName[i] );
+		// they are defined by comment string format
+		// time and date
+		Q_strncpy( time, comment + CS_SIZE, CS_TIME );
+		Q_strncpy( date, comment + CS_SIZE + CS_TIME, CS_TIME );
 
-		// fill save desc
-		snprintf( m_szCells[i][0], MAX_CELLSTRING, "%.16s %.16s", comment + CS_SIZE, comment + CS_SIZE + CS_TIME );
-		Q_strncpy( m_szCells[i][1], comment, MAX_CELLSTRING );
-		Q_strncpy( m_szCells[i][2], comment + CS_SIZE + (CS_TIME * 2), MAX_CELLSTRING );
+		snprintf( save.date, sizeof( save.date ), "%s %s", time, date );
+
+		// ingame time
+		Q_strncpy( save.elapsed_time, comment + CS_SIZE + CS_TIME * 2, sizeof( save.elapsed_time ));
+
+		char *title, *type, *p;
+		type = p = nullptr;
+
+		// we need real title
+		// so search for square brackets
+		if( comment[0] == '[' && ( p = strchr( comment, ']' )))
+		{
+			type = comment + 1; // this might be "autosave", "quick", etc...
+			title = p + 1; // this is a title
+		}
+		else title = comment;
+
+		if( title[0] == '#' )
+		{
+			char s[CS_SIZE];
+
+			// remove the second ], we don't need it to concatenate
+			if( p )
+				*p = 0;
+
+			// strip everything after first space, assume translatable save titles have no space
+			p = strchr( title, ' ' );
+			if( p )
+				*p = 0;
+
+			Q_strncpy( s, title, sizeof( s ));
+
+			if( type )
+			{
+				// Localize known save-type identifiers (quick/autosave). Otherwise, fall back to original behavior.
+				if( !stricmp( type, "quick" ))
+					snprintf( save.comment, sizeof( save.comment ), "%s%s", L( "GameUI_QuickSave" ), L( s ));
+				else if( !stricmp( type, "autosave" ))
+					snprintf( save.comment, sizeof( save.comment ), "%s%s", L( "GameUI_AutoSave" ), L( s ));
+				else
+					snprintf( save.comment, sizeof( save.comment ), "[%.16s]%s", type, L( s ));
+			}
+			else Q_strncpy( save.comment, L( s ), sizeof( save.comment ));
+		}
+		else
+		{
+			// strip whitespace from the end of string
+			for( size_t len = strlen( title ) - 1; len >= 0; len-- )
+			{
+				if( !isspace( title[len] ))
+					break;
+
+				title[len] = '\0';
+			}
+
+			Q_strncpy( save.comment, comment, sizeof( save.comment ));
+		}
+
+		AddToTail( save );
 	}
 
-	m_iNumItems = i;
-
-	if ( saveName[0][0] == 0 )
+	if( !parent->IsSaveMode( ))
 	{
-		uiLoadGame.load.SetGrayed( true );
+		parent->load.SetGrayed( !IsValidIndex( 0 ) );
 	}
 	else
 	{
-		uiLoadGame.levelShot.szName = saveName[0];
-		uiLoadGame.load.SetGrayed( false );
+		parent->save.SetGrayed( !IsValidIndex( 0 ) || !CL_IsActive( ));
 	}
 
-	if ( saveName[0][0] == 0 || !CL_IsActive() )
-		uiLoadGame.save.SetGrayed( true );
-	else uiLoadGame.save.SetGrayed( false );
-
-	if ( delName[0][0] == 0 )
-		uiLoadGame.remove.SetGrayed( true );
-	else uiLoadGame.remove.SetGrayed( false );
+	parent->remove.SetGrayed( !IsValidIndex( 0 ));
+	parent->UpdateGame();
 }
 
-void CMenuSavesListModel::OnDeleteEntry(int line)
+void CMenuSavesListModel::OnDeleteEntry( int line )
 {
-	uiLoadGame.msgBox.Show();
+	parent->msgBox.Show();
 }
 
 /*
@@ -228,29 +329,28 @@ UI_LoadGame_Init
 */
 void CMenuLoadGame::_Init( void )
 {
-	save.SetNameAndStatus( L( "GameUI_Save" ), L( "Save current game" ) );
+	save.szName = L( "GameUI_Save" );
 	save.SetPicture( PC_SAVE_GAME );
 	save.onReleased = VoidCb( &CMenuLoadGame::SaveGame );
 	save.SetCoord( 72, 230 );
 
-	load.SetNameAndStatus( L( "GameUI_Load" ), L( "Load saved game" ) );
+	load.szName = L( "GameUI_Load" );
 	load.SetPicture( PC_LOAD_GAME );
 	load.onReleased = VoidCb( &CMenuLoadGame::LoadGame );
 	load.SetCoord( 72, 230 );
 
-	remove.SetNameAndStatus( L( "Delete" ), L( "Delete saved game" ) );
+	remove.szName = L( "Delete" );
 	remove.SetPicture( PC_DELETE );
 	remove.onReleased = msgBox.MakeOpenEvent();
 	remove.SetCoord( 72, 280 );
 
-	cancel.SetNameAndStatus( L( "GameUI_Cancel" ), L( "Return back to main menu" ) );
+	cancel.szName = L( "GameUI_Cancel" );
 	cancel.SetPicture( PC_CANCEL );
 	cancel.onReleased = VoidCb( &CMenuLoadGame::Hide );
 	cancel.SetCoord( 72, 330 );
 
 	savesList.szName = hintText;
 	savesList.onChanged = VoidCb( &CMenuLoadGame::UpdateGame );
-	// savesList.onDeleteEntry = msgBox.MakeOpenEvent();
 	savesList.SetupColumn( 0, L( "GameUI_Time" ), 0.30f );
 	savesList.SetupColumn( 1, L( "GameUI_Game" ), 0.55f );
 	savesList.SetupColumn( 2, L( "GameUI_ElapsedTime" ), 0.15f );
@@ -265,7 +365,6 @@ void CMenuLoadGame::_Init( void )
 
 	levelShot.SetRect( LEVELSHOT_X, LEVELSHOT_Y, LEVELSHOT_W, LEVELSHOT_H );
 
-	AddItem( background );
 	AddItem( banner );
 	AddItem( load );
 	AddItem( save );
@@ -277,71 +376,67 @@ void CMenuLoadGame::_Init( void )
 
 void CMenuLoadGame::LoadGame()
 {
-	const char *saveName = savesListModel.saveName[savesList.GetCurrentIndex()];
-	if( saveName[0] )
-	{
-		char	cmd[128];
-		sprintf( cmd, "load \"%s\"\n", saveName );
+	if( !savesListModel.IsValidIndex( savesList.GetCurrentIndex( )))
+		return;
 
-		EngFuncs::StopBackgroundTrack( );
+	char cmd[128];
+	const char *name = savesListModel[savesList.GetCurrentIndex( )].name;
 
-		EngFuncs::ClientCmd( FALSE, cmd );
-
-		UI_CloseMenu();
-	}
+	snprintf( cmd, sizeof( cmd ), "load \"%s\"\n", name );
+	EngFuncs::StopBackgroundTrack( );
+	EngFuncs::ClientCmd( false, cmd );
+	UI_CloseMenu();
 }
 
 void CMenuLoadGame::SaveGame()
 {
-	const char *saveName = savesListModel.saveName[savesList.GetCurrentIndex()];
-	if( saveName[0] )
-	{
-		char	cmd[128];
+	if( !savesListModel.IsValidIndex( savesList.GetCurrentIndex( )))
+		return;
 
-		sprintf( cmd, "save/%s.bmp", saveName );
-		EngFuncs::PIC_Free( cmd );
+	char cmd[128];
+	const char *name = savesListModel[savesList.GetCurrentIndex( )].name;
 
-		sprintf( cmd, "save \"%s\"\n", saveName );
-		EngFuncs::ClientCmd( FALSE, cmd );
+	snprintf( cmd, sizeof( cmd ), "save/%s.bmp", name );
+	EngFuncs::PIC_Free( cmd );
 
-		UI_CloseMenu();
-	}
+	snprintf( cmd, sizeof( cmd ), "save \"%s\"\n", name );
+	EngFuncs::ClientCmd( false, cmd );
+	UI_CloseMenu();
 }
 
 void CMenuLoadGame::UpdateGame()
 {
 	// first item is for creating new saves
-	if( IsSaveMode() && savesList.GetCurrentIndex() == 0 )
+	if(( IsSaveMode() && savesList.GetCurrentIndex() == 0 ) || !savesListModel.IsValidIndex( savesList.GetCurrentIndex( )))
 	{
 		remove.SetGrayed( true );
-		levelShot.szName = NULL;
+		levelShot.SetSaveName( nullptr );
 	}
 	else
 	{
 		remove.SetGrayed( false );
-		levelShot.szName = savesListModel.saveName[savesList.GetCurrentIndex()];
+		levelShot.SetSaveName( savesListModel[savesList.GetCurrentIndex( )].name );
 	}
 }
 
 void CMenuLoadGame::DeleteGame()
 {
-	const char *delName = savesListModel.delName[savesList.GetCurrentIndex()];
+	if( !savesListModel.IsValidIndex( savesList.GetCurrentIndex( )))
+		return;
 
-	if( delName[0] )
-	{
-		char	cmd[128];
-		sprintf( cmd, "killsave \"%s\"\n", delName );
+	char cmd[128];
+	const char *name = savesListModel[savesList.GetCurrentIndex( )].name;
 
-		EngFuncs::ClientCmd( TRUE, cmd );
+	snprintf( cmd, sizeof( cmd ), "killsave \"%s\"\n", name );
+	EngFuncs::ClientCmd( true, cmd );
 
-		sprintf( cmd, "save/%s.bmp", delName );
-		EngFuncs::PIC_Free( cmd );
+	snprintf( cmd, sizeof( cmd ), "save/%s.bmp", name );
+	EngFuncs::PIC_Free( cmd );
 
-		savesListModel.Update();
-	}
+	savesListModel.Update();
 }
 
-void CMenuLoadGame::SetSaveMode(bool saveMode)
+void CMenuLoadGame::SetSaveMode( bool saveMode )
 {
 	m_fSaveMode = saveMode;
 	if( saveMode )
@@ -360,13 +455,16 @@ void CMenuLoadGame::SetSaveMode(bool saveMode)
 	}
 }
 
+static CMenuLoadGame *menu_loadgame = NULL;
+
 /*
 =================
 UI_LoadGame_Precache
 =================
 */
-void UI_LoadGame_Precache( void )
+void UI_LoadSaveGame_Precache( void )
 {
+	menu_loadgame = new CMenuLoadGame();
 	EngFuncs::PIC_Load( ART_BANNER_SAVE );
 	EngFuncs::PIC_Load( ART_BANNER_LOAD );
 }
@@ -381,9 +479,14 @@ void UI_LoadSaveGame_Menu( bool saveMode )
 
 	if( !EngFuncs::CheckGameDll( )) return;
 
-	uiLoadGame.Show();
-	uiLoadGame.SetSaveMode( saveMode );
-	uiLoadGame.UpdateList();
+	menu_loadgame->Show();
+	menu_loadgame->SetSaveMode( saveMode );
+	menu_loadgame->UpdateList();
+}
+
+void UI_LoadSaveGame_Shutdown( void )
+{
+	delete menu_loadgame;
 }
 
 /*
@@ -400,5 +503,5 @@ void UI_SaveGame_Menu( void )
 {
 	UI_LoadSaveGame_Menu( true );
 }
-ADD_MENU( menu_loadgame, UI_LoadGame_Precache, UI_LoadGame_Menu );
-ADD_MENU( menu_savegame, NULL, UI_SaveGame_Menu );
+ADD_MENU4( menu_loadgame, UI_LoadSaveGame_Precache, UI_LoadGame_Menu, UI_LoadSaveGame_Shutdown );
+ADD_MENU4( menu_savegame, NULL, UI_SaveGame_Menu, NULL );

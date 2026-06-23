@@ -31,17 +31,24 @@ class CMenuMultiplayer : public CMenuFramework
 public:
 	CMenuMultiplayer() : CMenuFramework( "CMenuMultiplayer" ) { }
 
-	void AskPredictEnable() { msgBox.Show(); }
+	void Show() override
+	{
+		CMenuFramework::Show();
+
+		if( EngFuncs::GetCvarFloat( "menu_mp_firsttime2" ) && EngFuncs::GetCvarFloat( "cl_nopred" ) )
+		{
+			EngFuncs::CvarSetValue( "cl_nopred", 0.0f );
+		}
+
+		if( !UI::Names::CheckIsNameValid( EngFuncs::GetCvarString( "name" ) ) )
+		{
+			UI_PlayerIntroduceDialog_Show( this );
+		}
+	}
 
 private:
 	void _Init() override;
-
-	// prompt dialog
-	CMenuYesNoMessageBox msgBox;
 };
-
-static CMenuMultiplayer	uiMultiPlayer;
-
 
 /*
 =================
@@ -50,69 +57,15 @@ CMenuMultiplayer::Init
 */
 void CMenuMultiplayer::_Init( void )
 {
-	// memset( &uiMultiPlayer, 0, sizeof( CMenuMultiplayer ));
-	AddItem( background );
-
 	banner.SetPicture( ART_BANNER );
 	AddItem( banner );
 
-	AddButton( L( "Internet game" ), NULL, PC_INET_GAME, UI_InternetGames_Menu, QMF_NOTIFY );
+	AddButton( L( "Internet game" ), L( "View list of a game internet servers and join the one of your choice" ), PC_INET_GAME, UI_InternetGames_Menu, QMF_NOTIFY );
 	// AddButton( L( "Spectate game" ), L( "Spectate internet games" ), PC_SPECTATE_GAMES, NoopCb, QMF_GRAYED | QMF_NOTIFY );
-	AddButton( L( "LAN game" ), NULL, PC_LAN_GAME, UI_LanGame_Menu, QMF_NOTIFY );
-	AddButton( L( "GameUI_GameMenu_Customize" ), NULL, PC_CUSTOMIZE, UI_PlayerSetup_Menu, QMF_NOTIFY );
-	AddButton( L( "Controls" ), NULL, PC_CONTROLS, UI_Controls_Menu, QMF_NOTIFY );
-	AddButton( L( "Done" ), NULL, PC_DONE, VoidCb( &CMenuMultiplayer::Hide ), QMF_NOTIFY );
-
-	msgBox.SetMessage( L( "It is recomended to enable client movement prediction.\nPress OK to enable it now or enable it later in ^5(Multiplayer/Customize)" ) );
-	msgBox.SetPositiveButton( L( "GameUI_OK" ), PC_OK );
-	msgBox.SetNegativeButton( L( "GameUI_Cancel" ), PC_CANCEL );
-	msgBox.HighlightChoice( CMenuYesNoMessageBox::HIGHLIGHT_YES );
-	SET_EVENT_MULTI( msgBox.onPositive,
-	{
-		EngFuncs::CvarSetValue( "cl_predict", 1.0f );
-		EngFuncs::CvarSetValue( "menu_mp_firsttime", 0.0f );
-
-		UI_PlayerIntroduceDialog_Show( &uiMultiPlayer );
-	});
-	SET_EVENT_MULTI( msgBox.onNegative,
-	{
-		EngFuncs::CvarSetValue( "menu_mp_firsttime", 0.0f );
-
-		UI_PlayerIntroduceDialog_Show( &uiMultiPlayer );
-	});
-	msgBox.Link( this );
-
+	AddButton( L( "LAN game" ), L( "Set up the game on the local area network" ), PC_LAN_GAME, UI_LanGame_Menu, QMF_NOTIFY );
+	AddButton( L( "GameUI_GameMenu_Customize" ), L( "Choose your player name, and select visual options for your character" ), PC_CUSTOMIZE, UI_PlayerSetup_Menu, QMF_NOTIFY );
+	AddButton( L( "Controls" ), L( "Change keyboard and mouse settings" ), PC_CONTROLS, UI_Controls_Menu, QMF_NOTIFY );
+	AddButton( L( "Done" ), L( "Go back to the Main menu" ), PC_DONE, VoidCb( &CMenuMultiplayer::Hide ), QMF_NOTIFY );
 }
 
-/*
-=================
-CMenuMultiplayer::Precache
-=================
-*/
-void UI_MultiPlayer_Precache( void )
-{
-	EngFuncs::PIC_Load( ART_BANNER );
-}
-
-/*
-=================
-UI_MultiPlayer_Menu
-=================
-*/
-void UI_MultiPlayer_Menu( void )
-{
-	if ( gMenu.m_gameinfo.gamemode == GAME_SINGLEPLAYER_ONLY )
-		return;
-
-	uiMultiPlayer.Show();
-
-	if( EngFuncs::GetCvarFloat( "menu_mp_firsttime" ) && !EngFuncs::GetCvarFloat( "cl_predict" ) )
-	{
-		uiMultiPlayer.AskPredictEnable();
-	}
-	else if( !UI::Names::CheckIsNameValid( EngFuncs::GetCvarString( "name" ) ) )
-	{
-		UI_PlayerIntroduceDialog_Show( &uiMultiPlayer );
-	}
-}
-ADD_MENU( menu_multiplayer, UI_MultiPlayer_Precache, UI_MultiPlayer_Menu );
+ADD_MENU( menu_multiplayer, CMenuMultiplayer, UI_MultiPlayer_Menu );

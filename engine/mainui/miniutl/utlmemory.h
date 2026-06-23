@@ -7,12 +7,9 @@
 // A growable memory class.
 //===========================================================================//
 
+#pragma once
 #ifndef UTLMEMORY_H
 #define UTLMEMORY_H
-
-#ifdef _WIN32
-#pragma once
-#endif
 
 #include <string.h>
 #include "miniutl.h"
@@ -94,10 +91,10 @@ protected:
 		EXTERNAL_CONST_BUFFER_MARKER = -2,
 	};
 
+	uint32_t m_unSizeOfElements;
 	void * m_pMemory;
 	int m_nAllocationCount;
 	int m_nGrowSize;
-	uint32 m_unSizeOfElements;
 };
 
 template< class T >
@@ -178,7 +175,7 @@ public:
 	void SetGrowSize( int size )							{}
 
 private:
-	uint8 m_Memory[SIZE*sizeof(T)];
+	uint8_t m_Memory[SIZE*sizeof(T)];
 };
 
 //-----------------------------------------------------------------------------

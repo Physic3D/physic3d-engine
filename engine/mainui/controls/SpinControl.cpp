@@ -23,18 +23,18 @@ GNU General Public License for more details.
 CMenuSpinControl::CMenuSpinControl()  : BaseClass(), m_szBackground(),
 		m_szLeftArrow(), m_szRightArrow(), m_szLeftArrowFocus(), m_szRightArrowFocus(),
 		m_flMinValue(0), m_flMaxValue(1), m_flCurValue(0), m_flRange(0.1), m_pModel( NULL ),
-		m_iFloatPrecision(0), m_szDisplay()
+		m_iFloatPrecision(0)
 {
-	m_szBackground = NULL;
+	m_szBackground = 0;
 	m_szLeftArrow = UI_LEFTARROW;
 	m_szLeftArrowFocus = UI_LEFTARROWFOCUS;
 	m_szRightArrow = UI_RIGHTARROW;
 	m_szRightArrowFocus = UI_RIGHTARROWFOCUS;
+	m_szDisplay[0] = 0;
 
 	eTextAlignment = QM_CENTER;
 	eFocusAnimation = QM_HIGHLIGHTIFFOCUS;
 	iFlags |= QMF_DROPSHADOW;
-
 }
 
 /*
@@ -49,32 +49,19 @@ void CMenuSpinControl::VidInit( void )
 	BaseClass::VidInit();
 }
 
-bool CMenuSpinControl::KeyDown(	int key )
+bool CMenuSpinControl::KeyDown( int key )
 {
 	const char *sound = 0;
 
-	switch( key )
-	{
-	case K_LEFTARROW:
-	case K_KP_LEFTARROW:
-		if( iFlags & QMF_MOUSEONLY )
-			break;
-
+	if( UI::Key::IsLeftArrow( key ) && !FBitSet( iFlags, QMF_MOUSEONLY ))
 		sound = MoveLeft();
-		break;
-	case K_RIGHTARROW:
-	case K_KP_RIGHTARROW:
-		if( iFlags & QMF_MOUSEONLY )
-			break;
-
+	else if( UI::Key::IsRightArrow( key ) && !FBitSet( iFlags, QMF_MOUSEONLY ))
 		sound = MoveRight();
-		break;
-	}
 
 	if( sound )
 	{
 		_Event( QM_PRESSED );
-		if( sound != uiSoundBuzz )
+		if( sound != uiStatic.sounds[SND_BUZZ] )
 		{
 			Display();
 			_Event( QM_CHANGED );
@@ -95,13 +82,8 @@ bool CMenuSpinControl::KeyUp( int key )
 	Size arrow;
 	Point left, right;
 
-	switch( key )
+	if( UI::Key::IsLeftMouse( key ) && FBitSet( iFlags, QMF_HASMOUSEFOCUS ))
 	{
-	case K_MOUSE1:
-	case K_MOUSE2:
-		if( !( iFlags & QMF_HASMOUSEFOCUS ))
-			break;
-
 		// calculate size and position for the arrows
 		arrow.w = m_scSize.h + UI_OUTLINE_WIDTH * 2 * uiStatic.scaleX;
 		arrow.h = m_scSize.h + UI_OUTLINE_WIDTH * 2 * uiStatic.scaleY;
@@ -113,20 +95,15 @@ bool CMenuSpinControl::KeyUp( int key )
 
 		// now see if either left or right arrow has focus
 		if( UI_CursorInRect( left, arrow ))
-		{
 			sound = MoveLeft();
-		}
 		else if( UI_CursorInRect( right, arrow ))
-		{
 			sound = MoveRight();
-		}
-		break;
 	}
 
 	if( sound )
 	{
 		_Event( QM_RELEASED );
-		if( sound != uiSoundBuzz )
+		if( sound != uiStatic.sounds[SND_BUZZ] )
 		{
 			Display();
 			_Event( QM_CHANGED );
@@ -165,7 +142,7 @@ void CMenuSpinControl::Draw( void )
 	}
 
 	int textHeight = m_scPos.y - (m_scChSize * 1.5f);
-	UI_DrawString( font, m_scPos.x - UI_OUTLINE_WIDTH, textHeight, m_scSize.w + UI_OUTLINE_WIDTH * 2, m_scChSize, szName, uiColorHelp, m_scChSize, QM_LEFT, textflags | ETF_FORCECOL );
+	UI_DrawString( font, m_scPos.x - UI_OUTLINE_WIDTH, textHeight, m_scSize.w + UI_OUTLINE_WIDTH * 2, m_scChSize, szName, uiColorHelp, m_scChSize, QM_LEFT, textflags | ETF_FORCECOL | ETF_NOSIZELIMIT );
 
 	// calculate size and position for the arrows
 	arrow.w = m_scSize.h + UI_OUTLINE_WIDTH * 2;
@@ -232,7 +209,7 @@ void CMenuSpinControl::Draw( void )
 	{
 		int	color;
 
-		color = PackAlpha( colorBase, 255 * (0.5 + 0.5 * sin( (float)uiStatic.realTime / UI_PULSE_DIVISOR )));
+		color = PackAlpha( colorBase, 255 * (0.5f + 0.5f * sin( (float)uiStatic.realTime / UI_PULSE_DIVISOR )));
 
 		UI::Scissor::PushScissor( scCenterPos, scCenterBox );
 		UI_DrawString( font, scCenterPos, scCenterBox, m_szDisplay, color, m_scChSize, eTextAlignment, textflags );
@@ -251,9 +228,9 @@ const char *CMenuSpinControl::MoveLeft()
 		m_flCurValue -= m_flRange;
 		if( m_flCurValue < m_flMinValue )
 			m_flCurValue = m_flMinValue;
-		sound = uiSoundMove;
+		sound = uiStatic.sounds[SND_MOVE];
 	}
-	else sound = uiSoundBuzz;
+	else sound = uiStatic.sounds[SND_BUZZ];
 
 	return sound;
 }
@@ -267,9 +244,9 @@ const char *CMenuSpinControl::MoveRight()
 		m_flCurValue += m_flRange;
 		if( m_flCurValue > m_flMaxValue )
 			m_flCurValue = m_flMaxValue;
-		sound = uiSoundMove;
+		sound = uiStatic.sounds[SND_MOVE];
 	}
-	else sound = uiSoundBuzz;
+	else sound = uiStatic.sounds[SND_BUZZ];
 
 	return sound;
 }
@@ -304,22 +281,23 @@ void CMenuSpinControl::Setup( CMenuBaseArrayModel *model )
 
 void CMenuSpinControl::SetCurrentValue( float curValue )
 {
+	bool notify = m_flCurValue != curValue;
 	m_flCurValue = curValue;
 	Display();
+
+	if( notify ) _Event( QM_CHANGED );
 }
 
 void CMenuSpinControl::SetCurrentValue( const char *stringValue )
 {
 	ASSERT( m_pModel );
 
-	if ( !m_pModel )
-	{
+	if( !m_pModel )
 		return;
-	}
 
-	int i = 0;
+	float oldValue = m_flCurValue;
 
-	for( ; i <= (int)m_flMaxValue; i++ )
+	for( int i = 0; i <= (int)m_flMaxValue; i++ )
 	{
 		if( !strcmp( m_pModel->GetText( i ), stringValue ) )
 		{
@@ -331,8 +309,10 @@ void CMenuSpinControl::SetCurrentValue( const char *stringValue )
 
 	m_flCurValue = -1;
 	SetCvarString( stringValue );
+	ForceDisplayString( stringValue );
 
-	Q_strncpy( m_szDisplay, stringValue, CS_SIZE );
+	if( oldValue != m_flCurValue )
+		_Event( QM_CHANGED );
 }
 
 void CMenuSpinControl::SetDisplayPrecision( short precision )
@@ -346,7 +326,7 @@ void CMenuSpinControl::Display()
 	{
 		SetCvarValue( m_flCurValue );
 
-		snprintf( m_szDisplay, CS_SIZE, "%.*f", m_iFloatPrecision, m_flCurValue );
+		snprintf( m_szDisplay, sizeof( m_szDisplay ), "%.*f", m_iFloatPrecision, m_flCurValue );
 	}
 	else
 	{
@@ -359,11 +339,11 @@ void CMenuSpinControl::Display()
 		case CVAR_VALUE: SetCvarValue( m_flCurValue ); break;
 		}
 
-		Q_strncpy( m_szDisplay, stringValue, CS_SIZE );
+		Q_strncpy( m_szDisplay, stringValue, sizeof( m_szDisplay ));
 	}
 }
 
-void CMenuSpinControl::ForceDisplayString(const char *display)
+void CMenuSpinControl::ForceDisplayString( const char *display )
 {
-	Q_strncpy( m_szDisplay, display, CS_SIZE );
+	Q_strncpy( m_szDisplay, display, sizeof( m_szDisplay ));
 }

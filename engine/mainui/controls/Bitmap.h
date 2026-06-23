@@ -14,7 +14,6 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 */
 
-#pragma once
 #ifndef MENU_BITMAP_H
 #define MENU_BITMAP_H
 
@@ -45,39 +44,15 @@ public:
 		ePressRenderMode = pressRenderMode;
 	}
 
-	const char *szPic;
+protected:
+	CImage szPic;
 	ERenderMode eRenderMode;
 
-	const char *szFocusPic;
+	CImage szFocusPic;
 	ERenderMode eFocusRenderMode;
 
-	const char *szPressPic;
+	CImage szPressPic;
 	ERenderMode ePressRenderMode;
 };
-
-// menu banners used fiexed rectangle (virtual screenspace at 640x480)
-#define UI_BANNER_POSX		72
-#define UI_BANNER_POSY		72
-#define UI_BANNER_WIDTH		736
-#define UI_BANNER_HEIGHT		128
-
-class CMenuBannerBitmap : public CMenuBitmap
-{
-public:
-	typedef CMenuBitmap BaseClass;
-
-	CMenuBannerBitmap() : BaseClass()
-	{
-		iFlags = QMF_INACTIVE;
-		SetCharSize( QM_BIGFONT );
-		SetRect( UI_BANNER_POSX, UI_BANNER_POSY, UI_BANNER_WIDTH, UI_BANNER_HEIGHT );
-		SetRenderMode( QM_DRAWADDITIVE );
-	}
-	void Draw( void ) override;
-	void VidInit( void ) override;
-	void SetInactive(bool) override { }
-	void ToggleInactive() override { }
-};
-
 
 #endif // MENU_BITMAP_H

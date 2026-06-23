@@ -105,10 +105,6 @@ void CMenuBaseItem::SetCharSize( EFontSizes fs )
 	{
 	case QM_DEFAULTFONT:
 	case QM_BOLDFONT:
-#ifdef MAINUI_RENDER_PICBUTTON_TEXT
-	case QM_LIGHTBLUR:
-	case QM_HEAVYBLUR:
-#endif
 		charSize = UI_MED_CHAR_HEIGHT;
 		break;
 	case QM_SMALLFONT:
@@ -291,10 +287,7 @@ bool CMenuBaseItem::KeyValueData(const char *key, const char *data)
 
 		if( m_bAllocName )
 		{
-			char *name = new char[strlen( data ) + 1];
-			strcpy( name, data );
-
-			szName = name;
+			szName = StringCopy( data );
 		}
 	}
 	else if( !strcmp( key, "textAlignment" ) )
@@ -322,7 +315,7 @@ bool CMenuBaseItem::KeyValueData(const char *key, const char *data)
 		}
 		else if( !strcmp( data, "engine " ) )
 		{
-			onReleased.SetCommand( FALSE, data + sizeof( "engine " ) );
+			onReleased.SetCommand( false, data + sizeof( "engine " ) );
 		}
 		else
 		{

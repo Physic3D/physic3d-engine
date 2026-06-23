@@ -16,7 +16,7 @@ GNU General Public License for more details.
 #ifndef PRIMITIVE_H
 #define PRIMITIVE_H
 
-#define BIT( n )		( 1U << ( n ))
+#include "xash3d_mathlib.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable:4244) // float->int
@@ -26,21 +26,7 @@ template<class T>
 inline bool isrange( T min, T value, T max )
 { return (((value) >= (min))) && (((value) <= (max))); }
 
-#define bound( min, num, max )	((num) >= (min) ? ((num) < (max) ? (num) : (max)) : (min))
-#define Q_min( a, b ) (((a) < (b)) ? (a) : (b))
-#define Q_max( a, b ) (((a) < (b)) ? (b) : (a))
-
-#define SetBits( iBitVector, bits )	((iBitVector) = (iBitVector) | (bits))
-#define ClearBits( iBitVector, bits )	((iBitVector) = (iBitVector) & ~(bits))
-#define FBitSet( iBitVector, bit )	((iBitVector) & (bit))
-
 // engine constants
-enum
-{
-	GAME_NORMAL = 0,
-	GAME_SINGLEPLAYER_ONLY,
-	GAME_MULTIPLAYER_ONLY
-};
 
 enum
 {
@@ -62,7 +48,7 @@ enum
 	QMF_HASKEYBOARDFOCUS   = BIT( 11 ),
 	QMF_DIALOG             = BIT( 12 ), // modal windows. Will grab key, char and mousemove events
 	QMF_DISABLESCAILING    = BIT( 13 ), // disables CalcPosition and CalcSizes
-	QMF_EVENTSIGNOREFOCUS  = BIT( 14 ), // don't care if item have focus, it must get events anyway
+	// deprecated: QMF_EVENTSIGNOREFOCUS  = BIT( 14 ), // don't care if item have focus, it must get events anyway
 
 	QMF_CLOSING            = BIT( 29 ), // INTERNAL USE ONLY: window is closing right now and we need only draw animation
 	QMF_HIDDENBYPARENT     = BIT( 30 ), // INTERNAL USE ONLY: parent set this flag and don't want to draw this control
@@ -195,6 +181,7 @@ struct Rect
 		pt( x, y ), sz( w, h ) { }
 	Rect( Point pt, Size sz ) :
 		pt( pt ), sz( sz ) { }
+	Rect() : pt(), sz() { }
 
 	// true if this rect overlaps
 	// false otherwise
@@ -209,6 +196,16 @@ struct Rect
 		    l2.y >= l1.y && r2.y <= r1.y )
 			return true;
 		return false;
+	}
+
+	static Rect Lerp( Rect a, Rect b, float frac )
+	{
+		Rect c = a;
+
+		c.pt = c.pt + ( b.pt - a.pt ) * frac;
+		c.sz = c.sz + ( b.sz - a.sz ) * frac;
+
+		return c;
 	}
 
 	Point pt;

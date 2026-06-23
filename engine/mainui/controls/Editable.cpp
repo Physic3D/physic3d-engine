@@ -15,12 +15,11 @@ GNU General Public License for more details.
 
 #include "Editable.h"
 
-CMenuEditable::CMenuEditable() : BaseClass(),
-	m_szCvarName(), m_eType(), m_bForceUpdate( false ),
-	m_szString(), m_szOriginalString(),
+CMenuEditable::CMenuEditable() : BaseClass(), bUpdateImmediately( false ),
+	m_szCvarName(), m_eType(),
 	m_flValue(), m_flOriginalValue()
 {
-
+	m_szString[0] = m_szOriginalString[0] = 0;
 }
 
 void CMenuEditable::LinkCvar(const char *)
@@ -33,18 +32,20 @@ void CMenuEditable::LinkCvar(const char *name, cvarType_e type)
 	m_szCvarName = name;
 	m_eType = type;
 
-	m_bForceUpdate = true;
-
-		UpdateCvar();
-
-	m_bForceUpdate = false;
+	UpdateCvar( true );
 }
 
 void CMenuEditable::Reload()
 {
 	// editable already initialized, so update
 	if( m_szCvarName )
-		UpdateCvar();
+	{
+		UpdateCvar( true );
+
+		// Ensure onCvarGet is called for reliable sync
+		if( onCvarGet )
+			onCvarGet( this );
+	}
 }
 
 void CMenuEditable::SetCvarValue( float value )
@@ -55,13 +56,10 @@ void CMenuEditable::SetCvarValue( float value )
 	if( bUpdateImmediately ) WriteCvar();
 }
 
-void CMenuEditable::SetCvarString(const char *string)
+void CMenuEditable::SetCvarString( const char *string )
 {
 	if( string != m_szString )
-	{
-		Q_strncpy( m_szString, string, CS_SIZE );
-		m_szString[CS_SIZE-1] = 0;
-	}
+		Q_strncpy( m_szString, string, sizeof( m_szString ));
 
 	if( onCvarChange ) onCvarChange( this );
 	if( bUpdateImmediately ) WriteCvar();
@@ -69,37 +67,31 @@ void CMenuEditable::SetCvarString(const char *string)
 
 void CMenuEditable::SetOriginalString( const char *psz )
 {
-	Q_strncpy( m_szString, psz, CS_SIZE );
-	Q_strncpy( m_szOriginalString, m_szString, CS_SIZE );
-	m_szOriginalString[CS_SIZE-1] = 0;
-
+	Q_strncpy( m_szOriginalString, psz, sizeof( m_szOriginalString ));
 	SetCvarString( m_szOriginalString );
 }
 
 void CMenuEditable::SetOriginalValue( float val )
 {
-	m_flValue =	m_flOriginalValue = val;
-
+	m_flOriginalValue = val;
 	SetCvarValue( m_flOriginalValue );
 }
 
-void CMenuEditable::UpdateCvar()
+void CMenuEditable::UpdateCvar( bool haveUpdate )
 {
-	bool haveUpdate = m_bForceUpdate;
-
 	if( onCvarGet )
 	{
 		onCvarGet( this );
-		haveUpdate = false; // FIXME: add return values to events
+		haveUpdate = true; // FIXME: add return values to events
 	}
-	else
+	else if( m_szCvarName )
 	{
 		switch( m_eType )
 		{
 		case CVAR_STRING:
 		{
 			const char *str = EngFuncs::GetCvarString( m_szCvarName );
-			if( m_bForceUpdate || strcmp( m_szOriginalString, str ) )
+			if( haveUpdate || strcmp( m_szOriginalString, str ) )
 			{
 				SetOriginalString( str );
 				haveUpdate = true;
@@ -109,7 +101,7 @@ void CMenuEditable::UpdateCvar()
 		case CVAR_VALUE:
 		{
 			float val = EngFuncs::GetCvarFloat( m_szCvarName );
-			if( m_bForceUpdate || m_flOriginalValue != val )
+			if( haveUpdate || m_flOriginalValue != val )
 			{
 				SetOriginalValue( val );
 				haveUpdate = true;
@@ -141,7 +133,7 @@ void CMenuEditable::DiscardChanges()
 void CMenuEditable::WriteCvar()
 {
 	if( onCvarWrite ) onCvarWrite( this );
-	else
+	else if( m_szCvarName )
 	{
 		switch( m_eType )
 		{

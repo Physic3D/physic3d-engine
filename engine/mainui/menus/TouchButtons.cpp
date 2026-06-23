@@ -29,12 +29,55 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "CheckBox.h"
 #include "YesNoMessageBox.h"
 #include "StringArrayModel.h"
+#include "KbActListModel.h"
 #define ART_BANNER	  	"gfx/shell/head_touch_buttons"
+
+class CMenuTouchButtons;
+
+class CMenuCommandPickerDialog : public CMenuBaseWindow
+{
+public:
+	typedef CMenuBaseWindow BaseClass;
+	CMenuCommandPickerDialog() : BaseClass( "CMenuCommandPickerDialog" ), model( this )
+	{
+		iFlags |= QMF_DIALOG;
+	}
+
+	void _Init() override;
+	void _VidInit() override;
+	void Draw() override;
+	bool KeyDown( int key ) override;
+	void Show() override;
+
+	class CCommandListModel : public CMenuKbActListModel
+	{
+	public:
+		CCommandListModel( CMenuCommandPickerDialog *parent )
+			: CMenuKbActListModel( VIEW_PICKER ), parent( parent ) { }
+
+		void OnActivateEntry( int line ) override
+		{
+			if( IsLineUsable( line ))
+				parent->Confirm();
+		}
+
+	private:
+		CMenuCommandPickerDialog *parent;
+	} model;
+
+	void Confirm();
+
+	CMenuTouchButtons *pCaller;
+	CMenuAction title;
+	CMenuTable list;
+	CMenuPicButton ok;
+	CMenuPicButton cancel;
+};
 
 class CMenuTouchButtons : public CMenuFramework
 {
 public:
-	CMenuTouchButtons() : CMenuFramework( "CMenuTouchButtons" ) { }
+	CMenuTouchButtons() : CMenuFramework( "CMenuTouchButtons" ), model( this ) { }
 
 private:
 	void _Init() override;
@@ -78,6 +121,7 @@ public:
 	CMenuPicButton	remove;
 	CMenuPicButton	save;
 	CMenuPicButton	select;
+	CMenuPicButton	selectCmd;
 	CMenuPicButton	editor;
 	CMenuField	command;
 	CMenuField	texture;
@@ -90,74 +134,86 @@ public:
 	class CMenuButtonPreview : public CMenuBaseItem
 	{
 	public:
+		CMenuButtonPreview() : CMenuBaseItem(), textureId( 0 ) { }
+
 		void Draw() override;
 		HIMAGE textureId;
 	} preview;
 
-	class CButtonListModel : public CStringArrayModel
+	class CButtonListModel : public CMenuBaseArrayModel
 	{
 	public:
-		CButtonListModel() : CStringArrayModel( (const char*)&buttons, sizeof( buttons[0] ), 0 ) {}
+		CButtonListModel( CMenuTouchButtons *parent ) : parent( parent ) { }
 
 		void Update() override;
 		void AddButtonToList( const char *name, const char *texture, const char *command, unsigned char *color, int flags );
 
-		struct
+		const char *GetText( int line ) final override
+		{
+			return buttons[line].szName;
+		}
+
+		int GetRows() const final override
+		{
+			return buttons.Count();
+		}
+
+		struct button_t
 		{
 			char szName[128];
 			char szTexture[128];
 			char szCommand[128];
 			byte bColors[4];
 			int  iFlags;
-		} buttons[UI_MAXGAMES];
+		};
+
+		CUtlVector<button_t> buttons;
 
 		bool gettingList;
 		bool initialized;
+		CMenuTouchButtons *parent;
 	} model;
 	CMenuTable buttonList;
 
 	// prompt dialog
 	CMenuYesNoMessageBox msgBox;
+
+	CMenuCommandPickerDialog cmdPicker;
+
+	void OpenCommandPicker();
+	void OnCommandPicked( const char *cmd );
 };
-
-static CMenuTouchButtons uiTouchButtons;
-
 
 void CMenuTouchButtons::CButtonListModel::AddButtonToList( const char *name, const char *texture, const char *command, unsigned char *color, int flags )
 {
 	if( !gettingList )
 		return;
 
-	int i = m_iCount++;
+	button_t button;
 
-	Q_strncpy( buttons[i].szName, name, sizeof( buttons[i].szName ) );
-	Q_strncpy( buttons[i].szTexture, texture, sizeof( buttons[i].szTexture ) );
-	Q_strncpy( buttons[i].szCommand, command, sizeof( buttons[i].szCommand ) );
-	memcpy( buttons[i].bColors, color, sizeof( buttons[i].bColors ) );
-	buttons[i].iFlags = flags;
+	Q_strncpy( button.szName, name, sizeof( button.szName ) );
+	Q_strncpy( button.szTexture, texture, sizeof( button.szTexture ) );
+	Q_strncpy( button.szCommand, command, sizeof( button.szCommand ) );
+	memcpy( button.bColors, color, sizeof( button.bColors ) );
+	button.iFlags = flags;
+
+	buttons.AddToTail( button );
 }
-
-// Engine callback
-extern "C" EXPORT void AddTouchButtonToList( const char *name, const char *texture, const char *command, unsigned char *color, int flags )
-{
-	uiTouchButtons.model.AddButtonToList( name, texture, command, color, flags );
-}
-
 
 void CMenuTouchButtons::CButtonListModel::Update()
 {
 	if( !initialized )
 		return;
 
-	m_iCount = 0;
+	buttons.RemoveAll();
 
-	EngFuncs::ClientCmd( TRUE, "" ); // perform Cbuf_Execute()
+	EngFuncs::ClientCmd( true, "" ); // perform Cbuf_Execute()
 
 	gettingList = true;
-	EngFuncs::ClientCmd( TRUE, "touch_list\n" );
+	EngFuncs::ClientCmd( true, "touch_list\n" );
 	gettingList = false;
 
-	uiTouchButtons.UpdateFields();
+	parent->UpdateFields();
 }
 
 void CMenuTouchButtons::CMenuColor::Draw()
@@ -215,7 +271,10 @@ void CMenuTouchButtons::UpdateFields( )
 {
 	int i = buttonList.GetCurrentIndex();
 
-	strcpy( selectedName, model.buttons[i].szName );
+	if( !model.buttons.IsValidIndex( i ))
+		return;
+
+	Q_strncpy( selectedName, model.buttons[i].szName, sizeof( selectedName ));
 	red.SetCurrentValue( model.buttons[i].bColors[0] );
 	green.SetCurrentValue( model.buttons[i].bColors[1] );
 	blue.SetCurrentValue( model.buttons[i].bColors[2] );
@@ -241,13 +300,14 @@ void CMenuTouchButtons::OpenFileDialog()
 	// TODO: Remove uiFileDialogGlobal
 	// TODO: Make uiFileDialog menu globally known
 	// TODO: Make FileDialogCallback as event
-	uiFileDialogGlobal.npatterns = 6;
-	strcpy( uiFileDialogGlobal.patterns[0], "touch/*.tga");
-	strcpy( uiFileDialogGlobal.patterns[1], "touch_default/*.tga");
-	strcpy( uiFileDialogGlobal.patterns[2], "gfx/touch/*");
-	strcpy( uiFileDialogGlobal.patterns[3], "gfx/vgui/*");
-	strcpy( uiFileDialogGlobal.patterns[4], "gfx/shell/*");
-	strcpy( uiFileDialogGlobal.patterns[5], "*.tga");
+	uiFileDialogGlobal.npatterns = 7;
+	Q_strncpy( uiFileDialogGlobal.patterns[0], "touch/*", sizeof( uiFileDialogGlobal.patterns[0] ));
+	Q_strncpy( uiFileDialogGlobal.patterns[1], "touch_default/*", sizeof( uiFileDialogGlobal.patterns[0] ));
+	Q_strncpy( uiFileDialogGlobal.patterns[2], "gfx/touch/*", sizeof( uiFileDialogGlobal.patterns[0] ));
+	Q_strncpy( uiFileDialogGlobal.patterns[3], "gfx/vgui/*", sizeof( uiFileDialogGlobal.patterns[0] ));
+	Q_strncpy( uiFileDialogGlobal.patterns[4], "gfx/shell/*", sizeof( uiFileDialogGlobal.patterns[0] ));
+	Q_strncpy( uiFileDialogGlobal.patterns[5], "*.tga", sizeof( uiFileDialogGlobal.patterns[0] ));
+	Q_strncpy( uiFileDialogGlobal.patterns[6], "*.png", sizeof( uiFileDialogGlobal.patterns[0] ));
 	uiFileDialogGlobal.preview = true;
 	uiFileDialogGlobal.valid = true;
 	uiFileDialogGlobal.callback = CMenuTouchButtons::FileDialogCallback;
@@ -348,15 +408,6 @@ void CMenuTouchButtons::ResetMsgBox()
 	msgBox.Show();
 }
 
-void CMenuTouchButtons::FileDialogCallback( bool success )
-{
-	if( success )
-	{
-		uiTouchButtons.texture.SetBuffer( uiFileDialogGlobal.result );
-		uiTouchButtons.UpdateTexture();
-	}
-}
-
 void CMenuTouchButtons::ExitMenuCb(CMenuBaseItem *pSelf, void *pExtra)
 {
 	const char *cmd = (const char *)pExtra;
@@ -376,15 +427,15 @@ void CMenuTouchButtons::_Init( void )
 
 	banner.SetPicture(ART_BANNER);
 
-	done.SetNameAndStatus( L( "Done" ), L( "Save changes and go back to the Touch Menu" ) );
+	done.szName = L( "Done" );
 	done.SetPicture( PC_DONE );
 	done.onReleased = ExitMenuCb;
 	done.onReleased.pExtra = (void*)"touch_writeconfig\n";
 
-	cancel.SetNameAndStatus( L( "GameUI_Cancel" ), L( "Discard changes and go back to the Touch Menu" ) );
+	cancel.szName = L( "GameUI_Cancel" );
 	cancel.SetPicture( PC_CANCEL );
 	cancel.onReleased = ExitMenuCb;
-	cancel.onReleased.pExtra = (void*)"touch_loadconfig\n";
+	cancel.onReleased.pExtra = (void*)"touch_reloadconfig\n";
 
 	red.eFocusAnimation = QM_PULSEIFFOCUS;
 	red.SetNameAndStatus( L( "Red:" ), L( "Texture red channel" ) );
@@ -429,16 +480,22 @@ void CMenuTouchButtons::_Init( void )
 	precision.onChanged = CMenuCheckBox::BitMaskCb;
 
 	save.SetNameAndStatus( L( "GameUI_Save" ), L( "Save as new button" ) );
-	save.SetPicture("gfx/shell/btn_touch_save");
+	save.SetPicture( PC_TOUCH_SAVE );
 	save.onReleased = VoidCb( &CMenuTouchButtons::SaveButton );
 
 	editor.SetNameAndStatus( L( "Editor" ), L( "Open interactive editor" ) );
-	editor.SetPicture("gfx/shell/btn_touch_editor");
+	editor.SetPicture( PC_TOUCH_EDITOR );
 	editor.onReleased = UI_TouchEdit_Menu;
 
 	select.SetNameAndStatus( L( "Select" ), L( "Select texture from list" ) );
-	select.SetPicture("gfx/shell/btn_touch_select");
+	select.SetPicture( PC_TOUCH_SELECT );
 	select.onReleased = VoidCb( &CMenuTouchButtons::OpenFileDialog );
+
+	selectCmd.SetNameAndStatus( L( "Pick" ), L( "Pick command from key bindings list" ) );
+	selectCmd.SetPicture( PC_TOUCH_SELECT );
+	selectCmd.onReleased = VoidCb( &CMenuTouchButtons::OpenCommandPicker );
+	cmdPicker.pCaller = this;
+	cmdPicker.Link( this );
 
 	name.szName = L( "New Button:" );
 	name.iMaxLength = 255;
@@ -452,7 +509,7 @@ void CMenuTouchButtons::_Init( void )
 	texture.eTextAlignment = QM_RIGHT;
 
 	reset.SetNameAndStatus( L( "Reset" ), L( "Reset touch to default state" ) );
-	reset.SetPicture( "gfx/shell/btn_touch_reset" );
+	reset.SetPicture( PC_TOUCH_RESET );
 	reset.onReleased = VoidCb( &CMenuTouchButtons::ResetMsgBox );
 
 	remove.SetNameAndStatus( L( "Delete" ), L( "Delete selected button" ) );		// Delete - уже было раньше
@@ -464,7 +521,6 @@ void CMenuTouchButtons::_Init( void )
 	UpdateFields();
 	msgBox.Link( this );
 
-	AddItem( background );
 	AddItem( remove );
 	AddItem( reset );
 	AddItem( done );
@@ -484,6 +540,7 @@ void CMenuTouchButtons::_Init( void )
 
 	AddItem( save );
 	AddItem( select );
+	AddItem( selectCmd );
 	AddItem( editor );
 
 	AddItem( banner );
@@ -497,8 +554,8 @@ void CMenuTouchButtons::_Init( void )
 void CMenuTouchButtons::_VidInit()
 {
 	int sliders_x = uiStatic.width - 344;
-	int fields_w = 205 + uiStatic.width - 1024;
-	if( fields_w < 205 ) fields_w = 205;
+	int field_w = sliders_x - 400 - 100; // leave room for 95-wide select button + 5px gap
+	if( field_w < 175 ) field_w = 175;
 
 	banner.SetCoord( 72, 0 );
 	done.SetCoord( 72, 550 );
@@ -519,29 +576,128 @@ void CMenuTouchButtons::_VidInit()
 	precision.SetCoord( 400, 470 );
 	buttonList.SetRect( 72, 135, 300, 395 );
 
-	save.SetRect( 384 - 42 + 320, 550, 130, 50 );
-	editor.SetRect( 384 - 42 + 320, 600, 130, 50 );
-	select.SetRect( 400 + fields_w - 95, 300, 150,50 );
+	save.SetRect( 384 - 42 + 320, 550, 170, 50 );
+	editor.SetRect( 384 - 42 + 320, 600, 170, 50 );
 
 	name.SetRect( 400, 550, 205, 32 );
-	command.SetRect( 400, 150, fields_w, 32 );
-	texture.SetRect( 400, 250, fields_w, 32 );
+	command.SetRect( 400, 150, field_w, 32 );
+	selectCmd.SetRect( 400 + field_w + 5, 150, 95, 32 );
+	texture.SetRect( 400, 250, field_w, 32 );
+	select.SetRect( 400 + field_w + 5, 250, 95, 32 );
 	color.SetRect( sliders_x + 120, 360, 70, 50 );
 	preview.SetRect( 400, 300, 70, 70 );
 
-	reset.SetRect( 384 - 72 + 480, 600, 130, 50 );
-	remove.SetRect( 384 - 72 + 480, 550, 130, 50 );
+	reset.SetRect( 384 - 72 + 520, 600, 170, 50 );
+	remove.SetRect( 384 - 72 + 520, 550, 170, 50 );
 }
 
-/*
-=================
-UI_TouchButtons_Precache
-=================
-*/
-void UI_TouchButtons_Precache( void )
+ADD_MENU3( menu_touchbuttons, CMenuTouchButtons, UI_TouchButtons_Menu );
+
+void CMenuTouchButtons::FileDialogCallback( bool success )
 {
-	EngFuncs::PIC_Load( ART_BANNER );
-	uiTouchButtons.model.gettingList = false; // prevent filling list before init
+	if( success )
+	{
+		menu_touchbuttons->texture.SetBuffer( uiFileDialogGlobal.result );
+		menu_touchbuttons->UpdateTexture();
+	}
+}
+
+void CMenuTouchButtons::OpenCommandPicker()
+{
+	cmdPicker.Show();
+}
+
+void CMenuTouchButtons::OnCommandPicked( const char *cmd )
+{
+	command.SetBuffer( cmd );
+}
+
+void CMenuCommandPickerDialog::Confirm()
+{
+	int i = list.GetCurrentIndex();
+	if( !model.IsLineUsable( i ))
+		return;
+
+	if( pCaller )
+		pCaller->OnCommandPicked( model.entries[i].bind );
+
+	Hide();
+}
+
+void CMenuCommandPickerDialog::_Init()
+{
+	title.szName = L( "Pick command" );
+	title.iFlags = QMF_INACTIVE | QMF_DROPSHADOW;
+	title.eTextAlignment = QM_TOP;
+	title.SetCharSize( QM_DEFAULTFONT );
+	title.SetRect( 0, 16, 720, 32 );
+
+	list.SetRect( 16, 56, 720 - 32, 480 - 56 - 64 );
+	list.SetModel( &model );
+	list.SetupColumn( 0, L( "GameUI_Action" ), 0.6f );
+	list.SetupColumn( 1, L( "Command" ), 0.4f );
+
+	ok.szName = L( "GameUI_OK" );
+	ok.SetPicture( PC_OK );
+	ok.SetRect( 720 / 2 - UI_BUTTONS_WIDTH / 2 - 8, 480 - 56, UI_BUTTONS_WIDTH / 2, UI_BUTTONS_HEIGHT );
+	SET_EVENT_MULTI( ok.onReleased,
+	{
+		((CMenuCommandPickerDialog *)pSelf->Parent())->Confirm();
+	});
+
+	cancel.szName = L( "GameUI_Cancel" );
+	cancel.SetPicture( PC_CANCEL );
+	cancel.SetRect( 720 / 2 + 8, 480 - 56, UI_BUTTONS_WIDTH / 2, UI_BUTTONS_HEIGHT );
+	SET_EVENT_MULTI( cancel.onReleased,
+	{
+		((CMenuCommandPickerDialog *)pSelf->Parent())->Hide();
+	});
+
+	AddItem( title );
+	AddItem( list );
+	AddItem( ok );
+	AddItem( cancel );
+}
+
+void CMenuCommandPickerDialog::_VidInit()
+{
+	SetRect(( uiStatic.width - 720 ) / 2, ( 768 - 480 ) / 2, 720, 480 );
+	pos.x += uiStatic.xOffset;
+	pos.y += uiStatic.yOffset;
+	CalcPosition();
+	CalcSizes();
+}
+
+void CMenuCommandPickerDialog::Draw()
+{
+	UI_FillRect( 0, 0, gpGlobals->scrWidth, gpGlobals->scrHeight, 0x40000000 );
+
+	EngFuncs::FillRGBA( m_scPos.x, m_scPos.y, m_scSize.w, m_scSize.h, 20, 20, 20, 235 );
+	UI_DrawRectangle( m_scPos, m_scSize, uiInputFgColor );
+
+	EngFuncs::FillRGBA(
+		m_scPos.x + 16 * uiStatic.scaleX,
+		m_scPos.y + ( 16 + 32 ) * uiStatic.scaleY,
+		m_scSize.w - 32 * uiStatic.scaleX,
+		1, 255, 255, 255, 40 );
+
+	BaseClass::Draw();
+}
+
+bool CMenuCommandPickerDialog::KeyDown( int key )
+{
+	if( UI::Key::IsEscape( key ))
+	{
+		Hide();
+		return true;
+	}
+	return BaseClass::KeyDown( key );
+}
+
+void CMenuCommandPickerDialog::Show()
+{
+	model.Update();
+	BaseClass::Show();
 }
 
 /*
@@ -552,11 +708,16 @@ UI_TouchButtons_Menu
 void UI_TouchButtons_Menu( void )
 {
 	UI_TouchButtons_GetButtonList();
-	uiTouchButtons.Show();
+	menu_touchbuttons->Show();
 }
 
 void UI_TouchButtons_GetButtonList()
 {
-	uiTouchButtons.model.Update();
+	menu_touchbuttons->model.Update();
 }
-ADD_MENU( menu_touchbuttons, UI_TouchButtons_Precache, UI_TouchButtons_Menu );
+
+// Engine callback
+extern "C" EXPORT void AddTouchButtonToList( const char *name, const char *texture, const char *command, unsigned char *color, int flags )
+{
+	menu_touchbuttons->model.AddButtonToList( name, texture, command, color, flags );
+}

@@ -33,6 +33,8 @@ CMenuSlider::CMenuSlider() : BaseClass(), m_flMinValue(), m_flMaxValue(), m_flCu
 
 	SetCharSize( QM_DEFAULTFONT );
 
+	imgSlider = UI_SLIDER_MAIN;
+
 	iFlags |= QMF_DROPSHADOW;
 }
 
@@ -52,7 +54,7 @@ void CMenuSlider::VidInit(  )
 	BaseClass::VidInit();
 
 	// scale the center box
-	m_scCenterBox.w = m_scSize.w / 5.0f;
+	m_scCenterBox.w = 40 * uiStatic.scaleX;
 	m_scCenterBox.h = m_scSize.h - m_iSliderOutlineWidth * 2;
 
 	m_iNumSteps = (m_flMaxValue - m_flMinValue) / m_flRange + 1;
@@ -79,9 +81,8 @@ CMenuSlider::Key
 */
 bool CMenuSlider::KeyDown( int key )
 {
-	switch( key )
+	if( UI::Key::IsLeftMouse( key ))
 	{
-	case K_MOUSE1:
 		if( !UI_CursorInRect( m_scPos, m_scSize ) )
 		{
 			m_iKeepSlider = false;
@@ -102,13 +103,15 @@ bool CMenuSlider::KeyDown( int key )
 		_Event( QM_CHANGED );
 
 		return true;
-	case K_LEFTARROW:
+	}
+	else if( UI::Key::IsLeftArrow( key ))
+	{
 		m_flCurValue -= m_flRange;
 
 		if( m_flCurValue < m_flMinValue )
 		{
 			m_flCurValue = m_flMinValue;
-			PlayLocalSound( uiSoundBuzz );
+			PlayLocalSound( uiStatic.sounds[SND_BUZZ] );
 			return true;
 		}
 
@@ -116,22 +119,24 @@ bool CMenuSlider::KeyDown( int key )
 		SetCvarValue( m_flCurValue );
 		_Event( QM_CHANGED );
 
-		PlayLocalSound( uiSoundKey );
+		PlayLocalSound( uiStatic.sounds[SND_KEY] );
 		return true;
-	case K_RIGHTARROW:
+	}
+	else if( UI::Key::IsRightArrow( key ))
+	{
 		m_flCurValue += m_flRange;
 
 		if( m_flCurValue > m_flMaxValue )
 		{
 			m_flCurValue = m_flMaxValue;
-			PlayLocalSound( uiSoundBuzz );
+			PlayLocalSound( uiStatic.sounds[SND_BUZZ] );
 			return true;
 		}
 
 		// tell menu about changes
 		SetCvarValue( m_flCurValue );
 		_Event( QM_CHANGED );
-		PlayLocalSound( uiSoundKey );
+		PlayLocalSound( uiStatic.sounds[SND_KEY] );
 		return true;
 	}
 
@@ -154,7 +159,6 @@ void CMenuSlider::Draw( void )
 
 		coord.x = m_scPos.x + 16 * uiStatic.scaleX;
 		coord.y = m_scPos.y + m_scSize.h / 2 - EngFuncs::ConsoleCharacterHeight() / 2;
-
 
 		int	r, g, b;
 
@@ -193,9 +197,9 @@ void CMenuSlider::Draw( void )
 
 	UI_DrawRectangleExt( m_scPos.x + m_iSliderOutlineWidth / 2, m_scPos.y + m_iSliderOutlineWidth, m_scSize.w - m_iSliderOutlineWidth, m_scCenterBox.h, uiInputBgColor, m_iSliderOutlineWidth );
 	if( eFocusAnimation == QM_HIGHLIGHTIFFOCUS && this == m_pParent->ItemAtCursor())
-		UI_DrawPic( sliderX, m_scPos.y, m_scCenterBox.w, m_scSize.h, uiColorHelp, UI_SLIDER_MAIN );
+		UI_DrawPic( sliderX, m_scPos.y, m_scCenterBox.w, m_scSize.h, uiColorHelp, imgSlider );
 	else
-		UI_DrawPic( sliderX, m_scPos.y, m_scCenterBox.w, m_scSize.h, uiColorWhite, UI_SLIDER_MAIN );
+		UI_DrawPic( sliderX, m_scPos.y, m_scCenterBox.w, m_scSize.h, uiColorWhite, imgSlider );
 
 
 	textHeight = m_scPos.y - (m_scChSize * 1.5f);
@@ -204,7 +208,7 @@ void CMenuSlider::Draw( void )
 
 void CMenuSlider::UpdateEditable()
 {
-	float flValue = EngFuncs::GetCvarFloat( m_szCvarName );
+	float flValue = CvarValue();
 
 	m_flCurValue = flValue;
 }

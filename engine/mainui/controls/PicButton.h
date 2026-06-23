@@ -13,12 +13,10 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 */
-
-#pragma once
 #ifndef MENU_PICBUTTON_H
 #define MENU_PICBUTTON_H
 
-#include "BtnsBMPTable.h"
+#include "Btns.h"
 #include "BaseWindow.h"
 
 // Use hover bitmap from btns_main.bmp instead of head_%s.bmp
@@ -39,63 +37,26 @@ public:
 	bool KeyUp( int key ) override;
 	bool KeyDown( int key ) override;
 	void Draw( void ) override;
+	bool HotKey( int key ) override;
 
 	void SetPicture( EDefaultBtns ID );
-	void SetPicture( const char *filename );
+	void SetPicture( const char *filename, int hotkey = 0 );
 
 	bool bEnableTransitions;
 	bool bPulse;
-
-	static bool DrawTitleAnim( CMenuBaseWindow::EAnimation anim );
-	static void ClearButtonStack( void );
-	static float GetTitleTransFraction( void );
-
-	static void SetupTitleQuadForLast( int x,int y, int w, int h);
-	static void SetTransPicForLast( HIMAGE pic );
-
-	void SetupTitleQuad( int x,int y, int w, int h);
-	void SetTransPic( HIMAGE pic );
-
-	static void RootChanged( bool isForward );
 private:
-#ifdef CS16CLIENT
 	bool bRollOver;
-#endif
 
-	enum animState_e { AS_TO_TITLE = 0, AS_TO_BUTTON };
-	struct Quad
-	{
-		Quad(): x(0), y(0), lx(0), ly(0) {}
-		float x, y, lx, ly;
-	};
-
-	static void SetTitleAnim( int state );
-	void TACheckMenuDepth( void );
-	void PushPButtonStack( void );
-	static void PopPButtonStack( void );
-	static const char *GetLastButtonText( void );
+	void CheckWindowChanged( void );
+	void _Event( int ev ) override;
 
 	void DrawButton( int r, int g, int b, int a, wrect_t *rects, int state );
 
 	HIMAGE hPic;
+	int hotkey;
 	int button_id;
 	int iFocusStartTime;
 	int iOldState;
-
-	Quad TitleLerpQuads[2];
-	HIMAGE TransPic;
-
-	static CMenuPicButton *temp;
-
-	static Quad LerpQuad( Quad a, Quad b, float frac );
-
-	static int transition_initial_time;
-	static int transition_state;
-
-	static HIMAGE s_hCurrentTransPic;
-	static wrect_t s_pCurrentTransRect;
-	static Quad s_CurrentLerpQuads[2];
-	friend class CMenuBannerBitmap;
 };
 
 #endif

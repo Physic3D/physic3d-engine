@@ -55,14 +55,15 @@ public:
 	CMenuScriptConfig();
 	~CMenuScriptConfig() override;
 
-	void SetScriptConfig( const char *path, bool earlyInit = false );
+	void SetScriptConfig( const char *path, bool bIsSettings, bool earlyInit = false );
 
 	void SaveAndPopMenu() override
 	{
 		for( int i = m_iPagesIndex, j = 0; j < m_iPagesCount; i++, j++ )
 			((CMenuScriptConfigPage*)m_pItems[i])->Save();
 
-		CMenuFramework::SaveAndPopMenu();
+		UI_SaveScriptConfig();
+		Hide();
 	}
 
 	void FlipMenu( void );
@@ -84,6 +85,7 @@ private:
 	int m_iPagesIndex;
 	int m_iPagesCount;
 	int m_iCurrentPage;
+	bool m_bIsSettingsConfig;
 };
 
 CMenuScriptConfigPage::CMenuScriptConfigPage() : CMenuItemsHolder()
@@ -124,7 +126,7 @@ void CMenuScriptConfigPage::Save()
 }
 
 CMenuScriptConfig::CMenuScriptConfig() : CMenuFramework( "ScriptConfig" ),
-	m_pVars(), m_szConfig(), m_iVarsCount(), m_iPagesIndex(), m_iPagesCount(), m_iCurrentPage()
+	m_pVars(), m_szConfig(), m_iVarsCount(), m_iPagesIndex(), m_iPagesCount(), m_iCurrentPage(), m_bIsSettingsConfig()
 {
 
 }
@@ -161,7 +163,10 @@ void CMenuScriptConfig::ListItemCvarGetCb(CMenuBaseItem *pSelf, void *pExtra)
 	for( i = 0; entry; entry = entry->next, i++ )
 	{
 		if( entry->flValue == value )
+		{
+			self->SetCurrentValue( i );
 			break;
+		}
 	}
 
 	if( entry )
@@ -170,12 +175,150 @@ void CMenuScriptConfig::ListItemCvarGetCb(CMenuBaseItem *pSelf, void *pExtra)
 	}
 }
 
+static void ScriptCvarGetNoSync( CMenuBaseItem *pSelf, void *pExtra )
+{
+	CMenuEditable *self = (CMenuEditable*)pSelf;
+	scrvardef_t *var = (scrvardef_t*)pExtra;
+
+	if( !var ) return;
+
+	switch( var->type )
+	{
+	case T_BOOL:
+	{
+		self->SetOriginalValue( ( var->value[0] == '1' ) ? 1.0f : 0.0f );
+		break;
+	}
+	case T_NUMBER:
+	{
+		self->SetOriginalValue( (float)atof( var->value ) );
+		break;
+	}
+	case T_STRING:
+	{
+		self->SetOriginalString( var->value );
+		break;
+	}
+	default:
+		break;
+	}
+}
+
+static void ScriptCvarGetSync( CMenuBaseItem *pSelf, void *pExtra )
+{
+	CMenuEditable *self = (CMenuEditable*)pSelf;
+	scrvardef_t *var = (scrvardef_t*)pExtra;
+
+	if( !var ) return;
+
+	switch( var->type )
+	{
+	case T_BOOL:
+	{
+		float eng = EngFuncs::GetCvarFloat( var->name );
+		float scr = ( var->value[0] == '1' ) ? 1.0f : 0.0f;
+		if( eng != scr ) self->SetOriginalValue( eng );
+		else self->SetOriginalValue( scr );
+		break;
+	}
+	case T_NUMBER:
+	{
+		float eng = EngFuncs::GetCvarFloat( var->name );
+		float scr = (float)atof( var->value );
+		if( eng != scr ) self->SetOriginalValue( eng );
+		else self->SetOriginalValue( scr );
+		break;
+	}
+	case T_STRING:
+	{
+		const char *eng = EngFuncs::GetCvarString( var->name );
+		if( eng && strcmp( eng, var->value ) )
+			self->SetOriginalString( eng );
+		else
+			self->SetOriginalString( var->value );
+		break;
+	}
+	default:
+		break;
+	}
+}
+
+static void ScriptCvarWriteNoSync( CMenuBaseItem *pSelf, void *pExtra )
+{
+	CMenuEditable *self = (CMenuEditable*)pSelf;
+	scrvardef_t *var = (scrvardef_t*)pExtra;
+
+	if( !var ) return;
+
+	switch( var->type )
+	{
+	case T_BOOL:
+	{
+		int v = (int)self->CvarValue();
+		Q_strncpy( var->value, v ? "1" : "0", sizeof( var->value ) );
+		break;
+	}
+	case T_NUMBER:
+	{
+		char tmp[64];
+		snprintf( tmp, sizeof( tmp ), "%g", self->CvarValue() );
+		Q_strncpy( var->value, tmp, sizeof( var->value ) );
+		break;
+	}
+	case T_STRING:
+	{
+		const char *s = self->CvarString();
+		if( s ) Q_strncpy( var->value, s, sizeof( var->value ) );
+		else var->value[0] = '\0';
+		break;
+	}
+	default:
+		break;
+	}
+}
+
+static void ScriptCvarWriteSync( CMenuBaseItem *pSelf, void *pExtra )
+{
+	CMenuEditable *self = (CMenuEditable*)pSelf;
+	scrvardef_t *var = (scrvardef_t*)pExtra;
+
+	if( !var ) return;
+
+	switch( var->type )
+	{
+	case T_BOOL:
+	{
+		int v = (int)self->CvarValue();
+		Q_strncpy( var->value, v ? "1" : "0", sizeof( var->value ) );
+		EngFuncs::CvarSetValue( var->name, (float)v );
+		break;
+	}
+	case T_NUMBER:
+	{
+		char tmp[64];
+		snprintf( tmp, sizeof( tmp ), "%g", self->CvarValue() );
+		Q_strncpy( var->value, tmp, sizeof( var->value ) );
+		EngFuncs::CvarSetValue( var->name, self->CvarValue() );
+		break;
+	}
+	case T_STRING:
+	{
+		const char *s = self->CvarString();
+		if( s ) Q_strncpy( var->value, s, sizeof( var->value ) );
+		else var->value[0] = '\0';
+		EngFuncs::CvarSetString( var->name, var->value );
+		break;
+	}
+	default:
+		break;
+	}
+}
+
 void CMenuScriptConfig::_Init( void )
 {
-	AddItem( background );
 	AddItem( banner );
-	AddButton( L( "Done" ), L( "Save and Go back to previous menu" ), PC_DONE, VoidCb( &CMenuScriptConfig::SaveAndPopMenu ) );
-	AddButton( L( "GameUI_Cancel" ), L( "Go back to previous menu" ), PC_CANCEL, VoidCb( &CMenuScriptConfig::Hide ) );
+	AddButton( L( "Done" ), nullptr, PC_DONE, VoidCb( &CMenuScriptConfig::SaveAndPopMenu ) );
+	AddButton( L( "GameUI_Cancel" ), nullptr, PC_CANCEL, VoidCb( &CMenuScriptConfig::Hide ) );
 
 	if( !m_pVars )
 		return;
@@ -214,6 +357,11 @@ void CMenuScriptConfig::_Init( void )
 
 			editable = checkbox;
 			cvarType = CMenuEditable::CVAR_VALUE;
+
+			editable->onCvarGet = m_bIsSettingsConfig ? ScriptCvarGetNoSync : ScriptCvarGetSync;
+			editable->onCvarGet.pExtra = (void*)var;
+			editable->onCvarWrite = m_bIsSettingsConfig ? ScriptCvarWriteNoSync : ScriptCvarWriteSync;
+			editable->onCvarWrite.pExtra = (void*)var;
 			break;
 		}
 		case T_NUMBER:
@@ -231,6 +379,11 @@ void CMenuScriptConfig::_Init( void )
 			editable = spinControl;
 
 			cvarType = CMenuEditable::CVAR_VALUE;
+
+			editable->onCvarGet = m_bIsSettingsConfig ? ScriptCvarGetNoSync : ScriptCvarGetSync;
+			editable->onCvarGet.pExtra = (void*)var;
+			editable->onCvarWrite = m_bIsSettingsConfig ? ScriptCvarWriteNoSync : ScriptCvarWriteSync;
+			editable->onCvarWrite.pExtra = (void*)var;
 			break;
 		}
 		case T_STRING:
@@ -239,6 +392,11 @@ void CMenuScriptConfig::_Init( void )
 			field->iMaxLength = CS_SIZE;
 			editable = field;
 			cvarType = CMenuEditable::CVAR_STRING;
+
+			editable->onCvarGet = m_bIsSettingsConfig ? ScriptCvarGetNoSync : ScriptCvarGetSync;
+			editable->onCvarGet.pExtra = (void*)var;
+			editable->onCvarWrite = m_bIsSettingsConfig ? ScriptCvarWriteNoSync : ScriptCvarWriteSync;
+			editable->onCvarWrite.pExtra = (void*)var;
 			break;
 		}
 		case T_LIST:
@@ -291,32 +449,18 @@ void CMenuScriptConfig::_Init( void )
 	pageSelector.onChanged = VoidCb( &CMenuScriptConfig::FlipMenu );
 }
 
-void CMenuScriptConfig::SetScriptConfig(const char *path, bool earlyInit)
+void CMenuScriptConfig::SetScriptConfig(const char *path, bool bIsSettings, bool earlyInit)
 {
 	if( m_szConfig && m_pVars && !stricmp( m_szConfig, path ) )
 		return; // do nothing
 
 	m_szConfig = path;
+	m_bIsSettingsConfig = bIsSettings;
 
 	if( m_pVars )
 		CSCR_FreeList( m_pVars );
 
 	m_pVars = CSCR_LoadDefaultCVars( m_szConfig, &m_iVarsCount );
-
-#if 0
-	if( earlyInit ) // create variables if engine does not support SCR
-	{
-		// Xash3D FWGS have internal SCR parser
-		// Unkle Mike's does not(as of 3598 build)
-		if( !EngFuncs::GetCvarFloat("host_build") && EngFuncs::GetCvarFloat("build"))
-		{
-			for( scrvardef_t *var = m_pVars; var; var = var->next )
-			{
-				EngFuncs::CvarRegister( var->name, var->value, var->flags );
-			}
-		}
-	}
-#endif
 }
 
 void CMenuScriptConfig::FlipMenu( void )
@@ -332,36 +476,92 @@ void CMenuScriptConfig::FlipMenu( void )
 	m_iCurrentPage = newIndex;
 }
 
-static CMenuScriptConfig staticServerOptions;
-static CMenuScriptConfig staticUserOptions;
+ADD_MENU3( menu_serveroptions, CMenuScriptConfig, UI_AdvServerOptions_Menu );
+ADD_MENU3( menu_useroptions, CMenuScriptConfig, UI_AdvUserOptions_Menu );
 
 void UI_AdvServerOptions_Menu()
 {
-	staticServerOptions.banner.SetPicture( ART_BANNER_SERVER );
-	staticUserOptions.szName = L( "Server Options" );
-	staticServerOptions.Show();
+	menu_serveroptions->banner.SetPicture( ART_BANNER_SERVER );
+	menu_serveroptions->szName = L( "Server Options" );
+	menu_serveroptions->Show();
 }
 
 void UI_AdvUserOptions_Menu()
 {
-	staticUserOptions.banner.SetPicture( ART_BANNER_USER );
-	staticUserOptions.szName = L( "GameUI_MultiplayerAdvanced" );
-	staticUserOptions.Show();
+	menu_useroptions->banner.SetPicture( ART_BANNER_USER );
+	menu_useroptions->szName = L( "GameUI_MultiplayerAdvanced" );
+	menu_useroptions->Show();
 }
 
 void UI_LoadScriptConfig()
 {
 	// yes, create cvars if needed
-	staticServerOptions.SetScriptConfig( "settings.scr", true );
-	staticUserOptions.SetScriptConfig( "user.scr", true );
+	menu_serveroptions->SetScriptConfig( "settings.scr", true, true );
+	menu_useroptions->SetScriptConfig( "user.scr", false, true );
+}
+
+void UI_SaveScriptConfig()
+{
+	if( menu_serveroptions && menu_serveroptions->m_pVars )
+		CSCR_SaveToFile( "settings.scr", "SERVER_OPTIONS", menu_serveroptions->m_pVars );
+	if( menu_useroptions && menu_useroptions->m_pVars )
+		CSCR_SaveToFile( "user.scr", "INFO_OPTIONS", menu_useroptions->m_pVars );
+}
+
+void UI_ApplyServerSettings()
+{
+	int count = 0;
+	scrvardef_t *vars = CSCR_LoadDefaultCVars( "settings.scr", &count );
+
+	if( !vars || count <= 0 )
+	{
+		if( vars )
+			CSCR_FreeList( vars );
+		return;
+	}
+
+	for( scrvardef_t *var = vars; var; var = var->next )
+	{
+		EngFuncs::CvarSetString( var->name, var->value );
+	}
+
+	CSCR_FreeList( vars );
+}
+
+const char *UI_GetScriptCvar( const char *name )
+{
+	if( menu_serveroptions && menu_serveroptions->m_pVars )
+	{
+		for( scrvardef_t *var = menu_serveroptions->m_pVars; var; var = var->next )
+		{
+			if( !strcmp( var->name, name ) )
+				return var->value;
+		}
+	}
+	return EngFuncs::GetCvarString( name );
+}
+
+void UI_SetScriptCvar( const char *name, const char *value )
+{
+	if( menu_serveroptions && menu_serveroptions->m_pVars )
+	{
+		for( scrvardef_t *var = menu_serveroptions->m_pVars; var; var = var->next )
+		{
+			if( !strcmp( var->name, name ) )
+			{
+				Q_strncpy( var->value, value, sizeof( var->value ) );
+				return;
+			}
+		}
+	}
 }
 
 bool UI_AdvUserOptions_IsAvailable()
 {
-	return staticUserOptions.m_pVars != NULL;
+	return menu_useroptions->m_pVars != NULL;
 }
 
 bool UI_AdvServerOptions_IsAvailable()
 {
-	return staticServerOptions.m_pVars != NULL;
+	return menu_serveroptions->m_pVars != NULL;
 }

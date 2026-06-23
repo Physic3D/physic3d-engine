@@ -14,7 +14,6 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 */
 
-#pragma once
 #ifndef MENU_CHECKBOX_H
 #define MENU_CHECKBOX_H
 
@@ -55,11 +54,11 @@ public:
 	bool bInvertMask;
 	bool bChangeOnPressed;
 
-	const char	*szEmptyPic;
-	const char	*szFocusPic;
-	const char	*szPressPic;
-	const char	*szCheckPic;
-	const char	*szGrayedPic;	// when QMF_GRAYED is set
+	CImage szEmptyPic;
+	CImage szFocusPic;
+	CImage szPressPic;
+	CImage szCheckPic;
+	CImage szGrayedPic;	// when QMF_GRAYED is set
 
 	unsigned int iMask; // used only for BitMaskCb
 	static void BitMaskCb( CMenuBaseItem *pSelf, void *pExtra )

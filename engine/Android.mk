@@ -17,8 +17,6 @@ XASH_COMMIT := $(firstword $(shell cd $(LOCAL_PATH)&&git rev-parse --short=6 HEA
 
 LOCAL_CFLAGS += -DXASH_BUILD_COMMIT=\"$(XASH_COMMIT)\"
 
-LOCAL_CONLYFLAGS += -std=c99
-
 LOCAL_C_INCLUDES := \
 	$(NANOGL_PATH)/GL			    \
 	$(NANOGL_PATH)/				    \
@@ -58,7 +56,7 @@ LOCAL_SRC_FILES := \
            client/cl_video.cpp \
            client/cl_view.cpp \
            client/cl_netgraph.cpp \
-           client/gl_backend.c \
+           client/gl_backend.cpp \
            client/gl_beams.cpp \
            client/gl_cull.cpp \
            client/gl_decals.cpp \
@@ -71,9 +69,9 @@ LOCAL_SRC_FILES := \
            client/gl_rmath.cpp \
            client/gl_rmisc.cpp \
            client/gl_rpart.cpp \
-           client/gl_rsurf.c \
+           client/gl_rsurf.cpp \
            client/gl_rstrobe.cpp \
-           client/gl_sprite.c \
+           client/gl_sprite.cpp \
            client/gl_studio.cpp \
            client/vid_common.cpp \
            client/gl_warp.cpp \
@@ -83,10 +81,10 @@ LOCAL_SRC_FILES := \
            client/keys.cpp \
            client/input_evdevkey.cpp \
            client/console.cpp \
-           client/touch.c \
+           client/touch.cpp \
            client/gamma.cpp \
            client/s_dsp.cpp \
-           client/s_load.c \
+           client/s_load.cpp \
            client/s_main.cpp \
            client/s_mix.cpp \
            client/s_mouth.cpp \
@@ -143,7 +141,7 @@ LOCAL_SRC_FILES := \
            server/sv_world.cpp \
            client/vgui/vgui_draw.cpp \
            client/imagelib/img_bmp.cpp \
-           client/imagelib/img_main.c \
+           client/imagelib/img_main.cpp \
            client/imagelib/img_quant.cpp \
            client/imagelib/img_tga.cpp \
            client/imagelib/img_utils.cpp \

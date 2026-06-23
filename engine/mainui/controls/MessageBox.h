@@ -28,6 +28,7 @@ public:
 	void SetMessage( const char *sz );
 private:
 	void _Init() override;
+	void Draw() override;
 
 	CMenuAction dlgMessage;
 };

@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "Bitmap.h"
 #include "Action.h"
 #include "Table.h"
-#include "StringArrayModel.h"
+#include "StringVectorModel.h"
 #include "PicButton.h"
 
 #define ART_BANNER	  	"gfx/shell/head_touchoptions"
@@ -43,14 +43,11 @@ private:
 	void ApplyChanges( const char *fileName );
 	void UpdateExtra();
 
-	class CFileListModel : public CStringArrayModel
+	class CFileListModel : public CStringVectorModel
 	{
 	public:
-		CFileListModel() : CStringArrayModel( (const char*)filePath, 95, UI_MAXGAMES ) {}
+		CFileListModel() : CStringVectorModel() {}
 		void Update() override;
-
-	private:
-		char		filePath[UI_MAXGAMES][95];
 	} model;
 
 	CMenuTable fileList;
@@ -62,9 +59,6 @@ private:
 		HIMAGE image;
 	} preview;
 };
-
-static CMenuFileDialog uiFileDialog;
-
 
 void CMenuFileDialog::CPreview::Draw()
 {
@@ -82,15 +76,11 @@ void CMenuFileDialog::CFileListModel::Update( void )
 
 	for( k = 0; k < uiFileDialogGlobal.npatterns; k++)
 	{
-		filenames = EngFuncs::GetFilesList( uiFileDialogGlobal.patterns[k], &numFiles, TRUE );
+		filenames = EngFuncs::GetFilesList( uiFileDialogGlobal.patterns[k], &numFiles, true );
 		for ( j = 0; j < numFiles; i++, j++ )
-		{
-			if( i >= UI_MAXGAMES ) break;
-			Q_strncpy( filePath[i],filenames[j], sizeof( filePath[0] ) );
-		}
+			AddToTail( filenames[j] );
 	}
 
-	m_iCount = i;
 }
 
 void CMenuFileDialog::ApplyChanges(const char *fileName)
@@ -138,7 +128,6 @@ void CMenuFileDialog::_Init( void )
 
 	preview.SetRect( 72, 380, 196, 196 );
 
-	AddItem( background );
 	// AddItem( banner );
 	AddButton( L( "Done" ), L( "Use selected file" ), PC_DONE, VoidCb( &CMenuFileDialog::SaveAndPopMenu ) );
 	AddButton( L( "GameUI_Cancel" ), L( "Cancel file selection" ), PC_CANCEL, VoidCb( &CMenuFileDialog::RejectChanges ) );
@@ -151,13 +140,4 @@ void CMenuFileDialog::_VidInit()
 	preview.SetVisibility( uiFileDialogGlobal.preview );
 }
 
-/*
-=================
-UI_FileDialog_Menu
-=================
-*/
-void UI_FileDialog_Menu( void )
-{
-	uiFileDialog.Show();
-}
-ADD_MENU( menu_filedialog, NULL, UI_FileDialog_Menu );
+ADD_MENU( menu_filedialog, CMenuFileDialog, UI_FileDialog_Menu );

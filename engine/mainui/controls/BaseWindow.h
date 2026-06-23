@@ -12,7 +12,6 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 */
-#pragma once
 #ifndef BASEWINDOW_H
 #define BASEWINDOW_H
 
@@ -25,7 +24,7 @@ class CMenuBaseWindow : public CMenuItemsHolder
 {
 public:
 	typedef CMenuItemsHolder BaseClass;
-	CMenuBaseWindow( const char *name = "Unnamed Window" );
+	CMenuBaseWindow( const char *name = "Unnamed Window", CWindowStack *pStack = &uiStatic.menu );
 
 	// Overloaded functions
 	// Window visibility is switched through window stack
@@ -42,8 +41,8 @@ public:
 	enum EAnimation
 	{
 		ANIM_NO = 0,  // no animation
-		ANIM_OUT,     // window closing animation
-		ANIM_IN,      // window showing animation
+		ANIM_CLOSING, // window closing animation
+		ANIM_OPENING, // window showing animation
 	};
 
 	// Override this method to draw custom animations
@@ -54,7 +53,7 @@ public:
 	virtual bool DrawAnimation();
 
 	// Check current window is a root
-	virtual bool IsRoot() { return false; }
+	virtual bool IsRoot() const { return false; }
 
 	// Hide current window and save changes
 	virtual void SaveAndPopMenu();
@@ -64,16 +63,6 @@ public:
 	void EnableTransition( EAnimation type );
 	void DisableTransition() { eTransitionType = ANIM_NO; }
 
-	bool IsMaximized() const
-	{
-		if( !FBitSet( iFlags, QMF_HIDDEN ) && // minimized
-		    m_scPos == Point( 0, 0 ) &&
-		    isrange( gpGlobals->scrWidth - 1, m_scSize.w, gpGlobals->scrWidth + 1 ) &&
-		    isrange( gpGlobals->scrHeight - 1, m_scSize.h, gpGlobals->scrHeight + 1 ))
-			return true;
-		return false;
-	}
-
 	// set parent of window
 	void Link( CMenuItemsHolder *h )
 	{
@@ -82,7 +71,6 @@ public:
 
 	bool bAllowDrag;
 	EAnimation eTransitionType; // valid only when in transition
-	CMenuBackgroundBitmap background;
 
 	const CWindowStack *WindowStack() const
 	{
@@ -96,6 +84,7 @@ protected:
 private:
 	CMenuBaseWindow(); // remove
 
+	friend void UI_DrawMouseCursor( void ); // HACKHACK: Cursor should be set by menu item
 	friend void UI_UpdateMenu( float flTime );
 
 	bool IsAbsolutePositioned( void ) const override { return true; }

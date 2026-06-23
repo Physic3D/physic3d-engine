@@ -81,7 +81,7 @@ void CWindowStack::Update( )
 	CUtlVector<CMenuBaseWindow *> drawList( 16 );
 	CUtlVector<int> removeList( 16 );
 
-	bool stop = Current()->IsMaximized();
+	bool stop = Current()->IsRoot();
 
 	// always add current window
 	drawList.AddToTail( Current() );
@@ -116,7 +116,7 @@ void CWindowStack::Update( )
 
 		// maximized, no need to go further anymore,
 		// but we need to check for closing windows, so don't break
-		if( stack[i]->IsMaximized() )
+		if( stack[i]->IsRoot() )
 		{
 			stop = true;
 		}
@@ -159,7 +159,7 @@ void CWindowStack::Update( )
 	{
 		CMenuBaseWindow *window = drawList[k];
 
-		if( window->eTransitionType > CMenuBaseWindow::ANIM_OUT )
+		if( window->eTransitionType > CMenuBaseWindow::ANIM_CLOSING )
 		{
 			if( window->DrawAnimation( ) )
 				window->DisableTransition();
@@ -172,7 +172,7 @@ void CWindowStack::Update( )
 		{
 			window = drawList[k+1];
 
-			if( window->eTransitionType == CMenuBaseWindow::ANIM_OUT )
+			if( window->eTransitionType == CMenuBaseWindow::ANIM_CLOSING )
 			{
 				if( window->DrawAnimation( ) )
 					window->DisableTransition();
@@ -235,7 +235,7 @@ void CWindowStack::Add( CMenuBaseWindow *menu )
 	{
 		if( stack[active]->IsRoot() && menu->IsRoot() )
 		{
-			stack[active]->EnableTransition( CMenuBaseWindow::ANIM_OUT );
+			stack[active]->EnableTransition( CMenuBaseWindow::ANIM_CLOSING );
 		}
 	}
 
@@ -254,9 +254,8 @@ void CWindowStack::Add( CMenuBaseWindow *menu )
 	if( this == &uiStatic.menu ) // hack!
 	{
 		uiStatic.firstDraw = true;
-		uiStatic.enterSound = gpGlobals->time + 0.15f;	// make some delay
 
-		EngFuncs::KEY_SetDest ( KEY_MENU );
+		EngFuncs::KEY_SetDest( KEY_MENU );
 	}
 }
 
@@ -267,7 +266,7 @@ void CWindowStack::Remove( CMenuBaseWindow *menu )
 
 	if( idx == stack.InvalidIndex() )
 	{
-		Con_DPrintf( "CWindowStack::Remove: can't remove not opened window" );
+		Con_DPrintf( "CWindowStack::Remove: can't remove not opened window\n" );
 	}
 
 	if( this == &uiStatic.menu ) // hack!
@@ -286,7 +285,10 @@ void CWindowStack::Remove( CMenuBaseWindow *menu )
 				active = i; // maybe isn't best solution
 
 				if( stack[active]->IsRoot() && menu->IsRoot() )
-					stack[active]->EnableTransition( CMenuBaseWindow::ANIM_IN );
+					stack[active]->EnableTransition( CMenuBaseWindow::ANIM_OPENING );
+
+				// notify new active window about changed mouse position
+				stack[active]->MouseMove( uiStatic.cursorX, uiStatic.cursorY );
 
 				break;
 			}
@@ -307,7 +309,7 @@ void CWindowStack::Remove( CMenuBaseWindow *menu )
 	// hacks for demos and some environments where we can't play them on background
 	if( this == &uiStatic.menu && uiStatic.m_fDemosPlayed && uiStatic.m_iOldMenuDepth == stack.Count() - 1 )
 	{
-		EngFuncs::ClientCmd( FALSE, "demos\n" );
+		EngFuncs::ClientCmd( false, "demos\n" );
 		uiStatic.m_fDemosPlayed = false;
 		uiStatic.m_iOldMenuDepth = 0;
 	}

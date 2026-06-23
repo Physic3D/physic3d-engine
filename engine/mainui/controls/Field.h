@@ -14,7 +14,6 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 */
 
-#pragma once
 #ifndef MENU_FIELD_H
 #define MENU_FIELD_H
 
@@ -41,14 +40,20 @@ public:
 		CMenuEditable::LinkCvar( name, CVAR_STRING );
 	}
 
+	VGUI_DefaultCursor CursorAction() override
+	{
+		return dc_ibeam;
+	}
+
 	void Paste();
 	void Clear();
 
 	void SetBuffer( const char *buffer )
 	{
-		Q_strncpy( szBuffer, buffer, UI_MAX_FIELD_LINE );
-		iCursor = (int)strlen( szBuffer );
-		iScroll = g_FontMgr.CutText( font, szBuffer, m_scChSize, iRealWidth, true );
+		Q_strncpy( szBuffer, buffer, sizeof( szBuffer ));
+		iCursor = strlen( szBuffer );
+		iScroll = g_FontMgr->CutText( font, szBuffer, m_scChSize, iRealWidth, true );
+		SetCvarString( szBuffer );
 	}
 
 	const char *GetBuffer()
@@ -59,8 +64,8 @@ public:
 	bool bAllowColorstrings;
 	bool bHideInput;
 	bool bNumbersOnly;
-	const char	*szBackground;
-	int		iMaxLength;		// can't be more than UI_MAX_FIELD_LINE
+	CImage szBackground;
+	int    iMaxLength;		// can't be more than UI_MAX_FIELD_LINE
 
 protected:
 	void _Event( int ev ) override;

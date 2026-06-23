@@ -347,7 +347,7 @@ void V_SplitString2( const char *pString, const char * const *pSeparators, int n
 			int separatorLen = (int)strlen( pSeparators[iFirstSeparator] );
 			if ( pFirstSeparator > pCurPos || ( pFirstSeparator == pCurPos && bIncludeEmptyStrings ) )
 			{
-				outStrings.AddToTail( AllocString( pCurPos, (int)(pFirstSeparator-pCurPos) ) );
+				outStrings.AddToTail( AllocString( pCurPos, pFirstSeparator-pCurPos ) );
 			}
 
 			pCurPos = pFirstSeparator + separatorLen;
@@ -431,5 +431,5 @@ int V_StrTrim( char *pStr )
 		*pLastWhiteBlock = 0;
 	}
 
-	return (int)(pDest - pStart);
+	return pDest - pStart;
 }

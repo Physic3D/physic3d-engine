@@ -75,6 +75,24 @@ public:
 		m_iState = STATE_DOWNLOAD;
 		commonProgress.SetValue( (float)iCurrent/iTotal +  0.01f / iTotal * EngFuncs::GetCvarFloat("scr_download") );
 	}
+	void HandleConnect( const char *pszText )
+	{
+		if( !pszText )
+		{
+			m_iSource = SOURCE_CREATEGAME;
+			SetServer( "" );
+			SetCommonText( L( "GameUI_StartingServer" ) );
+		}
+		else
+		{
+			m_iSource = SOURCE_SERVERBROWSER;
+			SetServer( pszText );
+			SetCommonText( L( "GameUI_EstablishingConnection" ) );
+		}
+
+		commonProgress.LinkCvar( "scr_loading", 0, 100 );
+	}
+
 	void SetCommonText( const char *pszText )
 	{
 		Q_strncpy( sCommonString, pszText, sizeof( sCommonString ) );
@@ -82,13 +100,18 @@ public:
 	}
 	void SetServer( const char *pszName )
 	{
-		if( m_iSource == SOURCE_CREATEGAME || !pszName[0] )
+		if( m_iSource == SOURCE_CREATEGAME )
+		{
+			Q_strncpy( sTitleString, L( "GameUI_StartingServer" ), sizeof( sTitleString ) );
+		}
+		else if( !pszName[0] )
 		{
 			Q_strncpy( sTitleString, L( "GameUI_StartingServer" ), sizeof( sTitleString ) );
 		}
 		else
 		{
-			Q_strncpy( sTitleString, L( "GameUI_EstablishingConnection" ), sizeof( sTitleString ) );
+			snprintf( sTitleString, sizeof( sTitleString ) - 1,
+				"%s %s", L( "GameUI_EstablishingConnection" ), pszName );
 		}
 
 		commonProgress.SetValue( 0 );
@@ -97,6 +120,7 @@ public:
 	EState m_iState;
 	ESource m_iSource;
 private:
+	CMenuBackgroundBitmap background;
 	CMenuProgressBar commonProgress;
 	CMenuProgressBar downloadProgress;
 	CMenuPicButton consoleButton;
@@ -111,8 +135,6 @@ private:
 	char sCommonString[512];
 };
 
-static CMenuConnectionProgress uiConnectionProgress;
-
 CMenuConnectionProgress::CMenuConnectionProgress() : CMenuBaseWindow( "ConnectionProgress" )
 {
 	sDownloadString[0] = sCommonString[0] = sTitleString[0] = '\0';
@@ -123,20 +145,19 @@ CMenuConnectionProgress::CMenuConnectionProgress() : CMenuBaseWindow( "Connectio
 
 bool CMenuConnectionProgress::KeyDown( int key )
 {
-	switch( key )
+	if( UI::Key::IsEscape( key ))
 	{
-	case K_ESCAPE:
 		dialog.Show();
-		PlayLocalSound( uiSoundOut );
-		return true;
-	case '~':
+		PlayLocalSound( uiStatic.sounds[SND_OUT] );
+	}
+	else if( UI::Key::IsConsole( key ))
+	{
 		consoleButton.onReleased( &consoleButton );
-		PlayLocalSound( uiSoundLaunch );
-		return true;
-	case 'A':
+		PlayLocalSound( uiStatic.sounds[SND_LAUNCH] );
+	}
+	else if( key == 'A' )
+	{
 		HandleDisconnect();
-		break;
-	default: break;
 	}
 
 	return CMenuItemsHolder::KeyDown( key );
@@ -188,7 +209,7 @@ void CMenuConnectionProgress::Disconnect()
 		HandleDisconnect();
 	}
 
-	EngFuncs::ClientCmd( false, "cmd disconnect;endgame disconnect\n");
+	EngFuncs::ClientCmd( false, "disconnect\n");
 }
 
 void CMenuConnectionProgress::_Init( void )
@@ -225,7 +246,7 @@ void CMenuConnectionProgress::_Init( void )
 	title.szName = sTitleString;
 
 	skipButton.szName = L( "Skip" );
-	skipButton.onReleased.SetCommand( TRUE, "http_skip\n" );
+	skipButton.onReleased.SetCommand( true, "http_skip\n" );
 	skipButton.bEnableTransitions = false;
 
 	downloadText.iFlags = commonText.iFlags = QMF_INACTIVE;
@@ -262,7 +283,7 @@ void CMenuConnectionProgress::_VidInit( void )
 	consoleButton.SetRect( 188, cursor, UI_BUTTONS_WIDTH / 2, UI_BUTTONS_HEIGHT );
 	disconnectButton.SetRect( 338, cursor, UI_BUTTONS_WIDTH / 2, UI_BUTTONS_HEIGHT );
 
-	if( EngFuncs::GetCvarFloat( "developer" ) != 0.0f )
+	if( gpGlobals->developer )
 		consoleButton.Hide();
 
 	cursor -= 30;
@@ -314,79 +335,71 @@ void CMenuConnectionProgress::Draw( void )
 	CMenuBaseWindow::Draw();
 }
 
+ADD_MENU3( menu_connectionprogress, CMenuConnectionProgress, UI_ConnectionProgress_f );
+
 // exports
 void UI_ConnectionProgress_Disconnect( void )
 {
-	uiConnectionProgress.HandleDisconnect();
+	menu_connectionprogress->HandleDisconnect();
 }
 
 void UI_ConnectionProgress_Download( const char *pszFileName, const char *pszServerName, int iCurrent, int iTotal, const char *comment )
 {
-	if( uiConnectionProgress.m_iState == STATE_CONSOLE )
+	if( menu_connectionprogress->m_iState == STATE_CONSOLE )
 		return;
 
-	uiConnectionProgress.HandleDownload( pszFileName, pszServerName, iCurrent, iTotal, comment );
+	menu_connectionprogress->HandleDownload( pszFileName, pszServerName, iCurrent, iTotal, comment );
+	menu_connectionprogress->Show();
 }
 
 void UI_ConnectionProgress_DownloadEnd( void )
 {
-	if( uiConnectionProgress.m_iState == STATE_CONSOLE )
+	if( menu_connectionprogress->m_iState == STATE_CONSOLE )
 		return;
 
-	uiConnectionProgress.m_iState = STATE_CONNECTING;
-	uiConnectionProgress.HandleDisconnect();
+	menu_connectionprogress->m_iState = STATE_CONNECTING;
+	menu_connectionprogress->HandleDisconnect();
+	menu_connectionprogress->Show();
 }
 
 void UI_ConnectionProgress_Precache( void )
 {
-	if( uiConnectionProgress.m_iState == STATE_CONSOLE )
+	if( menu_connectionprogress->m_iState == STATE_CONSOLE )
 		return;
 
-	uiConnectionProgress.HandlePrecache();
+	menu_connectionprogress->HandlePrecache();
+	menu_connectionprogress->Show();
 }
 
 void UI_ConnectionProgress_Connect( const char *server ) // NULL for local server
 {
-	if( uiConnectionProgress.m_iState == STATE_CONSOLE )
+	if( menu_connectionprogress->m_iState == STATE_CONSOLE )
 		return;
 
-	uiConnectionProgress.m_iState = STATE_MENU;
-
-	if( !server )
-	{
-		uiConnectionProgress.m_iSource = SOURCE_CREATEGAME;
-		uiConnectionProgress.SetServer( "" );
-		uiConnectionProgress.SetCommonText( L( "GameUI_StartingServer" ) );
-	}
-	else
-	{
-		uiConnectionProgress.m_iSource = SOURCE_SERVERBROWSER;
-		uiConnectionProgress.SetServer( server );
-		uiConnectionProgress.SetCommonText( L( "GameUI_EstablishingConnection" ) );
-	}
-
-	uiConnectionProgress.Show();
+	menu_connectionprogress->m_iState = STATE_MENU;
+	menu_connectionprogress->HandleConnect( server );
+	menu_connectionprogress->Show();
 }
 
 void UI_ConnectionProgress_ChangeLevel( void )
 {
-	if( uiConnectionProgress.m_iState == STATE_CONSOLE )
+	if( menu_connectionprogress->m_iState == STATE_CONSOLE )
 		return;
 
-	uiConnectionProgress.m_iState = STATE_MENU;
-	uiConnectionProgress.SetCommonText( L( "Changing level on server" ) );
-	uiConnectionProgress.Show();
+	menu_connectionprogress->m_iState = STATE_MENU;
+	menu_connectionprogress->SetCommonText( L( "Changing level on server" ) );
+	menu_connectionprogress->Show();
 }
 
 void UI_ConnectionProgress_ParseServerInfo( const char *server )
 {
-	if( uiConnectionProgress.m_iState == STATE_CONSOLE )
+	if( menu_connectionprogress->m_iState == STATE_CONSOLE )
 		return;
 
-	uiConnectionProgress.SetServer( server );
-	uiConnectionProgress.m_iState = STATE_CONNECTING;
-	uiConnectionProgress.SetCommonText( L( "GameUI_ParseServerInfo" ) );
-	uiConnectionProgress.Show();
+	menu_connectionprogress->SetServer( server );
+	menu_connectionprogress->m_iState = STATE_CONNECTING;
+	menu_connectionprogress->SetCommonText( L( "GameUI_ParseServerInfo" ) );
+	menu_connectionprogress->Show();
 }
 
 void UI_ConnectionProgress_f( void )
@@ -405,7 +418,7 @@ void UI_ConnectionProgress_f( void )
 	}
 	else if( !strcmp( EngFuncs::CmdArgv(1), "stufftext" ) )
 	{
-		uiConnectionProgress.HandleStufftext( atof( EngFuncs::CmdArgv( 2 ) ), EngFuncs::CmdArgv( 3 ) );
+		menu_connectionprogress->HandleStufftext( atof( EngFuncs::CmdArgv( 2 ) ), EngFuncs::CmdArgv( 3 ) );
 	}
 	else if( !strcmp( EngFuncs::CmdArgv(1), "precache" ) )
 	{
@@ -428,4 +441,3 @@ void UI_ConnectionProgress_f( void )
 		UI_ConnectionProgress_ParseServerInfo( EngFuncs::CmdArgv(2) );
 	}
 }
-ADD_COMMAND( menu_connectionprogress, UI_ConnectionProgress_f );

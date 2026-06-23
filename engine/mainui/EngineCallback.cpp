@@ -17,7 +17,7 @@ GNU General Public License for more details.
 #include "BaseMenu.h"
 #include "Utils.h"
 
-void EngFuncs::PIC_Set(HIMAGE hPic, int r, int g, int b, int a)
+void EngFuncs::PIC_Set( HIMAGE hPic, int r, int g, int b, int a)
 {
 	if( uiStatic.enableAlphaFactor )
 		a *= uiStatic.alphaFactor;
@@ -63,33 +63,17 @@ int EngFuncs::DrawConsoleString(int x, int y, const char *string)
 	sz.w = ScreenWidth - pt.x;
 	sz.h = ScreenHeight - pt.y;
 
-	charSz = g_FontMgr.GetFontTall( uiStatic.hConsoleFont );
+	charSz = g_FontMgr->GetFontTall( uiStatic.hConsoleFont );
 
 	return UI_DrawString( uiStatic.hConsoleFont, pt, sz, string, color, charSz, QM_TOPLEFT );
 }
 
 void EngFuncs::ConsoleStringLen(const char *string, int *length, int *height)
 {
-	g_FontMgr.GetTextSize( uiStatic.hConsoleFont, string, length, height );
+	g_FontMgr->GetTextSize( uiStatic.hConsoleFont, string, length, height );
 }
 
 int EngFuncs::ConsoleCharacterHeight()
 {
-	return g_FontMgr.GetFontTall( uiStatic.hConsoleFont );
-}
-
-// We have full unicode support now
-int EngFuncs::UtfProcessChar(int ch)
-{
-	return Con_UtfProcessChar( ch );
-}
-
-int EngFuncs::UtfMoveLeft(const char *str, int pos)
-{
-	return Con_UtfMoveLeft( str, pos );
-}
-
-int EngFuncs::UtfMoveRight(const char *str, int pos, int length)
-{
-	return Con_UtfMoveRight( str, pos, length );
+	return g_FontMgr->GetFontTall( uiStatic.hConsoleFont );
 }

@@ -28,18 +28,13 @@ GNU General Public License for more details.
 #endif
 
 #include "BitmapFont.h"
+#include "utflib.h"
 
-#if defined __ANDROID__ || defined CS16CLIENT
-#define DEFAULT_MENUFONT "RobotoCondensed"
-#define DEFAULT_CONFONT  "DroidSans"
-#define DEFAULT_WEIGHT   1000
-#else
 #define DEFAULT_MENUFONT "Trebuchet MS"
 #define DEFAULT_CONFONT  "Tahoma"
 #define DEFAULT_WEIGHT   500
-#endif
 
-CFontManager g_FontMgr;
+CFontManager *g_FontMgr;
 
 CFontManager::CFontManager()
 {
@@ -47,6 +42,7 @@ CFontManager::CFontManager()
 	FT_Init_FreeType( &CFreeTypeFont::m_Library );
 #endif
 	m_Fonts.EnsureCapacity( 4 );
+	m_FontFiles.EnsureCapacity( 2 );
 }
 
 CFontManager::~CFontManager()
@@ -56,6 +52,14 @@ CFontManager::~CFontManager()
 	FT_Done_FreeType( CFreeTypeFont::m_Library );
 	CFreeTypeFont::m_Library = NULL;
 #endif
+
+	FOR_EACH_HASHMAP( m_FontFiles, i )
+	{
+		byte *p = m_FontFiles.Element( i ).data;
+		EngFuncs::COM_FreeFile( p );
+	}
+
+	m_FontFiles.Purge();
 }
 
 void CFontManager::VidInit( void )
@@ -84,17 +88,17 @@ void CFontManager::VidInit( void )
 			.SetHandleNum( QM_BOLDFONT )
 			.Create();
 
-#ifdef MAINUI_RENDER_PICBUTTON_TEXT
-		uiStatic.hLightBlur = CFontBuilder( DEFAULT_MENUFONT, UI_MED_CHAR_HEIGHT * scale, 1000 )
-			.SetHandleNum( QM_LIGHTBLUR )
-			.SetBlurParams( 2, 1.0f )
-			.Create();
+		if( !uiStatic.lowmemory )
+		{
+			uiStatic.hLightBlur = CFontBuilder( DEFAULT_MENUFONT, UI_MED_CHAR_HEIGHT * scale, DEFAULT_WEIGHT )
+				.SetBlurParams( 2 * scale, 1.25f )
+				.Create();
 
-		uiStatic.hHeavyBlur = CFontBuilder( DEFAULT_MENUFONT, UI_MED_CHAR_HEIGHT * scale, 1000 )
-			.SetHandleNum( QM_HEAVYBLUR )
-			.SetBlurParams( 8, 1.75f )
-			.Create();
-#endif
+			uiStatic.hHeavyBlur = CFontBuilder( DEFAULT_MENUFONT, UI_MED_CHAR_HEIGHT * scale, DEFAULT_WEIGHT )
+				.SetBlurParams( 8 * scale, 2.0f )
+				.Create();
+		}
+
 		uiStatic.hConsoleFont = CFontBuilder( DEFAULT_CONFONT, UI_CONSOLE_CHAR_HEIGHT * scale, 500 )
 			.SetOutlineSize()
 			.Create();
@@ -116,7 +120,7 @@ void CFontManager::DeleteFont(HFont hFont)
 	CBaseFont *font = GetIFontFromHandle(hFont);
 	if( font )
 	{
-		m_Fonts[hFont] = NULL;
+		m_Fonts[hFont-1] = NULL;
 
 		delete font;
 	}
@@ -212,8 +216,7 @@ void CFontManager::GetTextSize(HFont fontHandle, const char *text, int *wide, in
 	const char *ch = text;
 	_tall = fontTall;
 	int i = 0;
-
-	EngFuncs::UtfProcessChar( 0 );
+	utfstate_t state;
 
 	while( *ch && ( size < 0 || i < size ) )
 	{
@@ -224,9 +227,8 @@ void CFontManager::GetTextSize(HFont fontHandle, const char *text, int *wide, in
 			continue;
 		}
 
-		int uch;
+		int uch = state.Decode((uint8_t)*ch );
 
-		uch = EngFuncs::UtfProcessChar( (unsigned char)*ch );
 		if( uch )
 		{
 			if( uch == '\n' && *( ch + 1 ) != '\0' )
@@ -246,7 +248,6 @@ void CFontManager::GetTextSize(HFont fontHandle, const char *text, int *wide, in
 		i++;
 		ch++;
 	}
-	EngFuncs::UtfProcessChar( 0 );
 
 	if( tall ) *tall = _tall;
 	if( wide ) *wide = _wide;
@@ -264,12 +265,11 @@ int CFontManager::CutText(HFont fontHandle, const char *text, int height, int vi
 
 	int _wide = 0;
 	const char *ch = text;
+	utfstate_t state;
 
 #ifdef SCALE_FONTS
 	visibleSize  = (float)visibleSize / (float)height * (float)font->GetTall();
 #endif
-
-	EngFuncs::UtfProcessChar( 0 );
 
 	int whiteSpacePos = 0;
 
@@ -283,7 +283,7 @@ int CFontManager::CutText(HFont fontHandle, const char *text, int height, int vi
 			continue;
 		}
 
-		int uch = EngFuncs::UtfProcessChar( (unsigned char)*ch );
+		int uch = state.Decode((uint8_t)*ch );
 		int x = 0;
 		if( uch )
 		{
@@ -310,8 +310,6 @@ int CFontManager::CutText(HFont fontHandle, const char *text, int height, int vi
 		_wide += x;
 	}
 
-	EngFuncs::UtfProcessChar( 0 );
-
 	if( !reverse )
 	{
 		if( *ch && remaining ) *remaining = true;
@@ -333,6 +331,7 @@ int CFontManager::CutText(HFont fontHandle, const char *text, int height, int vi
 	whiteSpacePos = 0;
 
 	// now remove character one by one to fit
+	state.Reset();
 	while( *ch && _wide > visibleSize )
 	{
 		// skip colorcodes
@@ -342,7 +341,7 @@ int CFontManager::CutText(HFont fontHandle, const char *text, int height, int vi
 			continue;
 		}
 
-		int uch = EngFuncs::UtfProcessChar( (unsigned char)*ch );
+		int uch = state.Decode((uint8_t)*ch );
 		if( uch )
 		{
 			// we don't need check for newlines here, it's only done for oneline Field widget
@@ -357,8 +356,6 @@ int CFontManager::CutText(HFont fontHandle, const char *text, int height, int vi
 		}
 		ch++;
 	}
-
-	EngFuncs::UtfProcessChar( 0 );
 
 	if( remaining ) *remaining = true;
 	if( wide ) *wide = _wide;
@@ -446,12 +443,14 @@ void CFontManager::UploadTextureForFont(CBaseFont *font)
 
 	charRange_t range[] =
 	{
-	{ 33, 126, NULL, 0 },			// ascii printable range
-	{ 0, 0, table_cp1251, ARRAYSIZE( table_cp1251 ) }, // cp1251
-	{ 0x0400, 0x045F, NULL, 0 },		// cyrillic range
+	{ 0x0021, 0x007E, NULL, 0 }, // ascii printable range
+	{ 0x00C0, 0x00FF, NULL, 0 }, // latin-1 supplement (letters only)
+	{ 0x0100, 0x017F, NULL, 0 }, // latin extended a
+	{ 0x0400, 0x045F, NULL, 0 }, // cyrillic range
+	{ 0, 0, table_cp1251, V_ARRAYSIZE( table_cp1251 ) }, // cp1251
 	};
 
-	font->UploadGlyphsForRanges( range, ARRAYSIZE( range ) );
+	font->UploadGlyphsForRanges( range, V_ARRAYSIZE( range ) );
 }
 
 int CFontManager::DrawCharacter(HFont fontHandle, int ch, Point pt, int charH, const unsigned int color, bool forceAdditive )
@@ -479,9 +478,9 @@ HFont CFontBuilder::Create()
 	// check existing font at first
 	if( !m_hForceHandle )
 	{
-		for( int i = 0; i < g_FontMgr.m_Fonts.Count(); i++ )
+		for( int i = 0; i < g_FontMgr->m_Fonts.Count(); i++ )
 		{
-			font = g_FontMgr.m_Fonts[i];
+			font = g_FontMgr->m_Fonts[i];
 
 			if( font->IsEqualTo( m_szName, m_iTall, m_iWeight, m_iBlur, m_iFlags ) )
 				return i + 1;
@@ -498,7 +497,7 @@ HFont CFontBuilder::Create()
 	font = new CBitmapFont();
 #endif
 
-	double starttime = Sys_DoubleTime();
+	double starttime = EngFuncs::DoubleTime();
 
 	if( !font->Create( m_szName, m_iTall, m_iWeight, m_iBlur, m_fBrighten, m_iOutlineSize, m_iScanlineOffset, m_fScanlineScale, m_iFlags ) )
 	{
@@ -515,20 +514,60 @@ HFont CFontBuilder::Create()
 		}
 	}
 
-	g_FontMgr.UploadTextureForFont( font );
+	g_FontMgr->UploadTextureForFont( font );
 
-	double endtime = Sys_DoubleTime();
+	double endtime = EngFuncs::DoubleTime();
 
 	Con_DPrintf( "Rendering %s(%i, %i) took %f seconds\n", font->GetName(), m_iTall, m_iWeight, endtime - starttime );
 
-	if( m_hForceHandle != -1 && g_FontMgr.m_Fonts.Count() != m_hForceHandle )
+	if( m_hForceHandle != -1 && g_FontMgr->m_Fonts.Count() != m_hForceHandle )
 	{
-		if( g_FontMgr.m_Fonts.IsValidIndex( m_hForceHandle ) )
+		if( g_FontMgr->m_Fonts.IsValidIndex( m_hForceHandle ) )
 		{
-			g_FontMgr.m_Fonts.FastRemove( m_hForceHandle );
-			return g_FontMgr.m_Fonts.InsertBefore( m_hForceHandle, font );
+			g_FontMgr->m_Fonts.FastRemove( m_hForceHandle );
+			return g_FontMgr->m_Fonts.InsertBefore( m_hForceHandle, font );
 		}
 	}
 
-	return g_FontMgr.m_Fonts.AddToTail(font) + 1;
+	return g_FontMgr->m_Fonts.AddToTail(font) + 1;
+}
+
+bool CFontManager::FindFontDataFile( const char *name, int tall, int weight, int flags, char *dataFile, size_t dataFileChars )
+{
+	if( !strcmp( name, "Trebuchet MS" ))
+	{
+		Q_strncpy( dataFile, "gfx/fonts/FiraSans-Regular.ttf", dataFileChars );
+		return true;
+	}
+	else if( !strcmp( name, "Tahoma" ))
+	{
+		Q_strncpy( dataFile, "gfx/fonts/tahoma.ttf", dataFileChars );
+		return true;
+	}
+
+	return false;
+}
+
+byte *CFontManager::LoadFontDataFile( const char *vfspath, int *plen )
+{
+	int i = m_FontFiles.Find( vfspath );
+	if( i != m_FontFiles.InvalidIndex( ))
+	{
+		if( plen )
+			*plen = m_FontFiles[i].length;
+
+		return m_FontFiles[i].data;
+	}
+	int len = 0;
+	byte *p = EngFuncs::COM_LoadFile( vfspath, &len );
+	if( p != nullptr )
+	{
+		if( plen )
+			*plen = len;
+
+		font_file file = { len, p };
+		m_FontFiles.Insert( vfspath, file );
+	}
+
+	return p;
 }

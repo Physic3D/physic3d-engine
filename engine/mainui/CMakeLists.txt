@@ -20,147 +20,42 @@
 # SOFTWARE.
 #
 
-cmake_minimum_required(VERSION 3.5.1)
-project (MAINUI)
+cmake_minimum_required(VERSION 3.5)
+project(MAINUI)
 
-# By default we require C++11 support.
 set(CMAKE_CXX_STANDARD 11)
 
-set(MAINUI_LIBRARY xashmenu)
-fwgs_fix_default_msvc_settings()
 option(MAINUI_USE_CUSTOM_FONT_RENDER "Use custom font rendering" ON)
 option(MAINUI_USE_STB "Use stb_truetype.h for rendering(*nix-only)" OFF)
-option(MAINUI_RENDER_PICBUTTON_TEXT "Use custom font render to render picbuttons(experimental)" OFF)
 option(MAINUI_FONT_SCALE "Scale fonts by height" OFF)
 
-set(MAINUI_CONTROLS_SOURCES
-	controls/Framework.cpp
-	controls/BaseItem.cpp
-	controls/Action.cpp
-	controls/Bitmap.cpp
-	controls/CheckBox.cpp
-	controls/ItemsHolder.cpp
-	controls/Field.cpp
-	controls/PicButton.cpp
-	controls/Slider.cpp
-	controls/SpinControl.cpp
-	controls/YesNoMessageBox.cpp
-	controls/MessageBox.cpp
-	controls/Editable.cpp
-	controls/Switch.cpp
-	controls/BaseWindow.cpp
-	controls/ProgressBar.cpp
-	controls/BackgroundBitmap.cpp
-	controls/Table.cpp
-	controls/TabView.cpp
-	controls/PlayerModelView.cpp
-	controls/ScrollView.cpp
-)
-
-set(MAINUI_MENUS_SOURCES
-	menus/AdvancedControls.cpp
-	menus/Audio.cpp
-	menus/Configuration.cpp
-	menus/Controls.cpp
-	menus/CreateGame.cpp
-	menus/Credits.cpp
-	menus/CustomGame.cpp
-	menus/FileDialog.cpp
-	menus/GameOptions.cpp
-	menus/Gamepad.cpp
-	menus/InputDevices.cpp
-	menus/LoadGame.cpp
-	menus/Main.cpp
-	menus/Multiplayer.cpp
-	menus/NewGame.cpp
-	menus/PlayerSetup.cpp
-	menus/SaveLoad.cpp
-	menus/ServerBrowser.cpp
-	menus/TouchButtons.cpp
-	menus/Touch.cpp
-	menus/TouchEdit.cpp
-	menus/TouchOptions.cpp
-	menus/Video.cpp
-	menus/VideoModes.cpp
-	menus/VideoOptions.cpp
-	menus/PlayerIntroduceDialog.cpp
-	menus/ConnectionProgress.cpp
-	menus/ConnectionWarning.cpp
-	menus/dynamic/ScriptMenu.cpp
-)
-
-set(MAINUI_FONT_RENDER_SOURCES
-	font/WinAPIFont.cpp
-	font/BitmapFont.cpp
-	font/FontManager.cpp
-	font/FreeTypeFont.cpp
-	font/StbFont.cpp
-	font/BaseFontBackend.cpp
-)
-
-set(MAINUI_SOURCES
-	unicode_strtools.cpp
-	EventSystem.cpp
-	EngineCallback.cpp
-	BaseMenu.cpp
-	Btns.cpp
-	MenuStrings.cpp
-	CFGScript.cpp
-	Utils.cpp
-	Scissor.cpp
-	udll_int.cpp
-	WindowSystem.cpp
-)
-
-set(MINIUTL_SOURCES
-        miniutl/bitstring.cpp
-        miniutl/generichash.cpp
-        miniutl/strtools.cpp
-        miniutl/utlbuffer.cpp
-        miniutl/utlmemory.cpp
-        miniutl/utlstring.cpp
-)
-
-if(CS16CLIENT)
-	add_definitions(-DCS16CLIENT)
-	list(APPEND MAINUI_SOURCES
-		${XASH_SDK}/common/interface.cpp
-		menus/Scoreboard.cpp
-		menus/client/JoinGame.cpp
-		menus/client/JoinClass.cpp
-		menus/client/ClientWindow.cpp
-		)
+if(NOT XASH_SDK)
+	set(XASH_SDK "sdk_includes/")
 endif()
 
-list(APPEND MAINUI_SOURCES ${MAINUI_CONTROLS_SOURCES})
-list(APPEND MAINUI_SOURCES ${MAINUI_MENUS_SOURCES})
-list(APPEND MAINUI_SOURCES ${MAINUI_FONT_RENDER_SOURCES})
-list(APPEND MAINUI_SOURCES ${MINIUTL_SOURCES})
-add_library (${MAINUI_LIBRARY} SHARED ${MAINUI_SOURCES})
+file(GLOB MAINUI_CONTROLS_SOURCES "controls/*.cpp")
+file(GLOB MAINUI_MENUS_SOURCES "menus/*.cpp" "menus/dynamic/*.cpp")
+file(GLOB MAINUI_FONT_RENDER_SOURCES "font/*.cpp")
+file(GLOB MAINUI_SOURCES "miniutl/*.cpp" "*.cpp")
+
+add_library(menu SHARED ${MAINUI_CONTROLS_SOURCES} ${MAINUI_MENUS_SOURCES} ${MAINUI_FONT_RENDER_SOURCES} ${MAINUI_SOURCES})
 
 if(NOT WIN32 AND NOT MINGW)
-	fwgs_add_compile_options(C -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable)
-endif()
-
-if(NOT XASH_SDK)
-	set(XASH_SDK "../")
-endif()
-
-if(XASH_SAILFISH)
-	add_definitions(-D__SAILFISH__)
+	add_compile_options(-Wall -Wextra -Wno-unused-parameter -Wno-unused-variable)
 endif()
 
 if(MAINUI_FONT_SCALE)
 	add_definitions(-DMAINUI_FONT_SCALE)
 endif()
 
-# Force stb_truetype for Apple devices, as there is no Apple native font renderer
-# And freetype&fontconfig isn't used on this platform by default
-if(APPLE)
+add_definitions(-DSTDINT_H=<cstdint>)
+
+# Android uses stb_truetype by default for rendering fonts
+if(ANDROID)
 	set(MAINUI_USE_STB TRUE)
 endif()
 
-include_directories(${XASH_SDK}/public ${XASH_SDK} ${XASH_SDK}/pm_shared . controls/ menus/ miniutl/ font/ model/)
+include_directories(${XASH_SDK}/common ${XASH_SDK}/engine ${XASH_SDK}/pm_shared ${XASH_SDK}/public . controls/ menus/ miniutl/ font/ model/)
 
 if(MSVC)
 	add_definitions(-D_CRT_SECURE_NO_WARNINGS)
@@ -176,36 +71,27 @@ if(MAINUI_USE_CUSTOM_FONT_RENDER)
 		else()
 			# Use freetype2
 			find_package(PkgConfig)
-			pkg_check_modules(FC REQUIRED fontconfig)
-			include_directories(${FC_INCLUDE_DIRS})
-			target_link_libraries(${MAINUI_LIBRARY} ${FC_LIBRARIES})
+			pkg_check_modules(FT2 REQUIRED freetype2)
+			include_directories(${FT2_INCLUDE_DIRS})
+			target_link_libraries(menu ${FT2_LIBRARIES})
 			add_definitions(-DMAINUI_USE_FREETYPE)
 		endif()
 	endif()
 
 	add_definitions(-DMAINUI_USE_CUSTOM_FONT_RENDER)
-	if(MAINUI_RENDER_PICBUTTON_TEXT)
-		add_definitions(-DMAINUI_RENDER_PICBUTTON_TEXT)
-	endif()
 endif()
 
-# Name library as it named in Unkle Mike's Xash3D
-if(MAINUI_NAME)
-	set_target_properties(${MAINUI_LIBRARY} PROPERTIES
-		OUTPUT_NAME ${MAINUI_NAME})
-elseif(WIN32)
-	set_target_properties(${MAINUI_LIBRARY} PROPERTIES
-		OUTPUT_NAME menu PREFIX "")
+if(NOT BUILD_AS_PART_OF_ENGINE)
+	# grab platform library suffix
+	set_target_postfix(menu)
+else()
+	# install to the same directory as engine
+        set(GAMEDIR ".")
+        set(CLIENT_INSTALL_DIR ".")
 endif()
 
-if(XASH_64BIT)
-	get_target_property(MAINUI_NAME ${MAINUI_LIBRARY} OUTPUT_NAME)
-	if(NOT MAINUI_NAME)
-		set(MAINUI_NAME ${MAINUI_LIBRARY})
-	endif()
-	set_target_properties(${MAINUI_LIBRARY} PROPERTIES 
-		OUTPUT_NAME ${MAINUI_NAME}64)
-endif()
+install(TARGETS menu DESTINATION "${GAMEDIR}/${CLIENT_INSTALL_DIR}")
 
-fwgs_set_default_properties(${MAINUI_LIBRARY})
-fwgs_install(${MAINUI_LIBRARY})
+if(MSVC)
+	install(FILES $<TARGET_PDB_FILE:menu> DESTINATION "${GAMEDIR}/${CLIENT_INSTALL_DIR}" OPTIONAL)
+endif()

@@ -14,7 +14,6 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 */
 
-#pragma once
 #ifndef MENU_SLIDER_H
 #define MENU_SLIDER_H
 #define UI_SLIDER_MAIN		"gfx/shell/slider"
@@ -53,6 +52,8 @@ public:
 	// void SetDrawStep( float drawStep, int numSteps );
 
 	void SetKeepSlider( int keepSlider ) { m_iKeepSlider = keepSlider; }
+
+	CImage imgSlider;
 private:
 	float	m_flMinValue;
 	float	m_flMaxValue;

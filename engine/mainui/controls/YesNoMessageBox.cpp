@@ -27,8 +27,11 @@ CMenuYesNoMessageBox::CMenuYesNoMessageBox( bool alert ) : BaseClass( "YesNoMess
 	bAutoHide = true;
 	m_bIsAlert = alert;
 	iFlags |= QMF_DIALOG;
+
 	dlgMessage1.iFlags = QMF_INACTIVE|QMF_DROPSHADOW;
 	dlgMessage1.eTextAlignment = QM_TOP;
+	dlgMessage1.SetRect( 0, 24, 640, 256 - 24 );
+	dlgMessage1.SetCharSize( QM_DEFAULTFONT );
 
 	if( m_bIsAlert )
 	{
@@ -71,8 +74,10 @@ CMenuYesNoMessageBox::CMenuYesNoMessageBox( bool alert ) : BaseClass( "YesNoMess
 CMenuYesNoMessageBox::Init
 ==============
 */
-void CMenuYesNoMessageBox::_Init( void )
+void CMenuYesNoMessageBox::_Init()
 {
+	SetRect( DLG_X + 192, 256, 640, 256 );
+
 	if( !m_bSetYes )
 		SetPositiveButton( L( "GameUI_OK" ), PC_OK );
 
@@ -85,9 +90,6 @@ void CMenuYesNoMessageBox::_Init( void )
 	if( !(bool)onPositive )
 		onPositive = CEventCallback::NoopCb;
 
-	background.bForceColor = true;
-	background.colorBase = uiPromptBgColor;
-	AddItem( background );
 	AddItem( dlgMessage1 );
 	AddItem( yes );
 
@@ -101,17 +103,13 @@ void CMenuYesNoMessageBox::_Init( void )
 CMenuYesNoMessageBox::VidInit
 ==============
 */
-void CMenuYesNoMessageBox::_VidInit( void )
+void CMenuYesNoMessageBox::_VidInit()
 {
 	SetRect( DLG_X + 192, 256, 640, 256 );
 	pos.x += uiStatic.xOffset;
 	pos.y += uiStatic.yOffset;
 	CalcPosition();
 	CalcSizes();
-
-	dlgMessage1.SetRect( 0, 24, 640, 256 - 24 );
-	dlgMessage1.SetCharSize( QM_DEFAULTFONT );
-
 }
 
 /*
@@ -119,9 +117,13 @@ void CMenuYesNoMessageBox::_VidInit( void )
 CMenuYesNoMessageBox::Draw
 ==============
 */
-void CMenuYesNoMessageBox::Draw( void )
+void CMenuYesNoMessageBox::Draw()
 {
-	UI_FillRect( 0,0, gpGlobals->scrWidth, gpGlobals->scrHeight, 0x40000000 );
+	UI_FillRect( 0, 0, gpGlobals->scrWidth, gpGlobals->scrHeight, 0x40000000 );
+
+	EngFuncs::FillRGBA( m_scPos.x, m_scPos.y, m_scSize.w, m_scSize.h, 20, 20, 20, 235 );
+	UI_DrawRectangle( m_scPos, m_scSize, uiInputFgColor );
+
 	CMenuBaseWindow::Draw();
 }
 
@@ -192,8 +194,8 @@ void CMenuYesNoMessageBox::HighlightChoice( EHighlight yesno )
 	}
 	else
 	{
-		yes.bPulse = yesno == HIGHLIGHT_YES ? true : false;
-		no.bPulse = yesno == HIGHLIGHT_NO ? true : false;
+		yes.bPulse = yesno == HIGHLIGHT_YES;
+		no.bPulse = yesno == HIGHLIGHT_NO;
 	}
 }
 
@@ -228,12 +230,12 @@ void UI_ShowMessageBox( const char *text )
 	static char msg[1024];
 	static CMenuYesNoMessageBox msgBox( true );
 
-	Q_strncpy( msg, text, sizeof( msg ) );
+	Q_strncpy( msg, text, sizeof( msg ));
 
 	if( !UI_IsVisible() )
 	{
 		UI_Main_Menu();
-		UI_SetActiveMenu( TRUE );
+		UI_SetActiveMenu( true );
 	}
 
 	if( strstr( msg, "m_ignore") || strstr( msg, "touch_enable" ) || strstr( msg, "joy_enable" ) )
@@ -261,14 +263,8 @@ void UI_ShowMessageBox( const char *text )
 	msgBox.Show();
 }
 
-void UI_ShowMessageBox_f( void )
+void UI_ShowMessageBox_f()
 {
-	if( EngFuncs::CmdArgc() <= 1 )
-	{
-		Con_Printf("UI_ShowMessageBox_f: Empty message\n");
-		return;
-	}
-
 	UI_ShowMessageBox( EngFuncs::CmdArgv(1) );
 }
 

@@ -25,7 +25,7 @@ jobs:
         uses: android-actions/setup-android@v3
 
       - name: Build with Gradle
-        working-directory: android
+        working-directory: engine/android
         run: |
           echo "sdk.dir=$ANDROID_HOME" > local.properties
           chmod +x gradlew
@@ -35,4 +35,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: xash3d-android
-          path: android/app/build/outputs/apk/debug/*.apk
+          path: engine/android/app/build/outputs/apk/debug/*.apk

@@ -8,7 +8,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -18,6 +18,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
 
+#include "build.h"
 #include "Framework.h"
 #include "Bitmap.h"
 #include "PicButton.h"
@@ -42,16 +43,16 @@ enum engineAxis_t
 
 static const char *axisNames[7] =
 {
-	"Side Movement",
-	"Forward Movement",
-	"Camera Vertical Turn",
-	"Camera Horizontal Turn",
+	"Side",
+	"Forward",
+	"Yaw",
+	"Pitch",
 	"Right Trigger",
 	"Left Trigger",
 	"NOT BOUND"
 };
 
-static class CMenuGamePad : public CMenuFramework
+class CMenuGamePad : public CMenuFramework
 {
 public:
 	CMenuGamePad() : CMenuFramework("CMenuGamePad") { }
@@ -68,8 +69,9 @@ private:
 	CMenuSpinControl axisBind[6];
 
 	CMenuAction axisBind_label;
-} uiGamePad;
 
+	CMenuCheckBox enableOsk;
+};
 
 /*
 =================
@@ -80,6 +82,8 @@ void CMenuGamePad::GetConfig( void )
 {
 	float _side, _forward, _pitch, _yaw;
 	char binding[7] = { 0 };
+
+	enableOsk.LinkCvar( "osk_enable" );
 
 	Q_strncpy( binding, EngFuncs::GetCvarString( "joy_axis_binding"), sizeof( binding ));
 
@@ -93,10 +97,10 @@ void CMenuGamePad::GetConfig( void )
 	pitch.SetCurrentValue( fabs( _pitch ));
 	yaw.SetCurrentValue( fabs( _yaw ));
 
-	invSide.bChecked = _side < 0.0f ? true: false;
-	invFwd.bChecked = _forward < 0.0f ? true: false;
-	invPitch.bChecked = _pitch < 0.0f ? true: false;
-	invYaw.bChecked = _yaw < 0.0f ? true: false;
+	invSide.bChecked = _side < 0.0f;
+	invFwd.bChecked = _forward < 0.0f;
+	invPitch.bChecked = _pitch < 0.0f;
+	invYaw.bChecked = _yaw < 0.0f;
 
 	// I made a monster...
 	for( unsigned int i = 0; i < sizeof( binding ) - 1; i++ )
@@ -180,6 +184,8 @@ void CMenuGamePad::SaveAndPopMenu()
 	EngFuncs::CvarSetValue( "joy_yaw", _yaw );
 	EngFuncs::CvarSetString( "joy_axis_binding", binding );
 
+	enableOsk.WriteCvar();
+
 	CMenuFramework::SaveAndPopMenu();
 }
 
@@ -192,9 +198,11 @@ void CMenuGamePad::_Init( void )
 {
 	int i, y;
 
-	static CStringArrayModel model( axisNames, ARRAYSIZE( axisNames ) );
+	static CStringArrayModel model( axisNames, V_ARRAYSIZE( axisNames ) );
 
 	banner.SetPicture( ART_BANNER );
+
+	enableOsk.SetNameAndStatus( L( "Builtin on-screen keyboard" ), L( "Enable builtin on-screen keyboard in case your platform doesn't have any" ));
 
 	axisBind_label.eTextAlignment = QM_CENTER;
 	axisBind_label.iFlags = QMF_INACTIVE|QMF_DROPSHADOW;
@@ -208,7 +216,7 @@ void CMenuGamePad::_Init( void )
 	}
 
 	side.Setup( 0.0f, 1.0f, 0.1f );
-	side.SetNameAndStatus( L( "Side" ), L( "Side movement sensitity" ) );
+	side.SetNameAndStatus( L( "Side" ), L( "Side movement sensitivity" ) );
 	invSide.SetNameAndStatus( L( "Invert" ), L( "Invert side movement axis" ) );
 
 	forward.Setup( 0.0f, 1.0f, 0.1f );
@@ -216,21 +224,20 @@ void CMenuGamePad::_Init( void )
 	invFwd.SetNameAndStatus( L( "Invert" ), L( "Invert forward movement axis" ) );
 
 	pitch.Setup( 0.0f, 200.0f, 0.1f );
-	pitch.SetNameAndStatus( L( "Pitch" ), L( "Pitch rotating sensitivity" ) );
+	pitch.SetNameAndStatus( L( "Look X" ), L( "Horizontal look sensitivity" ) );
 	invPitch.SetNameAndStatus( L( "Invert" ), L( "Invert pitch axis" ) );
 
 	yaw.Setup( 0.0f, 200.0f, 0.1f );
-	yaw.SetNameAndStatus( L( "Yaw" ), L( "Yaw rotating sensitivity" ) );
+	yaw.SetNameAndStatus( L( "Look Y" ), L( "Vertical look sensitivity" ) );
 	invYaw.SetNameAndStatus( L( "Invert" ), L( "Invert yaw axis" ) );
 
-	AddItem( background );
 	AddItem( banner );
-	AddButton( L( "Controls" ), L( "Change keyboard and mouse settings" ), PC_CONTROLS, UI_Controls_Menu );
-	AddButton( L( "Done" ), L( "Go back to the Configuration Menu" ), PC_DONE, VoidCb( &CMenuGamePad::SaveAndPopMenu ) );	// Обе строки уже встречались ранее !!
+	AddButton( L( "Controls" ), nullptr, PC_CONTROLS, UI_Controls_Menu );
+	AddButton( L( "Gyroscope" ), nullptr, PC_GYRO, UI_GamePadGyro_Menu, QMF_NOTIFY, 'g' );
+	AddButton( L( "Done" ), nullptr, PC_DONE, VoidCb( &CMenuGamePad::SaveAndPopMenu ) );	// Обе строки уже встречались ранее !!
 	for( i = 0; i < 6; i++ )
-	{
 		AddItem( axisBind[i] );
-	}
+	AddItem( enableOsk );
 	AddItem( side );
 	AddItem( invSide );
 	AddItem( forward );
@@ -247,11 +254,14 @@ void CMenuGamePad::_VidInit()
 	axisBind_label.SetCoord( 360, 230 );
 	axisBind_label.SetCharSize( QM_SMALLFONT );
 
-	for( int i = 0, y = 280; i < 6; i++, y += 50 )
+	int y = 280;
+	for( int i = 0; i < 6; i++, y += 50 )
 	{
 		axisBind[i].SetRect( 360, y, 256, invSide.size.h );
 		axisBind[i].SetCharSize( QM_SMALLFONT );
 	}
+
+	enableOsk.SetCoord( 360, y );
 
 	int sliderAlign = invSide.size.h - side.size.h;
 
@@ -274,23 +284,4 @@ void CMenuGamePad::_VidInit()
 	GetConfig();
 }
 
-/*
-=================
-CMenuGamePad::Precache
-=================
-*/
-void UI_GamePad_Precache( void )
-{
-	EngFuncs::PIC_Load( ART_BANNER );
-}
-
-/*
-=================
-CMenuGamePad::Menu
-=================
-*/
-void UI_GamePad_Menu( void )
-{
-	uiGamePad.Show();
-}
-ADD_MENU( menu_gamepad, UI_GamePad_Precache, UI_GamePad_Menu );
+ADD_MENU( menu_gamepad, CMenuGamePad, UI_GamePad_Menu );

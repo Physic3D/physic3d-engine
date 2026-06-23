@@ -21,16 +21,34 @@ GNU General Public License for more details.
 #include "utlrbtree.h"
 
 // #ifdef XASH_MOBILE_PLATFORM
-#if defined(__ANDROID__) || defined(__SAILFISH__) || defined(MAINUI_FONT_SCALE)
+#if defined(__ANDROID__) || TARGET_OS_IPHONE || defined(XASH_SAILFISH) || defined(MAINUI_FONT_SCALE)
 #define SCALE_FONTS
 #endif
 
+#if defined(_WIN32)
+#undef GetCharABCWidths
+#endif // defined(_WIN32)
+
 struct charRange_t
 {
-	int chMin;
-	int chMax;
-	const int *sequence;
-	int size;
+	uint32_t chMin;
+	uint32_t chMax;
+	const uint32_t *sequence;
+	size_t size;
+
+	size_t Length() const
+	{
+		if( sequence )
+			return size;
+		return chMax - chMin;
+	}
+
+	int Character( size_t pos )
+	{
+		if( sequence )
+			return sequence[pos];
+		return chMin + pos;
+	}
 };
 
 class CBaseFont
@@ -47,10 +65,12 @@ public:
 		int scanlineOffset, float scanlineScale,
 		int flags ) = 0;
 	virtual void GetCharRGBA( int ch, Point pt, Size sz, byte *rgba, Size &drawSize ) = 0;
-	virtual void GetCharABCWidths( int ch, int &a, int &b, int &c ) = 0;
+	virtual void GetCharABCWidthsNoCache( int ch, int &a, int &b, int &c ) = 0;
 	virtual bool HasChar( int ch ) const = 0;
+	virtual const char *GetBackendName() const = 0;
+	virtual void GetCharABCWidths( int ch, int &a, int &b, int &c );
 	virtual void UploadGlyphsForRanges( charRange_t *range, int rangeSize );
-	virtual int DrawCharacter(int ch, Point pt, int charH, const unsigned int color, bool forceAdditive = false);
+	virtual int  DrawCharacter(int ch, Point pt, int charH, const unsigned int color, bool forceAdditive = false);
 
 	inline int GetHeight() const       { return m_iHeight + GetEfxOffset(); }
 	inline int GetTall() const         { return m_iTall; }
@@ -64,9 +84,6 @@ public:
 	bool IsEqualTo( const char *name, int tall, int weight, int blur, int flags ) const;
 
 	void DebugDraw();
-
-
-
 
 	void GetTextureName(char *dst, size_t len) const;
 
@@ -96,7 +113,10 @@ protected:
 	int m_iEllipsisWide;
 
 private:
-	void GetBlurValueForPixel(float *distribution, byte *src, Point srcPt, Size srcSz, byte *dest);
+	bool ReadFromCache( const char *filename, charRange_t *range, size_t rangeSize );
+	void SaveToCache( const char *filename, charRange_t *range, size_t rangeSize, CBMP *bmp );
+
+	void GetBlurValueForPixel( double *distribution, const byte *src, Point srcPt, Size srcSz, byte *dest );
 
 	struct glyph_t
 	{
@@ -112,7 +132,21 @@ private:
 		}
 	};
 
+	struct abc_t
+	{
+		int ch;
+		int a, b, c;
+
+		bool operator< ( const abc_t &a ) const
+		{
+			return ch < a.ch;
+		}
+	};
+
 	CUtlRBTree<glyph_t, int> m_glyphs;
+	CUtlRBTree<abc_t, int>   m_ABCCache;
+
+	char m_szTextureName[256];
 	friend class CFontManager;
 };
 

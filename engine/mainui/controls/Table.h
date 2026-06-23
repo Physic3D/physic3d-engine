@@ -13,7 +13,6 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 */
 
-#pragma once
 #ifndef MENU_TABLE_H
 #define MENU_TABLE_H
 
@@ -55,23 +54,21 @@ public:
 	bool KeyDown( int key ) override;
 	void Draw() override;
 	void VidInit() override;
+	bool MouseMove( int x, int y ) override;
 	bool MoveView( int delta );
 	bool MoveCursor( int delta );
 	int GetCurrentIndex() { return iCurItem; }
 	void SetCurrentIndex( int idx );
 	int GetSortingColumn( void ) { return m_iSortingColumn; }
 	bool IsAscend( void ) { return m_bAscend; }
-	void SetSortingColumn( int column, bool ascend )
+	void SetSortingColumn( int column, bool ascend = true )
 	{
 		m_iSortingColumn = column;
 		m_bAscend = ascend;
 		if( !m_pModel->Sort( column, ascend ) )
 			m_iSortingColumn = -1; // sorting is not supported
 	}
-	void SetSortingColumn( int column )
-	{
-		SetSortingColumn( column, true );
-	}
+
 	void SwapOrder( void )
 	{
 		SetSortingColumn( m_iSortingColumn, !m_bAscend );
@@ -138,6 +135,8 @@ public:
 	CColor iHeaderColor;
 
 private:
+	float Step( void );
+
 	void DrawLine(Point p, const char **psz, size_t size, uint textColor, bool forceCol, uint fillColor = 0);
 	void DrawLine(Point p, int line, uint textColor, bool forceCol, uint fillColor = 0);
 
@@ -150,15 +149,16 @@ private:
 
 	float flFixedSumm, flDynamicSumm;
 
-	const char	*szBackground;
-	const char	*szUpArrow;
-	const char	*szUpArrowFocus;
-	const char  *szUpArrowPressed;
-	const char	*szDownArrow;
-	const char	*szDownArrowFocus;
-	const char  *szDownArrowPressed;
+	CImage szBackground;
+	CImage szUpArrow;
+	CImage szUpArrowFocus;
+	CImage szUpArrowPressed;
+	CImage szDownArrow;
+	CImage szDownArrowFocus;
+	CImage szDownArrowPressed;
 
 	int		iTopItem;
+	int     iNumRows;
 // scrollbar stuff // ADAMIX
 	Point	sbarPos;
 	Size	sbarSize;
@@ -166,7 +166,6 @@ private:
 // highlight // mittorn
 	int		iHighlight;
 	int		iCurItem;
-	int     iNumRows;
 
 	int		m_iLastItemMouseChange;
 

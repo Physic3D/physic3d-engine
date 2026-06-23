@@ -9,7 +9,7 @@ of the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See the GNU General Public License for more details.
 
@@ -18,7 +18,12 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 #pragma once
+#ifndef BMPUTILS_H
+#define BMPUTILS_H
 
+#include "xash3d_types.h"
+
+#define BI_FILE_HEADER_SIZE 14
 #define BI_SIZE	40 // size of bitmap info header.
 typedef unsigned short       word;
 
@@ -49,19 +54,35 @@ struct rgbquad_t
 	byte r;
 	byte reserved;
 };
+
+struct tga_t
+{
+	uint8_t  id_length;
+	uint8_t  colormap_type;
+	uint8_t  image_type;
+	uint16_t colormap_index;
+	uint16_t colormap_length;
+	uint8_t  colormap_size;
+	uint16_t x_origin;
+	uint16_t y_origin;
+	uint16_t width;
+	uint16_t height;
+	uint8_t  pixel_size;
+	uint8_t  attributes;
+};
 #pragma pack( pop )
 
 class CBMP
 {
 public:
 	static CBMP* LoadFile( const char *filename ); // implemented in library!
-	
+
 	CBMP( uint w, uint h )
 	{
 		bmp_t bhdr;
 
-		const size_t cbPalBytes = 0; // UNUSED
-		const uint pixel_size = 4; // Always RGBA
+		const size_t cbPalBytes = 0;
+		const uint pixel_size = 4; // RGBA
 
 		bhdr.id[0] = 'B';
 		bhdr.id[1] = 'M';
@@ -71,7 +92,7 @@ public:
 		bhdr.bitmapDataOffset = sizeof( bmp_t ) + cbPalBytes;
 		bhdr.bitmapDataSize = bhdr.width * bhdr.height * pixel_size;
 		bhdr.fileSize = bhdr.bitmapDataOffset + bhdr.bitmapDataSize;
-	
+
 		// constant
 		bhdr.reserved0 = 0;
 		bhdr.planes = 1;
@@ -80,13 +101,37 @@ public:
 		bhdr.hRes = bhdr.vRes = 0;
 		bhdr.colors = ( pixel_size == 1 ) ? 256 : 0;
 		bhdr.importantColors = 0;
-	
+
+		fileAllocated = false;
 		data = new byte[bhdr.fileSize];
 		memcpy( data, &bhdr, sizeof( bhdr ));
 		memset( data + bhdr.bitmapDataOffset, 0, bhdr.bitmapDataSize );
 	}
-	
-	~CBMP() { if( data ) delete []data; }
+
+	CBMP( const bmp_t *header, uint img_sz )
+	{
+		data = new byte[ header->bitmapDataOffset + img_sz ];
+		fileAllocated = false;
+
+		// copy the header and palette
+		memcpy( data, header, header->bitmapDataOffset );
+
+		// fixup
+		bmp_t *hdr = GetBitmapHdr();
+		hdr->bitmapDataSize = img_sz;
+		hdr->fileSize = hdr->bitmapDataOffset + hdr->bitmapDataSize;
+	}
+
+	~CBMP()
+	{
+		if( data )
+		{
+			if( fileAllocated )
+				EngFuncs::COM_FreeFile( data );
+			else
+				delete []data;
+		}
+	}
 
 	void Increase(uint w, uint h)
 	{
@@ -109,7 +154,7 @@ public:
 		byte *newData = new byte[bhdr.fileSize];
 		memcpy( newData, &bhdr, sizeof( bhdr ));
 		memset( newData + bhdr.bitmapDataOffset, 0, bhdr.bitmapDataSize );
-	
+
 		// now copy texture
 		byte *src = GetTextureData();
 		byte *dst = newData + bhdr.bitmapDataOffset;
@@ -127,7 +172,7 @@ public:
 		data = newData;
 	}
 
-	void RemapLogo( int r, int g, int b )
+	void RemapLogo( int stripes, const byte *rgb, bool horizontal = false )
 	{
 		// palette is always right after header
 		rgbquad_t *palette = GetPaletteData();
@@ -136,14 +181,85 @@ public:
 		if( GetBitmapHdr()->bitsPerPixel > 8 )
 			return;
 
-		for( int i = 0; i < 256; i++ )
+		int max_palette_slots = (int)(256 / (float)stripes) * stripes;
+
+		for( int i = 0; i < max_palette_slots; i += stripes )
 		{
-			float t = (float)i/256.0f;
-	
-			palette[i].r = (byte)(r * t);
-			palette[i].g = (byte)(g * t);
-			palette[i].b = (byte)(b * t);
+			double t = (double)i / max_palette_slots;
+
+			t = Q_min( t, 1.0 );
+
+			for( int j = 0; j < stripes; j++ )
+			{
+				int x = i + j;
+
+				palette[x].r = (byte)(rgb[j * 3 + 0] * t);
+				palette[x].g = (byte)(rgb[j * 3 + 1] * t);
+				palette[x].b = (byte)(rgb[j * 3 + 2] * t);
+			}
 		}
+
+		if( stripes == 1 )
+			return;
+
+		const bmp_t *hdr = GetBitmapHdr();
+		const double cells_per_stripe = ( horizontal ? hdr->width : hdr->height ) / (double)stripes;
+		byte *data = GetTextureData();
+
+		for( int i = 0; i < hdr->height; i++ )
+		{
+			for( int j = 0; j < hdr->width; j++ )
+			{
+				byte c = data[i * hdr->width + j];
+				if( c == 0 )
+					continue;
+
+				int stripe = horizontal ? j / cells_per_stripe : ( hdr->height - i - 1 ) / cells_per_stripe;
+
+				// remap to the palette
+				int idx = ( c / 256.0f ) * max_palette_slots; // remap to limited palette
+				idx = (int)((double)( idx ) / stripes) * stripes; // now remap per palette
+				idx += stripe; // add stripe index
+				data[i * hdr->width + j] = Q_min( idx, max_palette_slots ); //
+			}
+		}
+	}
+
+	static inline void SwapBmpHdrToLE( bmp_t *hdr )
+	{
+		LittleLongSW( hdr->fileSize );
+		LittleLongSW( hdr->reserved0 );
+		LittleLongSW( hdr->bitmapDataOffset );
+		LittleLongSW( hdr->bitmapHeaderSize );
+		LittleLongSW( hdr->width );
+		LittleLongSW( hdr->height );
+		LittleShortSW( hdr->planes );
+		LittleShortSW( hdr->bitsPerPixel );
+		LittleLongSW( hdr->compression );
+		LittleLongSW( hdr->bitmapDataSize );
+		LittleLongSW( hdr->hRes );
+		LittleLongSW( hdr->vRes );
+		LittleLongSW( hdr->colors );
+		LittleLongSW( hdr->importantColors );
+	}
+
+	inline void SwapHdrToLE()
+	{
+		SwapBmpHdrToLE((bmp_t *)data );
+	}
+
+	inline HIMAGE Upload( const char *name, int flags = 0 )
+	{
+		uint fileSize = GetBitmapHdr()->fileSize;
+		SwapHdrToLE();
+		return EngFuncs::PIC_Load( name, GetBitmap(), fileSize, flags );
+	}
+
+	inline void Save( const char *name )
+	{
+		uint fileSize = GetBitmapHdr()->fileSize;
+		SwapHdrToLE();
+		EngFuncs::COM_SaveFile( name, GetBitmap(), fileSize );
 	}
 
 	inline byte *GetBitmap()
@@ -169,10 +285,34 @@ public:
 	inline rgbquad_t *GetPaletteData()
 	{
 		// palette is always right after header
-		return (rgbquad_t*)(data + sizeof( bmp_t ));
+		return (rgbquad_t*)(data + BI_FILE_HEADER_SIZE + GetBitmapHdr()->bitmapHeaderSize);
 	}
 
+	inline size_t GetPaletteSize()
+	{
+		bmp_t *hdr = GetBitmapHdr();
+
+		if( hdr->bitsPerPixel > 8 )
+			return 0;
+
+		if( hdr->colors == 0 )
+		{
+			// silently fixup hdr WTF?
+			hdr->colors = 256;
+			return ( 1 << hdr->bitsPerPixel ) * sizeof( rgbquad_t );
+		}
+
+		return hdr->colors * sizeof( rgbquad_t );
+	}
 
 private:
-	byte    *data;
+	CBMP( bmp_t *data ) :
+		fileAllocated( true ), data( (byte*)data )
+	{
+	}
+
+	bool fileAllocated;
+	byte *data;
 };
+
+#endif // BMPUTILS_H

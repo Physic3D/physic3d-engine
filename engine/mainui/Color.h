@@ -31,6 +31,12 @@ public:
 		return color;
 	}
 
+	inline CColor& operator =( CColor& c )
+	{
+		Set( c.rgba );
+		return c;
+	}
+
 	inline operator unsigned int() { return rgba; }
 
 	inline void Set( unsigned int color )
@@ -71,7 +77,7 @@ private:
 	};
 	bool init;
 public:
-		const ColorWrap a,r,g,b;
+		const ColorWrap r,g,b,a;
 };
 
 #endif // COLOR_H

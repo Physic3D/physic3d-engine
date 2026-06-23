@@ -13,8 +13,7 @@ LOCAL_CPPFLAGS = -frtti -fno-exceptions -Wno-write-strings -Wno-invalid-offsetof
 LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH)/../public \
 	$(LOCAL_PATH)/.. \
-	$(HLSDK_PATH)/utils/vgui/include \
-	$(VGUI_DIR)/include 
+	$(HLSDK_PATH)/utils/fake_vgui/include \
 
 LOCAL_SRC_FILES := vgui_clip.cpp vgui_font.cpp vgui_input.cpp vgui_int.cpp vgui_surf.cpp
 

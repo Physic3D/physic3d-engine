@@ -6,10 +6,6 @@
 // $NoKeywords: $
 //=============================================================================//
 
-#if defined(_MSC_VER) && !defined(_XBOX)
-#pragma warning (disable:4514)
-#endif
-
 #include "utlstring.h"
 #include "utlvector.h"
 #include "winlite.h"
@@ -112,51 +108,28 @@ static size_t RemoveWhitespace( char *pszString )
 //-----------------------------------------------------------------------------
 size_t CUtlString::FormatV( const char *pFormat, va_list args )
 {
-	size_t len = 0;
-#if defined _WIN32 || defined __WATCOMC__
-	char buf[4096];
+	int len = 0, len2;
+	va_list args_copy;
 
-	len = _vsnprintf( buf, sizeof( buf ), pFormat, args );
+	// format into that space, which is certainly enough
+	va_copy( args_copy, args );
+	len = _vsnprintf( NULL, 0, pFormat, args_copy );
+	va_end( args_copy );
 
-	Assert( len >= 0 );
-	Assert( len < sizeof( buf ));
-
-	// get it
 	FreePv( m_pchString );
 	m_pchString = (char *)PvAlloc( len + 1 );
-	strcpy( m_pchString, buf );
-#elif defined ( _PS3 )
 
-	// ignore the PS3 documentation about vsnprintf returning -1 when the string is too small. vsprintf seems to do the right thing (least at time of
-	// implementation) and returns the number of characters needed when you pass in a buffer that is too small
+	va_copy( args_copy, args );
+	len2 = _vsnprintf( m_pchString, len + 1, pFormat, args_copy );
+	va_end( args_copy );
 
-	FreePv( m_pchString );
-	m_pchString = NULL;	
-
-	len = vsnprintf( NULL, 0, pFormat, args );
-	if ( len > 0 )
+	if( len2 < 0 || len2 > len )
 	{
-		m_pchString = (char*) PvAlloc( len + 1 );
-		len = vsnprintf( m_pchString, len + 1, pFormat, args );
+		Set( "!Out Of Memory!" );
+		return sizeof( "!Out Of Memory!" ) - 1;
 	}
 
-#else
-
-	char *buf = NULL;
-	len = vasprintf( &buf, pFormat, args );
-
-	// Len < 0 represents an overflow
-	if( buf )
-	{
-		// We need to get the string into PvFree-compatible memory, which
-		// we can't assume is directly interoperable with the malloc memory
-		// that vasprintf returned (definitely not compatible with a debug
-		// allocator, for example).
-		Set( buf );
-		free( buf );
-	}
-#endif
-	return len;
+	return len2;
 }
 
 
@@ -165,46 +138,51 @@ size_t CUtlString::FormatV( const char *pFormat, va_list args )
 //-----------------------------------------------------------------------------
 size_t CUtlString::VAppendFormat( const char *pFormat, va_list args )
 {
-	size_t len = 0;
-#if defined _WIN32 || defined __WATCOMC__
+	int len = 0, required_len = 0;
 	char pstrFormatted[4096];
+	va_list args_copy;
 
 	// format into that space, which is certainly enough
-	len = _vsnprintf( pstrFormatted, sizeof(pstrFormatted), pFormat, args );
+	va_copy( args_copy, args );
+	len = _vsnprintf( pstrFormatted, sizeof( pstrFormatted ), pFormat, args_copy );
+	va_end( args_copy );
 
-	Assert( len >= 0 );
-	Assert( len < sizeof( pstrFormatted ));
-
-#elif defined ( _PS3 )
-	char *pstrFormatted = NULL;
-
-	// ignore the PS3 documentation about vsnprintf returning -1 when the string is too small. vsprintf seems to do the right thing (least at time of
-	// implementation) and returns the number of characters needed when you pass in a buffer that is too small
-
-	len = vsnprintf( NULL, 0, pFormat, args );
-	if ( len > 0 )
+	if( len < 0 )
 	{
-		pstrFormatted = (char*) PvAlloc( len + 1 );
-		len = vsnprintf( pstrFormatted, len + 1, pFormat, args );
+		va_copy( args_copy, args );
+		required_len = _vsnprintf( NULL, 0, pFormat, args_copy );
+		va_end( args_copy );
+	}
+	else if( len > sizeof( pstrFormatted ))
+		required_len = len;
+
+	// allocate a string if not fit
+	if( required_len > 0 )
+	{
+		char *large_buf = (char *)PvAlloc( required_len + 1 );
+
+		if( !large_buf )
+		{
+			Append( "!Out Of Memory!", sizeof( "!Out Of Memory!" ) - 1);
+			return sizeof( "!Out Of Memory!" ) - 1;
+		}
+
+		va_copy( args_copy, args );
+		len = _vsnprintf( large_buf, required_len + 1, pFormat, args_copy );
+		va_end( args_copy );
+		if( len < 0 || len > required_len )
+		{
+			Append( "!Out Of Memory!", sizeof( "!Out Of Memory!" ) - 1);
+			return sizeof( "!Out Of Memory!" ) - 1;
+		}
+
+		Append( large_buf, len );
+		FreePv( large_buf );
+
+		return len;
 	}
 
-#else
-	char *pstrFormatted = NULL;
-	len = vasprintf( &pstrFormatted, pFormat, args );
-#endif
-
-	// if we ended with a formatted string, append and free it
-	if ( pstrFormatted != NULL )
-	{
-		Append( pstrFormatted, len );
-#if defined( _WIN32 ) || defined __WATCOMC__
-		// no need to free a buffer on stack
-#elif defined( _PS3 )
-		FreePv( pstrFormatted );
-#else
-		free( pstrFormatted );
-#endif
-	}
+	Append( pstrFormatted, len );
 
 	return len;
 }
@@ -391,7 +369,7 @@ size_t CUtlString::TrimTrailingWhitespace()
 	if ( m_pchString == NULL )
 		return 0;
 
-	uint32 cChars = Length();
+	uint32_t cChars = Length();
 	if ( cChars == 0 )
 		return 0;
 
@@ -411,14 +389,14 @@ size_t CUtlString::TrimTrailingWhitespace()
 //-----------------------------------------------------------------------------
 void CUtlString::AssertStringTooLong()
 {
-	(void)AssertMsg( false, "Assertion failed: length > k_cchMaxString" );
+	AssertMsg( false, "Assertion failed: length > k_cchMaxString" );
 }
 
 
 //-----------------------------------------------------------------------------
 // Purpose: format binary data as hex characters, appending to existing data
 //-----------------------------------------------------------------------------
-void CUtlString::AppendHex( const uint8 *pbInput, size_t cubInput, bool bLowercase /*= true*/ )
+void CUtlString::AppendHex( const uint8_t *pbInput, size_t cubInput, bool bLowercase /*= true*/ )
 {
 	if ( !cubInput )
 		return;
@@ -436,7 +414,7 @@ void CUtlString::AppendHex( const uint8 *pbInput, size_t cubInput, bool bLowerca
 	char *pOut = newValue.Access() + existingLen;
 	for ( ; cubInput; --cubInput, ++pbInput )
 	{
-		uint8 val = *pbInput;
+		uint8_t val = *pbInput;
 		*pOut++ = pchHexLookup[val >> 4];
 		*pOut++ = pchHexLookup[val & 15];
 	}
@@ -446,7 +424,7 @@ void CUtlString::AppendHex( const uint8 *pbInput, size_t cubInput, bool bLowerca
 
 
 // Catch invalid UTF-8 sequences and return false if found, or true if the sequence is correct
-static bool BVerifyValidUTF8Continuation( size_t unStart, size_t unContinuationLength, const uint8 *pbCharacters )
+static bool BVerifyValidUTF8Continuation( size_t unStart, size_t unContinuationLength, const uint8_t *pbCharacters )
 {
 	for ( size_t i = 0; i < unContinuationLength; ++ i )
 	{
@@ -468,7 +446,7 @@ bool CUtlString::TruncateUTF8Internal( size_t unMaxChars, size_t unMaxBytes )
 	if ( !m_pchString )
 		return false;
 
-	const uint8 *pbCharacters = ( const uint8 * )m_pchString;
+	const uint8_t *pbCharacters = ( const uint8_t * )m_pchString;
 	size_t unBytes = 0;
 	size_t unChars = 0;
 	bool bSuccess = true;

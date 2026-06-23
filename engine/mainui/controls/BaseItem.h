@@ -12,12 +12,12 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 */
-#pragma once
 #ifndef BASEITEM_H
 #define BASEITEM_H
 
 #include "BaseMenu.h"
 #include "Color.h"
+#include "cursor_type.h"
 
 class CMenuItemsHolder;
 class CMenuBaseItem
@@ -82,11 +82,17 @@ public:
 	// Window will be removed from current window stack
 	virtual void Hide() { iFlags |= QMF_HIDDEN;  }
 
-	// Determine, is this item is visible
+	// Determine if this item is visible
 	virtual bool IsVisible() const { return !(iFlags & QMF_HIDDEN); }
 
 	// Key value data reading, both parameters are zero-terminated string
 	virtual bool KeyValueData( const char *key, const char *data );
+
+	// Determine if this item can be activated using a hotkey
+	virtual bool HotKey( int key ) { return false; }
+
+	// Get item default cursor (flags may override this)
+	virtual VGUI_DefaultCursor CursorAction() { return dc_arrow; }
 
 	// Toggle visibiltiy.
 	inline void ToggleVisibility()
@@ -157,7 +163,14 @@ public:
 	}
 
 	CMenuItemsHolder* Parent() const			{ return m_pParent; }
-	template <class T> T* Parent() const	{ return (T*) m_pParent; } // a shortcut to parent
+
+	#ifndef MY_COMPILER_SUCKS
+	template <class T> T* _Parent() const	{ return static_cast<T*>(m_pParent); } // a shortcut to parent
+	#define GetParent(type) _Parent<type>()
+	#else
+	template <class T> T* _Parent(T*) const	{ return static_cast<T*>(m_pParent); } // a shortcut to parent
+	#define GetParent(type) _Parent((type*)(NULL))
+	#endif
 	bool IsPressed() const { return m_bPressed; }
 	int LastFocusTime() const { return m_iLastFocusTime; }
 

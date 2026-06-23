@@ -15,10 +15,10 @@ GNU General Public License for more details.
 #ifndef CMENUPLAYERMODELVIEW_H
 #define CMENUPLAYERMODELVIEW_H
 
+#include "xash3d_types.h"
+
 // HLSDK includes
-#include "mathlib.h"
 #include "const.h"
-#include "keydefs.h"
 #include "ref_params.h"
 #include "cl_entity.h"
 #include "com_model.h"
@@ -38,7 +38,7 @@ public:
 
 	HIMAGE hPlayerImage;
 
-	ref_menu_params_t refdef;
+	ref_viewpass_t refdef;
 	cl_entity_t *ent;
 
 	bool bDrawAsPlayer;
