@@ -33,7 +33,7 @@ jobs:
           mkdir staging
           copy build-x86-client\engine\game_launch\RelWithDebInfo\physic3d.exe staging\
           copy build-x86-client\engine\RelWithDebInfo\physic3d_sdl.dll staging\
-          copy build-x86-client\engine\mainui\RelWithDebInfo\libmenu.dll staging\
+          copy build-x86-client\engine\mainui\RelWithDebInfo\menu.dll staging\
           curl -sLo sdl2.zip https://github.com/libsdl-org/SDL/releases/download/release-2.30.3/SDL2-devel-2.30.3-VC.zip
           tar -xf sdl2.zip -C "%TEMP%"
           copy "%TEMP%\SDL2-2.30.3\lib\x86\SDL2.dll" staging\
