@@ -20,7 +20,7 @@
 # SOFTWARE.
 #
 
-cmake_minimum_required(VERSION 3.5.1)
+cmake_minimum_required(VERSION 3.5.1...3.28)
 
 # Must be specified before to check if we are targeting 64 bit
 option(XASH_64BIT "Enable experimental 64-bit build. Note that you must also provide 64-bit game binaries" OFF) # Enable 64-bit build of Xash3D FWGS Engine.
@@ -142,6 +142,7 @@ if(XASH_NANOGL OR XASH_WES)
 	set(XASH_GLES ON)
 endif()
 
+set(BUILD_AS_PART_OF_ENGINE ON)
 fwgs_conditional_subproject(XASH_MAINUI engine/mainui)
 fwgs_conditional_subproject("NOT XASH_64BIT AND XASH_VGUI" engine/vgui_support)
 fwgs_conditional_subproject("NOT XASH_SINGLE_BINARY" engine/game_launch)

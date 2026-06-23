@@ -20,7 +20,7 @@
 # SOFTWARE.
 #
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.5...3.28)
 project(MAINUI)
 
 set(CMAKE_CXX_STANDARD 11)

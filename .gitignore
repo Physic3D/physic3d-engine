@@ -313,6 +313,9 @@ build-*
 # Visual Studio CMake support
 CMakeSettings.json
 
+# CMake default output directory
+out/
+
 # rpmbuild
 RPMS/
 
