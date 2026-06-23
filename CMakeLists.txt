@@ -46,7 +46,7 @@ if(WIN32 AND NOT XASH_64BIT)
 	endif()
 endif()
 
-project(XASH3D)
+project(XASH3D CXX)
 
 if(WIN32)
 	option(XASH_DOWNLOAD_DEPENDENCIES "Download dependencies automatically, if supported" ON)

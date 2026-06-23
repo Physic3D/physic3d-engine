@@ -21,7 +21,7 @@
 #
 
 cmake_minimum_required(VERSION 3.5...3.28)
-project(VGUI_SUPPORT)
+project(VGUI_SUPPORT CXX)
 
 set(VGUI_SUPPORT vgui_support)
 fwgs_fix_default_msvc_settings()

@@ -20,7 +20,7 @@
 # SOFTWARE.
 #
 cmake_minimum_required(VERSION 3.5.1...3.28)
-project(XASH_ENGINE C CXX)
+project(XASH_ENGINE CXX)
 
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
@@ -89,7 +89,7 @@ elseif(XASH_WES)
 		message(FATAL_ERROR "Clone both gl-wes-v2 and nanogl sources to engine folder!")
 	endif()
 	list(APPEND XASH_ENGINE_SOURCES ${XASH_ENGINE_GLESWRAP_SOURCES})
-	set_source_files_properties(${XASH_ENGINE_GLESWRAP_SOURCES} PROPERTIES LANGUAGE C)
+	set_source_files_properties(${XASH_ENGINE_GLESWRAP_SOURCES} PROPERTIES LANGUAGE CXX)
 
 	include_directories(${XASH_NANOGL_SRC}/ ${XASH_NANOGL_SRC}/GL/ ${XASH_WES_SRC}/src/)
 	add_definitions(-DXASH_WES)
