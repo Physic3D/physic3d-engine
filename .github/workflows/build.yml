@@ -22,12 +22,12 @@ jobs:
         with:
           submodules: recursive
 
-      - uses: ilammy/msvc-dev-cmd@v1
-        with:
-          arch: x86
-
       - name: Configure (32-bit Client)
-        run: cmake --preset x86-release -B build-x86-client
+        shell: powershell
+        run: |
+          $vsPath = & "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath
+          & "$vsPath\VC\Auxiliary\Build\vcvarsall.bat" x86
+          cmake --preset x86-release -B build-x86-client
 
       - name: Build
         run: cmake --build build-x86-client --config RelWithDebInfo
@@ -64,12 +64,12 @@ jobs:
         with:
           submodules: recursive
 
-      - uses: ilammy/msvc-dev-cmd@v1
-        with:
-          arch: x86
-
       - name: Configure (32-bit Dedicated)
-        run: cmake --preset x86-dedicated -B build-x86-dedicated
+        shell: powershell
+        run: |
+          $vsPath = & "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath
+          & "$vsPath\VC\Auxiliary\Build\vcvarsall.bat" x86
+          cmake --preset x86-dedicated -B build-x86-dedicated
 
       - name: Build
         run: cmake --build build-x86-dedicated --config RelWithDebInfo
