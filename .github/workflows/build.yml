@@ -60,29 +60,19 @@ jobs:
 
   linux-client:
     runs-on: ubuntu-latest
-    container:
-      image: i386/ubuntu:24.04
-      options: --user root
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: false
+          submodules: recursive
 
-      - name: Install dependencies
+      - name: Build in 32-bit container
         run: |
-          apt-get update -qq
-          apt-get install -y -qq git cmake ninja-build g++ libsdl2-dev libfontconfig-dev
-          git submodule update --init --recursive
-
-      - name: Configure (Linux 32-bit Client)
-        run: >
-          cmake --preset linux-release -B build-linux-client -G Ninja
-
-      - name: Build
-        run: cmake --build build-linux-client --config RelWithDebInfo
-
-      - name: Build
-        run: cmake --build build-linux-client --config RelWithDebInfo
+          docker run --rm -v $PWD:/work -w /work i386/ubuntu:24.04 bash -c "
+            apt-get update -qq &&
+            apt-get install -y -qq cmake ninja-build g++ libsdl2-dev libfontconfig-dev &&
+            cmake --preset linux-release -B build-linux-client -G Ninja &&
+            cmake --build build-linux-client --config RelWithDebInfo
+          "
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -92,26 +82,19 @@ jobs:
 
   linux-dedicated:
     runs-on: ubuntu-latest
-    container:
-      image: i386/ubuntu:24.04
-      options: --user root
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: false
+          submodules: recursive
 
-      - name: Install dependencies
+      - name: Build in 32-bit container
         run: |
-          apt-get update -qq
-          apt-get install -y -qq git cmake ninja-build g++
-          git submodule update --init --recursive
-
-      - name: Configure (Linux 32-bit Dedicated)
-        run: >
-          cmake --preset linux-dedicated -B build-linux-dedicated -G Ninja
-
-      - name: Build
-        run: cmake --build build-linux-dedicated --config RelWithDebInfo
+          docker run --rm -v $PWD:/work -w /work i386/ubuntu:24.04 bash -c "
+            apt-get update -qq &&
+            apt-get install -y -qq cmake ninja-build g++ &&
+            cmake --preset linux-dedicated -B build-linux-dedicated -G Ninja &&
+            cmake --build build-linux-dedicated --config RelWithDebInfo
+          "
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
