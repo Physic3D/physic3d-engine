@@ -51,6 +51,11 @@ LOCAL_SRC_FILES := \
 	controls/TabView.cpp				\
 	controls/PlayerModelView.cpp                    \
 	controls/ScrollView.cpp				\
+	controls/BaseClientWindow.cpp			\
+	controls/ColorPicker.cpp			\
+	controls/DropDown.cpp				\
+	controls/AnimatedBanner.cpp			\
+	controls/MovieBanner.cpp			\
 	menus/AdvancedControls.cpp                      \
 	menus/Audio.cpp                                 \
 	menus/Configuration.cpp                         \
@@ -80,6 +85,10 @@ LOCAL_SRC_FILES := \
 	menus/VideoModes.cpp                            \
 	menus/VideoOptions.cpp                          \
 	menus/dynamic/ScriptMenu.cpp                    \
+	menus/ColorPickerDialog.cpp			\
+	menus/Gyro.cpp					\
+	menus/ServerInfo.cpp				\
+	menus/Zoo.cpp					\
 	font/FontManager.cpp				\
 	font/BaseFontBackend.cpp			\
 	font/StbFont.cpp				\
@@ -90,7 +99,9 @@ LOCAL_SRC_FILES := \
 	miniutl/utlbuffer.cpp				\
 	miniutl/utlmemory.cpp				\
 	miniutl/utlstring.cpp				\
+	miniutl/ipv6text.cpp				\
 	unicode_strtools.cpp				\
+	utflib.cpp					\
 	EventSystem.cpp                                 \
 	BaseMenu.cpp                                    \
 	Btns.cpp                                        \
