@@ -36,16 +36,20 @@ jobs:
           copy "%TEMP%\SDL2-2.30.3\lib\x64\SDL2.dll" build-x86-client\engine\
           del sdl2.zip
 
+      - name: Stage artifacts
+        run: |
+          mkdir staging
+          copy build-x86-client\engine\game_launch\xash.exe staging\
+          copy build-x86-client\engine\xash_sdl.dll staging\
+          copy build-x86-client\engine\mainui\libmenu.dll staging\
+          copy build-x86-client\engine\SDL2.dll staging\
+          if exist build-x86-client\engine\vgui_support\vgui_support.dll copy build-x86-client\engine\vgui_support\vgui_support.dll staging\
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: xash3d-windows-x86
-          path: |
-            build-x86-client/engine/game_launch/xash.exe
-            build-x86-client/engine/xash_sdl.dll
-            build-x86-client/engine/mainui/libmenu.dll
-            build-x86-client/engine/vgui_support/vgui_support.dll
-            build-x86-client/engine/SDL2.dll
+          path: staging/*
 
   windows-dedicated:
     runs-on: windows-latest
@@ -127,16 +131,20 @@ jobs:
       - name: Copy SDL2 shared library
         run: cp /tmp/sdl2-prefix/lib/libSDL2-2.0.so.0 build-linux-client/engine/
 
+      - name: Stage artifacts
+        run: |
+          mkdir -p staging
+          cp build-linux-client/engine/game_launch/xash3d staging/
+          cp build-linux-client/engine/libxash.so staging/
+          cp build-linux-client/engine/mainui/libmenu.so staging/
+          cp build-linux-client/engine/libSDL2-2.0.so.0 staging/
+          cp build-linux-client/engine/vgui_support/libvgui_support.so staging/ || true
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: xash3d-linux-x86
-          path: |
-            build-linux-client/engine/game_launch/xash3d
-            build-linux-client/engine/libxash.so
-            build-linux-client/engine/mainui/libmenu.so
-            build-linux-client/engine/vgui_support/libvgui_support.so
-            build-linux-client/engine/libSDL2-2.0.so.0
+          path: staging/*
 
   linux-dedicated:
     runs-on: ubuntu-latest
