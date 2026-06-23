@@ -37,6 +37,7 @@ jobs:
             build-x86-client/engine/game_launch/xash.exe
             build-x86-client/engine/xash_sdl.dll
             build-x86-client/engine/mainui/libmenu.dll
+            build-x86-client/engine/vgui_support/vgui_support.dll
 
   windows-dedicated:
     runs-on: windows-latest
@@ -123,6 +124,7 @@ jobs:
             build-linux-client/engine/game_launch/xash3d
             build-linux-client/engine/libxash.so
             build-linux-client/engine/mainui/libmenu.so
+            build-linux-client/engine/vgui_support/libvgui_support.so
 
   linux-dedicated:
     runs-on: ubuntu-latest

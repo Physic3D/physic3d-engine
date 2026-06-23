@@ -23,7 +23,7 @@
                 "CMAKE_BUILD_TYPE": "RelWithDebInfo",
                 "XASH_SDL": "ON",
                 "XASH_MAINUI": "ON",
-                "XASH_VGUI": "OFF",
+                "XASH_VGUI": "ON",
                 "XASH_DEDICATED": "OFF",
                 "XASH_SINGLE_BINARY": "OFF"
             }
@@ -53,7 +53,7 @@
                 "CMAKE_BUILD_TYPE": "RelWithDebInfo",
                 "XASH_SDL": "ON",
                 "XASH_MAINUI": "ON",
-                "XASH_VGUI": "OFF",
+                "XASH_VGUI": "ON",
                 "XASH_DEDICATED": "OFF",
                 "XASH_SINGLE_BINARY": "OFF"
             }
