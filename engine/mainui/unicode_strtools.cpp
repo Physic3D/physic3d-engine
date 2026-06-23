@@ -309,8 +309,8 @@ int Q_UTF8ToUChar32(const char *pUTF8_, uchar32 &uValueOut, bool &bErrorOut)
 	const byte *pUTF8 = (const byte *)pUTF8_;
 
 	int nBytes = 1;
-	uint32 uValue = pUTF8[0];
-	uint32 uMinValue = 0;
+	uint32_t uValue = pUTF8[0];
+	uint32_t uMinValue = 0;
 
 	// 0....... single byte
 	if (uValue < 0x80)

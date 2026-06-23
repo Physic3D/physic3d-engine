@@ -67,7 +67,9 @@ GNU General Public License for more details.
 #endif
 
 #ifndef USE_WINMAIN // use for MSVC check here
+#ifndef _inline
 #define _inline static inline
+#endif
 #endif
 
 #ifdef WIN32
