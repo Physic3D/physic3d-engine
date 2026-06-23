@@ -22,10 +22,12 @@ jobs:
         with:
           submodules: recursive
 
+      - uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x86
+
       - name: Configure (32-bit Client)
-        run: >
-          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x86
-          && cmake --preset x86-release -B build-x86-client
+        run: cmake --preset x86-release -B build-x86-client
 
       - name: Build
         run: cmake --build build-x86-client --config RelWithDebInfo
@@ -62,10 +64,12 @@ jobs:
         with:
           submodules: recursive
 
+      - uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x86
+
       - name: Configure (32-bit Dedicated)
-        run: >
-          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x86
-          && cmake --preset x86-dedicated -B build-x86-dedicated
+        run: cmake --preset x86-dedicated -B build-x86-dedicated
 
       - name: Build
         run: cmake --build build-x86-dedicated --config RelWithDebInfo

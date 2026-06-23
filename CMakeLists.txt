@@ -152,6 +152,6 @@ if(WIN32)
 	if(XASH_SINGLE_BINARY)
 		set_property(DIRECTORY . PROPERTY VS_STARTUP_PROJECT physic3d) # Engine project
 	else()
-		set_property(DIRECTORY . PROPERTY VS_STARTUP_PROJECT physic3d) # Game_launch project
+		set_property(DIRECTORY . PROPERTY VS_STARTUP_PROJECT physic3d_launcher) # Game_launch project
 	endif()
 endif()

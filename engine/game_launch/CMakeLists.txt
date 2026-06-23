@@ -26,7 +26,7 @@ project(XASH_LAUNCHER CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(XASH_LAUNCHER physic3d)
+set(XASH_LAUNCHER physic3d_launcher)
 fwgs_fix_default_msvc_settings()
 file(GLOB XASH_LAUNCHER_SOURCES *.cpp)
 if(WIN32)
@@ -48,10 +48,8 @@ if(MSVC)
         add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 endif()
 
-if(WIN32)
-	set_target_properties(${XASH_LAUNCHER} PROPERTIES
-		OUTPUT_NAME physic3d)
-endif()
+set_target_properties(${XASH_LAUNCHER} PROPERTIES
+	OUTPUT_NAME physic3d)
 
 target_link_libraries(${XASH_LAUNCHER} ${CMAKE_DL_LIBS})
 
