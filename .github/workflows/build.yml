@@ -65,27 +65,46 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install 32-bit toolchain
+      - name: Install 32-bit toolchain and deps
         run: |
           sudo dpkg --add-architecture i386
           sudo apt-get update -qq
           sudo apt-get install -y g++-multilib ninja-build
 
-      - name: Install 32-bit SDL2 and freetype
+      - name: Build SDL2 from source (32-bit)
         run: |
-          # Remove any existing amd64 packages that would conflict
-          sudo apt-get remove -y libsdl2-dev libsdl2-2.0-0 libfreetype-dev libfreetype6 libfontconfig-dev libfontconfig1 2>/dev/null || true
-          sudo apt-get autoremove -y 2>/dev/null || true
-          # Now install the i386 versions
-          sudo apt-get install -y libsdl2-dev:i386 libfreetype-dev:i386 2>&1
+          cd /tmp
+          wget -qO- https://github.com/libsdl-org/SDL/archive/refs/tags/release-2.30.3.tar.gz | tar xz
+          cd SDL-release-2.30.3
+          cmake -S . -B build \
+            -DCMAKE_C_FLAGS="-m32" \
+            -DCMAKE_CXX_FLAGS="-m32" \
+            -DCMAKE_INSTALL_PREFIX=/tmp/sdl2-prefix \
+            -DSDL_X11=OFF \
+            -DSDL_WAYLAND=OFF \
+            -DSDL_PULSEAUDIO=OFF \
+            -DSDL_ALSA=OFF \
+            -DSDL_HIDAPI=OFF \
+            -DSDL_JOYSTICK=OFF \
+            -DSDL_HAPTIC=OFF \
+            -DSDL_POWER=OFF \
+            -DSDL_RENDER=OFF \
+            -DSDL_VULKAN=OFF \
+            -DSDL_OPENGL=OFF \
+            -DSDL_OPENGLES=OFF \
+            -DSDL_STATIC=OFF \
+            -DSDL_SHARED=ON \
+            -DSDL_TEST=OFF
+          cmake --build build -j$(nproc)
+          cmake --install build
 
       - name: Configure (Linux 32-bit Client)
-        run: |
-          CXXFLAGS="-m32" CFLAGS="-m32" \
-          PKG_CONFIG_PATH=/usr/lib/i386-linux-gnu/pkgconfig \
-          cmake --preset linux-release \
-          -B build-linux-client -G Ninja \
+        run: >
+          CXXFLAGS="-m32" CFLAGS="-m32"
+          cmake --preset linux-release
+          -B build-linux-client -G Ninja
           -DMAINUI_USE_STB=ON
+          -DSDL2_DIR=/tmp/sdl2-prefix/lib/cmake/SDL2
 
       - name: Build
         run: cmake --build build-linux-client --config RelWithDebInfo
