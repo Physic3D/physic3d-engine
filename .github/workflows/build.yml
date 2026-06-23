@@ -75,12 +75,12 @@ jobs:
 
       - name: Configure (Linux 32-bit Client)
         run: >
-          linux32 cmake --preset linux-release
+          CXXFLAGS="-m32" CFLAGS="-m32"
+          cmake --preset linux-release
           -B build-linux-client -G Ninja
-          -DCMAKE_CXX_FLAGS=-m32 -DCMAKE_C_FLAGS=-m32
 
       - name: Build
-        run: linux32 cmake --build build-linux-client --config RelWithDebInfo
+        run: cmake --build build-linux-client --config RelWithDebInfo
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -103,12 +103,12 @@ jobs:
 
       - name: Configure (Linux 32-bit Dedicated)
         run: >
-          linux32 cmake --preset linux-dedicated
+          CXXFLAGS="-m32" CFLAGS="-m32"
+          cmake --preset linux-dedicated
           -B build-linux-dedicated -G Ninja
-          -DCMAKE_CXX_FLAGS=-m32 -DCMAKE_C_FLAGS=-m32
 
       - name: Build
-        run: linux32 cmake --build build-linux-dedicated --config RelWithDebInfo
+        run: cmake --build build-linux-dedicated --config RelWithDebInfo
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
