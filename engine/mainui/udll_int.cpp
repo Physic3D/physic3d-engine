@@ -54,9 +54,24 @@ extern "C" EXPORT int GetMenuAPI(UI_FUNCTIONS *pFunctionTable, ui_enginefuncs_t*
 	}
 
 	// copy HUD_FUNCTIONS table to engine, copy engfuncs table from engine
-	memcpy( pFunctionTable, &gFunctionTable, sizeof( UI_FUNCTIONS ));
-	memcpy( &EngFuncs::engfuncs, pEngfuncsFromEngine, sizeof( ui_enginefuncs_t ));
-	memset( &EngFuncs::textfuncs, 0, sizeof( ui_extendedfuncs_t ));
+	// use manual loops instead of memcpy/memset to avoid any CRT call issues
+	{
+		const unsigned long *src = (const unsigned long *)&gFunctionTable;
+		unsigned long *dst = (unsigned long *)pFunctionTable;
+		for( int i = 0; i < (int)(sizeof( UI_FUNCTIONS ) / sizeof( unsigned long )); i++ )
+			dst[i] = src[i];
+	}
+	{
+		const unsigned long *src = (const unsigned long *)pEngfuncsFromEngine;
+		unsigned long *dst = (unsigned long *)&EngFuncs::engfuncs;
+		for( int i = 0; i < (int)(sizeof( ui_enginefuncs_t ) / sizeof( unsigned long )); i++ )
+			dst[i] = src[i];
+	}
+	{
+		unsigned long *dst = (unsigned long *)&EngFuncs::textfuncs;
+		for( int i = 0; i < (int)(sizeof( ui_extendedfuncs_t ) / sizeof( unsigned long )); i++ )
+			dst[i] = 0;
+	}
 
 	gpGlobals = pGlobals;
 
@@ -92,8 +107,18 @@ extern "C" EXPORT int GetExtAPI( int version, UI_EXTENDED_FUNCTIONS *pFunctionTa
 		return false;
 	}
 
-	memcpy( &EngFuncs::textfuncs, pEngfuncsFromEngine, sizeof( ui_extendedfuncs_t ) );
-	memcpy( pFunctionTable, &gExtendedTable, sizeof( UI_EXTENDED_FUNCTIONS ));
+	{
+		const unsigned long *src = (const unsigned long *)pEngfuncsFromEngine;
+		unsigned long *dst = (unsigned long *)&EngFuncs::textfuncs;
+		for( int i = 0; i < (int)(sizeof( ui_extendedfuncs_t ) / sizeof( unsigned long )); i++ )
+			dst[i] = src[i];
+	}
+	{
+		const unsigned long *src = (const unsigned long *)&gExtendedTable;
+		unsigned long *dst = (unsigned long *)pFunctionTable;
+		for( int i = 0; i < (int)(sizeof( UI_EXTENDED_FUNCTIONS ) / sizeof( unsigned long )); i++ )
+			dst[i] = src[i];
+	}
 
 	return true;
 }
