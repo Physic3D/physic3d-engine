@@ -17,7 +17,7 @@ LOCAL_CPPFLAGS := -std=gnu++11 -DMAINUI_USE_STB -DMAINUI_USE_CUSTOM_FONT_RENDER 
 LOCAL_C_INCLUDES := \
 	$(SDL_PATH)/include				\
 	$(LOCAL_PATH)/. 				\
-	$(LOCAL_PATH)/../public 			\
+	$(LOCAL_PATH)/sdk_includes/public 		\
 	$(LOCAL_PATH)/../pm_shared 			\
 	$(LOCAL_PATH)/.. 				\
 	$(LOCAL_PATH)/../common 			\
