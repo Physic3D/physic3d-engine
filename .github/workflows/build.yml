@@ -67,7 +67,7 @@ jobs:
 
       - name: Build in 32-bit container
         run: |
-          docker run --rm -v $PWD:/work -w /work i386/ubuntu:24.04 bash -c "
+          docker run --rm -v $PWD:/work -w /work i386/ubuntu:22.04 bash -c "
             apt-get update -qq &&
             apt-get install -y -qq cmake ninja-build g++ libsdl2-dev libfontconfig-dev &&
             cmake --preset linux-release -B build-linux-client -G Ninja &&
@@ -89,7 +89,7 @@ jobs:
 
       - name: Build in 32-bit container
         run: |
-          docker run --rm -v $PWD:/work -w /work i386/ubuntu:24.04 bash -c "
+          docker run --rm -v $PWD:/work -w /work i386/ubuntu:22.04 bash -c "
             apt-get update -qq &&
             apt-get install -y -qq cmake ninja-build g++ &&
             cmake --preset linux-dedicated -B build-linux-dedicated -G Ninja &&
