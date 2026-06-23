@@ -23,26 +23,22 @@ jobs:
           submodules: recursive
 
       - name: Configure (32-bit Client)
-        run: for /f "usebackq delims=" %%i in (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath`) do @call "%%i\VC\Auxiliary\Build\vcvarsall.bat" x86 & set CC=cl.exe& set CXX=cl.exe& cmake --preset x86-release -B build-x86-client
+        run: cmake -S . -B build-x86-client -G "Visual Studio 18 2026" -A Win32 -DXASH_SDL=ON -DXASH_MAINUI=ON -DXASH_VGUI=ON -DXASH_DEDICATED=OFF -DXASH_SINGLE_BINARY=OFF -DXASH_DOWNLOAD_DEPENDENCIES=ON -DXASH_NONSTANDARD_LOAD=ON -DXASH_USE_STB_SPRINTF=ON -DXASH_VECTORIZE_SINCOS=ON
 
       - name: Build
         run: cmake --build build-x86-client --config RelWithDebInfo
 
-      - name: Download SDL2 DLL
-        run: |
-          curl -sLo sdl2.zip https://github.com/libsdl-org/SDL/releases/download/release-2.30.3/SDL2-devel-2.30.3-VC.zip
-          tar -xf sdl2.zip -C "%TEMP%"
-          copy "%TEMP%\SDL2-2.30.3\lib\x86\SDL2.dll" build-x86-client\engine\
-          del sdl2.zip
-
       - name: Stage artifacts
         run: |
           mkdir staging
-          copy build-x86-client\engine\game_launch\physic3d.exe staging\
-          copy build-x86-client\engine\physic3d_sdl.dll staging\
-          copy build-x86-client\engine\mainui\libmenu.dll staging\
-          copy build-x86-client\engine\SDL2.dll staging\
-          if exist build-x86-client\engine\vgui_support\vgui_support.dll copy build-x86-client\engine\vgui_support\vgui_support.dll staging\
+          copy build-x86-client\engine\game_launch\RelWithDebInfo\physic3d.exe staging\
+          copy build-x86-client\engine\RelWithDebInfo\physic3d_sdl.dll staging\
+          copy build-x86-client\engine\mainui\RelWithDebInfo\libmenu.dll staging\
+          curl -sLo sdl2.zip https://github.com/libsdl-org/SDL/releases/download/release-2.30.3/SDL2-devel-2.30.3-VC.zip
+          tar -xf sdl2.zip -C "%TEMP%"
+          copy "%TEMP%\SDL2-2.30.3\lib\x86\SDL2.dll" staging\
+          del sdl2.zip
+          if exist build-x86-client\engine\vgui_support\RelWithDebInfo\vgui_support.dll copy build-x86-client\engine\vgui_support\RelWithDebInfo\vgui_support.dll staging\
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -61,7 +57,7 @@ jobs:
           submodules: recursive
 
       - name: Configure (32-bit Dedicated)
-        run: for /f "usebackq delims=" %%i in (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath`) do @call "%%i\VC\Auxiliary\Build\vcvarsall.bat" x86 & cmake --preset x86-dedicated -B build-x86-dedicated
+        run: cmake -S . -B build-x86-dedicated -G "Visual Studio 18 2026" -A Win32 -DXASH_SDL=OFF -DXASH_MAINUI=OFF -DXASH_VGUI=OFF -DXASH_DEDICATED=ON -DXASH_SINGLE_BINARY=ON -DXASH_DOWNLOAD_DEPENDENCIES=ON -DXASH_NONSTANDARD_LOAD=ON -DXASH_USE_STB_SPRINTF=ON -DXASH_VECTORIZE_SINCOS=ON
 
       - name: Build
         run: cmake --build build-x86-dedicated --config RelWithDebInfo
@@ -69,7 +65,7 @@ jobs:
       - name: Stage artifacts
         run: |
           mkdir staging
-          copy build-x86-dedicated\engine\physic3d_dedicated.exe staging\
+          copy build-x86-dedicated\engine\RelWithDebInfo\physic3d_dedicated.exe staging\
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
