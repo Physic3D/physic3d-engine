@@ -54,6 +54,10 @@ else()
 	option(XASH_DOWNLOAD_DEPENDENCIES "Download dependencies automatically, if supported" OFF)
 endif()
 
+if(MSVC)
+	add_definitions(-DNOMINMAX)
+endif()
+
 include(${CMAKE_SOURCE_DIR}/cmake_fwgs.cmake)
 include(CMakeDependentOption)
 include(CPack)

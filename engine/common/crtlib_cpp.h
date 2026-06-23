@@ -6,6 +6,12 @@
 // Must be included AFTER crtlib.h (for _Mem_Alloc/_Mem_Realloc prototypes)
 // and after port.h (for byte typedef).
 
+#ifdef _WIN32
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#endif
+
 #include <algorithm>
 #include <cstddef>
 
