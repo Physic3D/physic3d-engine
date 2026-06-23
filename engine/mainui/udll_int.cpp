@@ -48,34 +48,12 @@ static UI_FUNCTIONS gFunctionTable =
 //=======================================================================
 extern "C" EXPORT int GetMenuAPI(UI_FUNCTIONS *pFunctionTable, ui_enginefuncs_t* pEngfuncsFromEngine, ui_globalvars_t *pGlobals)
 {
-	if( !pFunctionTable || !pEngfuncsFromEngine )
-	{
-		return false;
-	}
-
-	// copy HUD_FUNCTIONS table to engine, copy engfuncs table from engine
-	// use manual loops instead of memcpy/memset to avoid any CRT call issues
-	{
-		const unsigned long *src = (const unsigned long *)&gFunctionTable;
-		unsigned long *dst = (unsigned long *)pFunctionTable;
-		for( int i = 0; i < (int)(sizeof( UI_FUNCTIONS ) / sizeof( unsigned long )); i++ )
-			dst[i] = src[i];
-	}
-	{
-		const unsigned long *src = (const unsigned long *)pEngfuncsFromEngine;
-		unsigned long *dst = (unsigned long *)&EngFuncs::engfuncs;
-		for( int i = 0; i < (int)(sizeof( ui_enginefuncs_t ) / sizeof( unsigned long )); i++ )
-			dst[i] = src[i];
-	}
-	{
-		unsigned long *dst = (unsigned long *)&EngFuncs::textfuncs;
-		for( int i = 0; i < (int)(sizeof( ui_extendedfuncs_t ) / sizeof( unsigned long )); i++ )
-			dst[i] = 0;
-	}
-
-	gpGlobals = pGlobals;
-
-	return true;
+	// DIAGNOSTIC: do nothing, return false.
+	// If crash still occurs, it's in DLL loading/CRT init, not in GetMenuAPI.
+	(void)pFunctionTable;
+	(void)pEngfuncsFromEngine;
+	(void)pGlobals;
+	return false;
 }
 
 static UI_EXTENDED_FUNCTIONS gExtendedTable =
@@ -107,18 +85,8 @@ extern "C" EXPORT int GetExtAPI( int version, UI_EXTENDED_FUNCTIONS *pFunctionTa
 		return false;
 	}
 
-	{
-		const unsigned long *src = (const unsigned long *)pEngfuncsFromEngine;
-		unsigned long *dst = (unsigned long *)&EngFuncs::textfuncs;
-		for( int i = 0; i < (int)(sizeof( ui_extendedfuncs_t ) / sizeof( unsigned long )); i++ )
-			dst[i] = src[i];
-	}
-	{
-		const unsigned long *src = (const unsigned long *)&gExtendedTable;
-		unsigned long *dst = (unsigned long *)pFunctionTable;
-		for( int i = 0; i < (int)(sizeof( UI_EXTENDED_FUNCTIONS ) / sizeof( unsigned long )); i++ )
-			dst[i] = src[i];
-	}
+	memcpy( &EngFuncs::textfuncs, pEngfuncsFromEngine, sizeof( ui_extendedfuncs_t ) );
+	memcpy( pFunctionTable, &gExtendedTable, sizeof( UI_EXTENDED_FUNCTIONS ));
 
 	return true;
 }
