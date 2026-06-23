@@ -23,11 +23,7 @@ jobs:
           submodules: recursive
 
       - name: Configure (32-bit Client)
-        shell: powershell
-        run: |
-          $vsPath = & "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath
-          & "$vsPath\VC\Auxiliary\Build\vcvarsall.bat" x86
-          cmake --preset x86-release -B build-x86-client
+        run: for /f "usebackq delims=" %%i in (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath`) do @call "%%i\VC\Auxiliary\Build\vcvarsall.bat" x86 & set CC=cl.exe& set CXX=cl.exe& cmake --preset x86-release -B build-x86-client
 
       - name: Build
         run: cmake --build build-x86-client --config RelWithDebInfo
@@ -65,11 +61,7 @@ jobs:
           submodules: recursive
 
       - name: Configure (32-bit Dedicated)
-        shell: powershell
-        run: |
-          $vsPath = & "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath
-          & "$vsPath\VC\Auxiliary\Build\vcvarsall.bat" x86
-          cmake --preset x86-dedicated -B build-x86-dedicated
+        run: for /f "usebackq delims=" %%i in (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath`) do @call "%%i\VC\Auxiliary\Build\vcvarsall.bat" x86 & cmake --preset x86-dedicated -B build-x86-dedicated
 
       - name: Build
         run: cmake --build build-x86-dedicated --config RelWithDebInfo
