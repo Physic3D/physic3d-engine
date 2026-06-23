@@ -18,23 +18,6 @@ GNU General Public License for more details.
 #include "BaseMenu.h"
 #include "Utils.h"
 
-#ifdef _MSC_VER
-#define WIN32_LEAN_AND_MEAN
-#define NOMINMAX
-#include <windows.h>
-
-static void DiagWrite(const char *msg)
-{
-    HANDLE h = CreateFileA("menu_diag.log", GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-    if (h == INVALID_HANDLE_VALUE) return;
-    SetFilePointer(h, 0, NULL, FILE_END);
-    DWORD written;
-    WriteFile(h, msg, (DWORD)strlen(msg), &written, NULL);
-    WriteFile(h, "\r\n", 2, &written, NULL);
-    CloseHandle(h);
-}
-#endif
-
 ui_enginefuncs_t EngFuncs::engfuncs;
 ui_extendedfuncs_t EngFuncs::textfuncs;
 ui_globalvars_t	*gpGlobals;
@@ -66,57 +49,23 @@ static UI_FUNCTIONS gFunctionTable =
 #pragma optimize("", off)
 extern "C" EXPORT int GetMenuAPI(UI_FUNCTIONS *pFunctionTable, ui_enginefuncs_t* pEngfuncsFromEngine, ui_globalvars_t *pGlobals)
 {
-#ifdef _MSC_VER
-	DiagWrite("GetMenuAPI entered");
-	DiagWrite("sizeof(UI_FUNCTIONS) = XX"); // avoid sprintf
-	if( !pFunctionTable || !pEngfuncsFromEngine )
-	{
-		DiagWrite("GetMenuAPI: null pointer, returning false");
-		return false;
-	}
-	DiagWrite("pointers OK, about to copy struct");
-	__try
-	{
-		*pFunctionTable = gFunctionTable;
-		DiagWrite("struct copy OK");
-		gpGlobals = pGlobals;
-		DiagWrite("globals assigned OK");
-	}
-	__except(EXCEPTION_EXECUTE_HANDLER)
-	{
-		DWORD code = GetExceptionCode();
-		char buf[128];
-		buf[0] = 0;
-		{
-			const char *hex = "0123456789ABCDEF";
-			buf[0] = 'E';
-			buf[1] = 'X';
-			buf[2] = 'C';
-			buf[3] = ' ';
-			buf[4] = hex[(code >> 28) & 0xF];
-			buf[5] = hex[(code >> 24) & 0xF];
-			buf[6] = hex[(code >> 20) & 0xF];
-			buf[7] = hex[(code >> 16) & 0xF];
-			buf[8] = hex[(code >> 12) & 0xF];
-			buf[9] = hex[(code >> 8) & 0xF];
-			buf[10] = hex[(code >> 4) & 0xF];
-			buf[11] = hex[code & 0xF];
-			buf[12] = 0;
-		}
-		DiagWrite(buf);
-		DiagWrite("SEH caught exception, returning false");
-		return false;
-	}
-	return true;
-#else
 	if( !pFunctionTable || !pEngfuncsFromEngine )
 	{
 		return false;
 	}
+
+	// Copy UI_FUNCTIONS table to engine
 	*pFunctionTable = gFunctionTable;
+
+	// Copy engine funcs to DLL (must do this or UI_Init crashes on null pointers)
+	EngFuncs::engfuncs = *pEngfuncsFromEngine;
+
+	// Zero out extended funcs (value-initialization, no CRT call)
+	EngFuncs::textfuncs = ui_extendedfuncs_t();
+
 	gpGlobals = pGlobals;
+
 	return true;
-#endif
 }
 #pragma optimize("", on)
 
