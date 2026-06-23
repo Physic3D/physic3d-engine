@@ -111,7 +111,7 @@ macro(target_link_vgui_hack arg1)
 	elseif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 		add_custom_command(TARGET ${arg1} PRE_LINK COMMAND
 			${CMAKE_COMMAND} -E copy ${VGUI_LIBRARY} $<TARGET_FILE_DIR:${arg1}>)
-		target_link_libraries(${arg1} -L. -L$<TARGET_FILE_DIR:${arg1}> -l:vgui.so)
+		target_link_libraries(${arg1} ${VGUI_LIBRARY})
 	endif()
 endmacro()
 
