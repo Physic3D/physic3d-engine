@@ -69,15 +69,23 @@ jobs:
         run: |
           sudo dpkg --add-architecture i386
           sudo apt-get update -qq
-          sudo apt-get remove -y libsdl2-dev libsdl2-2.0-0 2>/dev/null || true
-          sudo apt-get install -y -qq g++-multilib ninja-build \
-            libsdl2-dev:i386 libfreetype-dev:i386 libfontconfig-dev:i386
+          sudo apt-get install -y g++-multilib ninja-build
+
+      - name: Install 32-bit SDL2 and freetype
+        run: |
+          # Remove any existing amd64 packages that would conflict
+          sudo apt-get remove -y libsdl2-dev libsdl2-2.0-0 libfreetype-dev libfreetype6 libfontconfig-dev libfontconfig1 2>/dev/null || true
+          sudo apt-get autoremove -y 2>/dev/null || true
+          # Now install the i386 versions
+          sudo apt-get install -y libsdl2-dev:i386 libfreetype-dev:i386 2>&1
 
       - name: Configure (Linux 32-bit Client)
-        run: >
-          CXXFLAGS="-m32" CFLAGS="-m32"
-          cmake --preset linux-release
-          -B build-linux-client -G Ninja
+        run: |
+          CXXFLAGS="-m32" CFLAGS="-m32" \
+          PKG_CONFIG_PATH=/usr/lib/i386-linux-gnu/pkgconfig \
+          cmake --preset linux-release \
+          -B build-linux-client -G Ninja \
+          -DMAINUI_USE_STB=ON
 
       - name: Build
         run: cmake --build build-linux-client --config RelWithDebInfo
