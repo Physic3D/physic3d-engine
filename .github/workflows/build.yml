@@ -31,14 +31,14 @@ jobs:
       - name: Stage artifacts
         run: |
           mkdir staging
-          copy build-x86-client\engine\game_launch\RelWithDebInfo\physic3d.exe staging\
-          copy build-x86-client\engine\RelWithDebInfo\physic3d_sdl.dll staging\
-          copy build-x86-client\engine\mainui\RelWithDebInfo\menu.dll staging\
+          copy build-x86-client\cleanout\RelWithDebInfo\physic3d.exe staging\
+          copy build-x86-client\cleanout\RelWithDebInfo\physic3d_sdl.dll staging\
+          copy build-x86-client\cleanout\RelWithDebInfo\menu.dll staging\
           curl -sLo sdl2.zip https://github.com/libsdl-org/SDL/releases/download/release-2.30.3/SDL2-devel-2.30.3-VC.zip
           tar -xf sdl2.zip -C "%TEMP%"
           copy "%TEMP%\SDL2-2.30.3\lib\x86\SDL2.dll" staging\
           del sdl2.zip
-          if exist build-x86-client\engine\vgui_support\RelWithDebInfo\vgui_support.dll copy build-x86-client\engine\vgui_support\RelWithDebInfo\vgui_support.dll staging\
+          if exist build-x86-client\cleanout\RelWithDebInfo\vgui_support.dll copy build-x86-client\cleanout\RelWithDebInfo\vgui_support.dll staging\
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -65,7 +65,7 @@ jobs:
       - name: Stage artifacts
         run: |
           mkdir staging
-          copy build-x86-dedicated\engine\RelWithDebInfo\physic3d_dedicated.exe staging\
+          copy build-x86-dedicated\cleanout\RelWithDebInfo\physic3d_dedicated.exe staging\
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -126,16 +126,16 @@ jobs:
         run: cmake --build build-linux-client --config RelWithDebInfo
 
       - name: Copy SDL2 shared library
-        run: cp /tmp/sdl2-prefix/lib/libSDL2-2.0.so.0 build-linux-client/engine/
+        run: cp /tmp/sdl2-prefix/lib/libSDL2-2.0.so.0 build-linux-client/cleanout/
 
       - name: Stage artifacts
         run: |
           mkdir -p staging
-          cp build-linux-client/engine/game_launch/physic3d staging/
-          cp build-linux-client/engine/libphysic3d.so staging/
-          cp build-linux-client/engine/mainui/libmenu.so staging/
-          cp build-linux-client/engine/libSDL2-2.0.so.0 staging/
-          cp build-linux-client/engine/vgui_support/libvgui_support.so staging/ || true
+          cp build-linux-client/cleanout/physic3d staging/
+          cp build-linux-client/cleanout/libphysic3d.so staging/
+          cp build-linux-client/cleanout/libmenu.so staging/
+          cp build-linux-client/cleanout/libSDL2-2.0.so.0 staging/
+          cp build-linux-client/cleanout/libvgui_support.so staging/ || true
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -195,13 +195,13 @@ jobs:
         run: cmake --build build-linux-dedicated --config RelWithDebInfo
 
       - name: Copy SDL2 shared library
-        run: cp /tmp/sdl2-prefix/lib/libSDL2-2.0.so.0 build-linux-dedicated/engine/ || true
+        run: cp /tmp/sdl2-prefix/lib/libSDL2-2.0.so.0 build-linux-dedicated/cleanout/ || true
 
       - name: Stage artifacts
         run: |
           mkdir -p staging
-          cp build-linux-dedicated/engine/physic3d staging/
-          cp build-linux-dedicated/engine/libSDL2-2.0.so.0 staging/ || true
+          cp build-linux-dedicated/cleanout/physic3d staging/
+          cp build-linux-dedicated/cleanout/libSDL2-2.0.so.0 staging/ || true
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4

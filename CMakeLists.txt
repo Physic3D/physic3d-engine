@@ -58,6 +58,11 @@ if(MSVC)
 	add_definitions(-DNOMINMAX)
 endif()
 
+# Flatten all outputs into cleanout/
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/cleanout")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/cleanout")
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/cleanout")
+
 include(${CMAKE_SOURCE_DIR}/cmake_fwgs.cmake)
 include(CMakeDependentOption)
 include(CPack)
