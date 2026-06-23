@@ -34,8 +34,9 @@ jobs:
         with:
           name: xash3d-windows-x86
           path: |
-            build-x86-client/engine/*.exe
-            build-x86-client/engine/*.dll
+            build-x86-client/engine/game_launch/xash.exe
+            build-x86-client/engine/xash_sdl.dll
+            build-x86-client/engine/mainui/libmenu.dll
 
   windows-dedicated:
     runs-on: windows-latest
@@ -119,9 +120,9 @@ jobs:
         with:
           name: xash3d-linux-x86
           path: |
-            build-linux-client/engine/xash3d
+            build-linux-client/engine/game_launch/xash3d
             build-linux-client/engine/libxash.so
-            build-linux-client/engine/libmenu.so
+            build-linux-client/engine/mainui/libmenu.so
 
   linux-dedicated:
     runs-on: ubuntu-latest
