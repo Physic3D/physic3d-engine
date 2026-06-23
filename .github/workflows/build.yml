@@ -33,7 +33,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: xash3d-windows-x86
-          path: build-x86-client/engine/*
+          path: |
+            build-x86-client/engine/*.exe
+            build-x86-client/engine/*.dll
 
   windows-dedicated:
     runs-on: windows-latest
@@ -56,7 +58,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: xash-dedicated-windows-x86
-          path: build-x86-dedicated/engine/*
+          path: |
+            build-x86-dedicated/engine/*.exe
+            build-x86-dedicated/engine/*.dll
 
   linux-client:
     runs-on: ubuntu-latest
@@ -114,7 +118,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: xash3d-linux-x86
-          path: build-linux-client/engine/*
+          path: |
+            build-linux-client/engine/xash3d
+            build-linux-client/engine/libxash.so
+            build-linux-client/engine/libmenu.so
 
   linux-dedicated:
     runs-on: ubuntu-latest
@@ -142,7 +149,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: xash-dedicated-linux-x86
-          path: build-linux-dedicated/engine/*
+          path: build-linux-dedicated/engine/xash3d
 
   lint:
     runs-on: ubuntu-latest
