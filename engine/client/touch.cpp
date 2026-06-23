@@ -762,7 +762,7 @@ void Touch_AddDefaultButton( const char *name, const char *texturefile, const ch
 	g_DefaultButtons[g_LastDefaultButton].x2 = x2;
 	g_DefaultButtons[g_LastDefaultButton].y2 = y2;
 	MakeRGBA( g_DefaultButtons[g_LastDefaultButton].color, color[0], color[1], color[2], color[3] );
-	g_DefaultButtons[g_LastDefaultButton].round = round;
+	g_DefaultButtons[g_LastDefaultButton].round = (touchRound)round;
 	g_DefaultButtons[g_LastDefaultButton].aspect = aspect;
 	g_DefaultButtons[g_LastDefaultButton].flags = flags;
 	g_LastDefaultButton++;
@@ -1848,7 +1848,7 @@ void Touch_KeyEvent( int key, int down )
 	x = xi/SCR_W;
 	y = yi/SCR_H;
 
-	Touch_ControlsEvent( !down, key == K_MOUSE1?0:1, x, y, 0, 0 );
+	Touch_ControlsEvent( (touchEventType)!down, key == K_MOUSE1?0:1, x, y, 0, 0 );
 }
 
 void Touch_Shutdown( void )
