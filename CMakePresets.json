@@ -19,6 +19,10 @@
             "displayName": "x86 Release (Client)",
             "description": "Client build using MSVC x86, Ninja",
             "generator": "Ninja",
+            "architecture": {
+                "value": "x86",
+                "strategy": "external"
+            },
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "RelWithDebInfo",
                 "XASH_SDL": "ON",
@@ -34,6 +38,10 @@
             "displayName": "x86 Dedicated Server",
             "description": "Dedicated server build using MSVC x86, Ninja",
             "generator": "Ninja",
+            "architecture": {
+                "value": "x86",
+                "strategy": "external"
+            },
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "RelWithDebInfo",
                 "XASH_SDL": "OFF",

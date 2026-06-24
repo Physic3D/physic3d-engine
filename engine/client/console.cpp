@@ -1330,11 +1330,10 @@ void Key_Console( int key )
 		// scroll down
 		Con_Bottom();
 
-		// check for backslash prefix, then filter
+		// check for backslash prefix, then add
 		if( con.input.buffer[0] == '\\' || con.input.buffer[0] == '/' )
-			Cbuf_AddFilterText( con.input.buffer + 1, false ); // allow forwarding unknown cmds
-		else Cbuf_AddFilterText( con.input.buffer, false ); // allow forwarding unknown cmds
-		Cbuf_AddFilterText( "\n", false );
+			Cbuf_AddText( va( "%s\n", con.input.buffer + 1 ) );
+		else Cbuf_AddText( va( "%s\n", con.input.buffer ) );
 
 		// echo to console
 		Msg( ">%s\n", con.input.buffer );
