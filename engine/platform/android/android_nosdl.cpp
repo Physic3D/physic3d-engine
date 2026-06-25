@@ -427,9 +427,9 @@ nativeSetPause
 =====================================================
 */
 #define DECLARE_JNI_INTERFACE( ret, name, ... ) \
-	JNIEXPORT ret JNICALL Java_com_physic3d_android_GameActivity_##name( JNIEnv *env, jclass clazz, __VA_ARGS__ )
+	extern "C" JNIEXPORT ret JNICALL Java_com_physic3d_android_GameActivity_##name( JNIEnv *env, jclass clazz, __VA_ARGS__ )
 #define DECLARE_JNI_INTERFACE_VOID( ret, name ) \
-	JNIEXPORT ret JNICALL Java_com_physic3d_android_GameActivity_##name( JNIEnv *env, jclass clazz )
+	extern "C" JNIEXPORT ret JNICALL Java_com_physic3d_android_GameActivity_##name( JNIEnv *env, jclass clazz )
 #include <sys/prctl.h>
 
 DECLARE_JNI_INTERFACE( int, nativeInit, jobjectArray array )
