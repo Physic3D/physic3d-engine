@@ -8,6 +8,7 @@ import android.webkit.*;
 import androidx.appcompat.app.AppCompatActivity;
 import com.physic3d.fwgslib.*;
 import org.json.*;
+import java.io.*;
 
 public class LauncherActivity extends AppCompatActivity
 {
@@ -25,17 +26,25 @@ public class LauncherActivity extends AppCompatActivity
 
 		mPref = getSharedPreferences("engine", 0);
 
-		DisplayMetrics metrics = new DisplayMetrics();
-		getWindowManager().getDefaultDisplay().getMetrics(metrics);
-		if( FWGSLib.isLandscapeOrientation( this ) )
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
 		{
-			mEngineWidth = metrics.widthPixels;
-			mEngineHeight = metrics.heightPixels;
+			WindowMetrics metrics = getWindowManager().getCurrentWindowMetrics();
+			mEngineWidth = metrics.getBounds().width();
+			mEngineHeight = metrics.getBounds().height();
 		}
 		else
 		{
-			mEngineWidth = metrics.heightPixels;
-			mEngineHeight = metrics.widthPixels;
+			DisplayMetrics metrics = new DisplayMetrics();
+			getWindowManager().getDefaultDisplay().getMetrics(metrics);
+			mEngineWidth = metrics.widthPixels;
+			mEngineHeight = metrics.heightPixels;
+		}
+
+		if (FWGSLib.isLandscapeOrientation(this))
+		{
+			int tmp = mEngineWidth;
+			mEngineWidth = mEngineHeight;
+			mEngineHeight = tmp;
 		}
 
 		mWebView = new WebView(this);
@@ -71,20 +80,39 @@ public class LauncherActivity extends AppCompatActivity
 				obj.put("sdk", mSdk);
 				return obj.toString();
 			}
-			catch( JSONException e )
+			catch (JSONException e)
 			{
 				return "{}";
 			}
 		}
 
 		@JavascriptInterface
-		public void launchGame( String settingsJson )
+		public boolean validatePath(String path)
+		{
+			if (path == null || path.isEmpty())
+				return false;
+
+			File dir = new File(path);
+			if (!dir.exists() || !dir.isDirectory())
+				return false;
+
+			File valveDir = new File(dir, "valve");
+			return valveDir.exists() && valveDir.isDirectory();
+		}
+
+		@JavascriptInterface
+		public void launchGame(String settingsJson)
 		{
 			try
 			{
 				JSONObject s = new JSONObject(settingsJson);
+				String basedir = s.optString("basedir", "");
+
+				if (basedir.isEmpty())
+					return;
+
 				SharedPreferences.Editor editor = mPref.edit();
-				editor.putString("basedir", s.optString("basedir", ""));
+				editor.putString("basedir", basedir);
 				editor.putString("argv", s.optString("argv", "-dev 3 -log"));
 				editor.putInt("pixelformat", s.optInt("pixelformat", 0));
 				editor.putBoolean("enableResizeWorkaround", s.optBoolean("resizeWorkaround", true));
@@ -92,7 +120,7 @@ public class LauncherActivity extends AppCompatActivity
 				editor.putInt("resolution_width", s.optInt("resWidth", mEngineWidth));
 				editor.putInt("resolution_height", s.optInt("resHeight", mEngineHeight));
 
-				if( mSdk >= 19 )
+				if (mSdk >= 19)
 					editor.putBoolean("immersive_mode", s.optBoolean("immersiveMode", true));
 				else
 					editor.putBoolean("immersive_mode", false);
@@ -102,9 +130,9 @@ public class LauncherActivity extends AppCompatActivity
 				intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 				startActivity(intent);
 			}
-			catch( JSONException e )
+			catch (JSONException e)
 			{
-				e.printStackTrace();
+				Log.e("Physic3D", "launchGame failed", e);
 			}
 		}
 
@@ -123,20 +151,27 @@ public class LauncherActivity extends AppCompatActivity
 		}
 
 		@JavascriptInterface
-		public void openUrl( String url )
+		public void openUrl(String url)
 		{
-			Intent intent = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse(url));
-			startActivity(intent);
+			try
+			{
+				Intent intent = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse(url));
+				startActivity(intent);
+			}
+			catch (Exception e)
+			{
+				Log.e("Physic3D", "openUrl failed", e);
+			}
 		}
 	}
 
 	public void onActivityResult(int requestCode, int resultCode, Intent resultData)
 	{
 		super.onActivityResult(requestCode, resultCode, resultData);
-		if( requestCode == ID_SELECT_FOLDER && resultCode == RESULT_OK && resultData != null )
+		if (requestCode == ID_SELECT_FOLDER && resultCode == RESULT_OK && resultData != null)
 		{
 			String path = resultData.getStringExtra("GetPath");
-			if( path != null )
+			if (path != null)
 			{
 				String escaped = path.replace("\\", "\\\\").replace("'", "\\'");
 				mWebView.evaluateJavascript("javascript:onFolderPicked('" + escaped + "')", null);
