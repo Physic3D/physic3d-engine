@@ -49,3 +49,62 @@ android {
         abortOnError false
     }
 }
+
+def hlsdkDir = file('../../hlsdk')
+def hlsdkBuildDir = file("${buildDir}/hlbuild")
+def abiList = ['arm64-v8a', 'armeabi-v7a']
+
+tasks.register('buildHlsdk') {
+    description 'Builds HLSDK client and server game DLLs via CMake'
+    group 'native'
+
+    doLast {
+        abiList.each { abi ->
+            def buildDir = file("${hlsdkBuildDir}/${abi}")
+            buildDir.mkdirs()
+
+            exec {
+                commandLine 'cmake',
+                    '-DCMAKE_TOOLCHAIN_FILE=' + android.ndkDirectory.absolutePath + '/build/cmake/android.toolchain.cmake',
+                    '-DANDROID_ABI=' + abi,
+                    '-DANDROID_PLATFORM=android-24',
+                    '-DANDROID_STL=c++_static',
+                    '-DCMAKE_BUILD_TYPE=RelWithDebInfo',
+                    '-DBUILD_CLIENT=ON',
+                    '-DBUILD_SERVER=ON',
+                    '-DANDROID_APK=ON',
+                    '-DUSE_VGUI=OFF',
+                    hlsdkDir.absolutePath
+                workingDir buildDir
+            }
+
+            exec {
+                commandLine 'cmake', '--build', '.', '--config', 'RelWithDebInfo', '-j' + Runtime.runtime.availableProcessors()
+                workingDir buildDir
+            }
+
+            def jniLibsDir = file("src/main/jniLibs/${abi}")
+            jniLibsDir.mkdirs()
+
+            ['client', 'server'].each { libName ->
+                def found = buildDir.listFiles()?.find { f ->
+                    f.name.startsWith("lib${libName}") && f.name.endsWith('.so')
+                }
+                if (found) {
+                    copy {
+                        from found
+                        into jniLibsDir
+                        rename { "lib${libName}.so" }
+                    }
+                    logger.lifecycle "Copied ${found.name} -> jniLibs/${abi}/lib${libName}.so"
+                } else {
+                    throw new GradleException("Failed to find lib${libName}.so in ${buildDir}")
+                }
+            }
+        }
+    }
+}
+
+tasks.named('preBuild').configure {
+    dependsOn 'buildHlsdk'
+}
