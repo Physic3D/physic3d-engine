@@ -1,4 +1,4 @@
-name: Build
+name: Build & Package
 
 on:
   push:
@@ -7,238 +7,83 @@ on:
     branches: [master]
   workflow_dispatch:
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
-  windows-client:
-    runs-on: windows-latest
-    defaults:
-      run:
-        shell: cmd
+  build-windows:
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x86, x64]
+        config: [RelWithDebInfo]
+        include:
+          - arch: x86
+            cmake_arch: x86
+            msvc_arch: x86
+          - arch: x64
+            cmake_arch: x64
+            msvc_arch: amd64
+
+    runs-on: windows-2022
+
+    env:
+      ENGINE_BUILD_DIR: ${{ github.workspace }}\out\build\engine
+      HLSDK_BUILD_DIR: ${{ github.workspace }}\out\build\hlsdk
+      DIST_DIR: ${{ github.workspace }}\out\dist
+
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: recursive
+          submodules: true
 
-      - name: Configure (32-bit Client)
-        run: cmake -S . -B build-x86-client -G "Visual Studio 18 2026" -A Win32 -DXASH_SDL=ON -DXASH_MAINUI=ON -DXASH_VGUI=ON -DXASH_DEDICATED=OFF -DXASH_SINGLE_BINARY=OFF -DXASH_DOWNLOAD_DEPENDENCIES=ON -DXASH_NONSTANDARD_LOAD=ON -DXASH_USE_STB_SPRINTF=ON -DXASH_VECTORIZE_SINCOS=ON
-
-      - name: Build
-        run: cmake --build build-x86-client --config RelWithDebInfo
-
-      - name: Stage artifacts
-        run: |
-          mkdir staging
-          copy build-x86-client\cleanout\RelWithDebInfo\physic3d.exe staging\
-          copy build-x86-client\cleanout\RelWithDebInfo\physic3d_sdl.dll staging\
-          copy build-x86-client\cleanout\RelWithDebInfo\menu.dll staging\
-          curl -sLo sdl2.zip https://github.com/libsdl-org/SDL/releases/download/release-2.30.3/SDL2-devel-2.30.3-VC.zip
-          tar -xf sdl2.zip -C "%TEMP%"
-          copy "%TEMP%\SDL2-2.30.3\lib\x86\SDL2.dll" staging\
-          del sdl2.zip
-          if exist build-x86-client\cleanout\RelWithDebInfo\vgui_support.dll copy build-x86-client\cleanout\RelWithDebInfo\vgui_support.dll staging\
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+      - uses: ilammy/msvc-dev-cmd@v1
         with:
-          name: physic3d-windows-x86
-          path: staging/*
+          arch: ${{ matrix.msvc_arch }}
 
-  windows-dedicated:
-    runs-on: windows-latest
-    defaults:
-      run:
-        shell: cmd
+      - uses: seanmiddleditch/gha-setup-ninja@v5
+
+      - run: pip install ninja
+        if: failure()
+
+      - name: Build & Package
+        shell: pwsh
+        run: |
+          python scripts/package.py --arch ${{ matrix.arch }} --config ${{ matrix.config }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: physic3d-windows-${{ matrix.arch }}-${{ matrix.config }}
+          path: ${{ env.DIST_DIR }}\physic3d-${{ matrix.arch }}-${{ matrix.config }}.zip
+
+  build-linux:
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x64]
+        config: [RelWithDebInfo]
+
+    runs-on: ubuntu-22.04
+
+    env:
+      ENGINE_BUILD_DIR: ${{ github.workspace }}/out/build/engine
+      HLSDK_BUILD_DIR: ${{ github.workspace }}/out/build/hlsdk
+      DIST_DIR: ${{ github.workspace }}/out/dist
+
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: recursive
+          submodules: true
 
-      - name: Configure (32-bit Dedicated)
-        run: cmake -S . -B build-x86-dedicated -G "Visual Studio 18 2026" -A Win32 -DXASH_SDL=OFF -DXASH_MAINUI=OFF -DXASH_VGUI=OFF -DXASH_DEDICATED=ON -DXASH_SINGLE_BINARY=ON -DXASH_DOWNLOAD_DEPENDENCIES=ON -DXASH_NONSTANDARD_LOAD=ON -DXASH_USE_STB_SPRINTF=ON -DXASH_VECTORIZE_SINCOS=ON
-
-      - name: Build
-        run: cmake --build build-x86-dedicated --config RelWithDebInfo
-
-      - name: Stage artifacts
+      - name: Install dependencies
         run: |
-          mkdir staging
-          copy build-x86-dedicated\cleanout\RelWithDebInfo\physic3d_dedicated.exe staging\
+          sudo apt-get update
+          sudo apt-get install -y ninja-build cmake g++ \
+            libsdl2-dev libfontconfig-dev libfreetype6-dev \
+            libx11-dev libxext-dev
 
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: physic3d-dedicated-windows-x86
-          path: staging/*
-
-  linux-client:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - name: Install 32-bit toolchain and deps
+      - name: Build & Package
         run: |
-          sudo dpkg --add-architecture i386
-          sudo apt-get update -qq
-          sudo apt-get install -y g++-multilib ninja-build
+          python3 scripts/package.py --arch ${{ matrix.arch }} --config ${{ matrix.config }}
 
-      - name: Build SDL2 from source (32-bit)
-        run: |
-          cd /tmp
-          wget -qO- https://github.com/libsdl-org/SDL/archive/refs/tags/release-2.30.3.tar.gz | tar xz
-          cd SDL-release-2.30.3
-          cmake -S . -B build \
-            -DCMAKE_C_FLAGS="-m32" \
-            -DCMAKE_CXX_FLAGS="-m32" \
-            -DCMAKE_INSTALL_PREFIX=/tmp/sdl2-prefix \
-            -DSDL_X11=OFF \
-            -DSDL_WAYLAND=OFF \
-            -DSDL_PULSEAUDIO=OFF \
-            -DSDL_ALSA=OFF \
-            -DSDL_HIDAPI=OFF \
-            -DSDL_JOYSTICK=OFF \
-            -DSDL_HAPTIC=OFF \
-            -DSDL_POWER=OFF \
-            -DSDL_RENDER=OFF \
-            -DSDL_VULKAN=OFF \
-            -DSDL_OPENGL=OFF \
-            -DSDL_OPENGLES=OFF \
-            -DSDL_STATIC=OFF \
-            -DSDL_SHARED=ON \
-            -DSDL_TEST=OFF
-          cmake --build build -j$(nproc)
-          cmake --install build
-
-      - name: Configure (Linux 32-bit Client)
-        run: >
-          CXXFLAGS="-m32" CFLAGS="-m32"
-          cmake --preset linux-release
-          -B build-linux-client -G Ninja
-          -DMAINUI_USE_STB=ON
-          -DSDL2_PATH=/tmp/sdl2-prefix
-          -DCMAKE_LIBRARY_PATH=/tmp/sdl2-prefix/lib
-
-      - name: Build
-        run: cmake --build build-linux-client --config RelWithDebInfo
-
-      - name: Copy SDL2 shared library
-        run: cp /tmp/sdl2-prefix/lib/libSDL2-2.0.so.0 build-linux-client/cleanout/
-
-      - name: Stage artifacts
-        run: |
-          mkdir -p staging
-          cp build-linux-client/cleanout/physic3d staging/
-          cp build-linux-client/cleanout/libphysic3d.so staging/
-          cp build-linux-client/cleanout/libmenu.so staging/
-          cp build-linux-client/cleanout/libSDL2-2.0.so.0 staging/
-          cp build-linux-client/cleanout/libvgui_support.so staging/ || true
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
-          name: physic3d-linux-x86
-          path: staging/*
-
-  linux-dedicated:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - name: Install 32-bit toolchain
-        run: |
-          sudo dpkg --add-architecture i386
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq g++-multilib ninja-build
-
-      - name: Build SDL2 from source (32-bit)
-        run: |
-          cd /tmp
-          wget -qO- https://github.com/libsdl-org/SDL/archive/refs/tags/release-2.30.3.tar.gz | tar xz
-          cd SDL-release-2.30.3
-          cmake -S . -B build \
-            -DCMAKE_C_FLAGS="-m32" \
-            -DCMAKE_CXX_FLAGS="-m32" \
-            -DCMAKE_INSTALL_PREFIX=/tmp/sdl2-prefix \
-            -DSDL_X11=OFF \
-            -DSDL_WAYLAND=OFF \
-            -DSDL_PULSEAUDIO=OFF \
-            -DSDL_ALSA=OFF \
-            -DSDL_HIDAPI=OFF \
-            -DSDL_JOYSTICK=OFF \
-            -DSDL_HAPTIC=OFF \
-            -DSDL_POWER=OFF \
-            -DSDL_RENDER=OFF \
-            -DSDL_VULKAN=OFF \
-            -DSDL_OPENGL=OFF \
-            -DSDL_OPENGLES=OFF \
-            -DSDL_STATIC=OFF \
-            -DSDL_SHARED=ON \
-            -DSDL_TEST=OFF
-          cmake --build build -j$(nproc)
-          cmake --install build
-
-      - name: Configure (Linux 32-bit Dedicated)
-        run: >
-          CXXFLAGS="-m32" CFLAGS="-m32"
-          cmake --preset linux-dedicated
-          -B build-linux-dedicated -G Ninja
-          -DSDL2_PATH=/tmp/sdl2-prefix
-          -DCMAKE_LIBRARY_PATH=/tmp/sdl2-prefix/lib
-
-      - name: Build
-        run: cmake --build build-linux-dedicated --config RelWithDebInfo
-
-      - name: Copy SDL2 shared library
-        run: cp /tmp/sdl2-prefix/lib/libSDL2-2.0.so.0 build-linux-dedicated/cleanout/ || true
-
-      - name: Stage artifacts
-        run: |
-          mkdir -p staging
-          cp build-linux-dedicated/cleanout/physic3d staging/
-          cp build-linux-dedicated/cleanout/libSDL2-2.0.so.0 staging/ || true
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: physic3d-dedicated-linux-x86
-          path: staging/*
-
-  android-client:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-          fetch-depth: 0
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Build with Gradle
-        working-directory: engine/android
-        run: |
-          echo "sdk.dir=$ANDROID_HOME" > local.properties
-          chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon
-
-      - name: Rename APK
-        working-directory: engine/android/app/build/outputs/apk/debug
-        run: mv app-debug.apk physic3d-debug.apk
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: physic3d-android-arm64
-          path: engine/android/app/build/outputs/apk/debug/physic3d-debug.apk
+          name: physic3d-linux-${{ matrix.arch }}-${{ matrix.config }}
+          path: ${{ env.DIST_DIR }}/physic3d-${{ matrix.arch }}-${{ matrix.config }}.zip
