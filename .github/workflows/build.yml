@@ -226,6 +226,11 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Download extras.pak
+        working-directory: engine/android/app/src/main/assets
+        run: |
+          curl -sLo extras.pak https://github.com/FWGS/xash-extras/releases/download/v0.19.2/extras.pak
+
       - name: Build with Gradle
         working-directory: engine/android
         run: |
