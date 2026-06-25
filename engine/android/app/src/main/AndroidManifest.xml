@@ -25,6 +25,7 @@
 		
 		<activity android:name="com.physic3d.android.LauncherActivity"
 			android:exported="true"
+			android:theme="@style/AppTheme"
 			android:label="@string/launcher_name"
 			android:windowSoftInputMode="stateAlwaysHidden|adjustResize"
 			android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize">
