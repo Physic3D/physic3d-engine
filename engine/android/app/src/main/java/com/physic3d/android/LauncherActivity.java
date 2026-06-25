@@ -63,7 +63,7 @@ public class LauncherActivity extends AppCompatActivity
 
 		WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
 		ViewCompat.setOnApplyWindowInsetsListener(mWebView, (v, insets) -> {
-			android.graphics.Rect bars = insets.getInsets(WindowInsetsCompat.Type.systemBars()).toRect();
+			var bars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
 			v.setPadding(bars.left, bars.top, bars.right, bars.bottom);
 			return WindowInsetsCompat.CONSUMED;
 		});
