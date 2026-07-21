@@ -63,24 +63,30 @@ tasks.register('buildHlsdk') {
             def buildDir = file("${hlsdkBuildDir}/${abi}")
             buildDir.mkdirs()
 
-            project.exec {
-                commandLine 'cmake',
-                    '-DCMAKE_TOOLCHAIN_FILE=' + android.ndkDirectory.absolutePath + '/build/cmake/android.toolchain.cmake',
-                    '-DANDROID_ABI=' + abi,
-                    '-DANDROID_PLATFORM=android-24',
-                    '-DANDROID_STL=c++_static',
-                    '-DCMAKE_BUILD_TYPE=RelWithDebInfo',
-                    '-DBUILD_CLIENT=ON',
-                    '-DBUILD_SERVER=ON',
-                    '-DANDROID_APK=ON',
-                    '-DUSE_VGUI=OFF',
-                    hlsdkDir.absolutePath
-                workingDir buildDir
+            def cmakeCmd = [
+                'cmake',
+                '-DCMAKE_TOOLCHAIN_FILE=' + android.ndkDirectory.absolutePath + '/build/cmake/android.toolchain.cmake',
+                '-DANDROID_ABI=' + abi,
+                '-DANDROID_PLATFORM=android-24',
+                '-DANDROID_STL=c++_static',
+                '-DCMAKE_BUILD_TYPE=RelWithDebInfo',
+                '-DBUILD_CLIENT=ON',
+                '-DBUILD_SERVER=ON',
+                '-DANDROID_APK=ON',
+                '-DUSE_VGUI=OFF',
+                hlsdkDir.absolutePath
+            ]
+            def proc = new ProcessBuilder(cmakeCmd).directory(buildDir).start()
+            proc.waitFor()
+            if (proc.exitValue() != 0) {
+                throw new GradleException("CMake configure failed for ${abi}")
             }
 
-            project.exec {
-                commandLine 'cmake', '--build', '.', '--config', 'RelWithDebInfo', '-j' + Runtime.runtime.availableProcessors()
-                workingDir buildDir
+            def buildCmd = ['cmake', '--build', '.', '--config', 'RelWithDebInfo', '-j' + Runtime.runtime.availableProcessors()]
+            def proc2 = new ProcessBuilder(buildCmd).directory(buildDir).start()
+            proc2.waitFor()
+            if (proc2.exitValue() != 0) {
+                throw new GradleException("CMake build failed for ${abi}")
             }
 
             def jniLibsDir = file("src/main/jniLibs/${abi}")
