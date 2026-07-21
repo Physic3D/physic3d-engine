@@ -30,9 +30,9 @@ android {
         }
     }
 
-    packagingOptions {
+    packaging {
         jniLibs {
-            useLegacyPackaging true
+            useLegacyPackaging = true
         }
     }
 
@@ -77,14 +77,18 @@ tasks.register('buildHlsdk') {
                 '-DUSE_VGUI=OFF',
                 hlsdkDir.absolutePath
             ]
-            def proc = new ProcessBuilder(cmakeCmd).directory(buildDir).start()
+            def proc = new ProcessBuilder(cmakeCmd).directory(buildDir)
+                .redirectErrorStream(true).start()
+            proc.inputStream.eachLine { line -> logger.lifecycle "[cmake-configure] ${line}" }
             proc.waitFor()
             if (proc.exitValue() != 0) {
                 throw new GradleException("CMake configure failed for ${abi}")
             }
 
             def buildCmd = ['cmake', '--build', '.', '--config', 'RelWithDebInfo', '-j' + Runtime.runtime.availableProcessors()]
-            def proc2 = new ProcessBuilder(buildCmd).directory(buildDir).start()
+            def proc2 = new ProcessBuilder(buildCmd).directory(buildDir)
+                .redirectErrorStream(true).start()
+            proc2.inputStream.eachLine { line -> logger.lifecycle "[cmake-build] ${line}" }
             proc2.waitFor()
             if (proc2.exitValue() != 0) {
                 throw new GradleException("CMake build failed for ${abi}")
@@ -93,9 +97,11 @@ tasks.register('buildHlsdk') {
             def jniLibsDir = file("src/main/jniLibs/${abi}")
             jniLibsDir.mkdirs()
 
-            ['client', 'server'].each { libName ->
+            // On Android: client -> libclient_android_*.so, server -> libhl_android_*.so
+            def libMap = ['client': 'client', 'server': 'hl']
+            libMap.each { libName, cmakeName ->
                 def found = buildDir.listFiles()?.find { f ->
-                    f.name.startsWith("lib${libName}") && f.name.endsWith('.so')
+                    f.name.startsWith("lib${cmakeName}") && f.name.endsWith('.so')
                 }
                 if (found) {
                     copy {
@@ -105,7 +111,7 @@ tasks.register('buildHlsdk') {
                     }
                     logger.lifecycle "Copied ${found.name} -> jniLibs/${abi}/lib${libName}.so"
                 } else {
-                    throw new GradleException("Failed to find lib${libName}.so in ${buildDir}")
+                    throw new GradleException("Failed to find lib${cmakeName}.so in ${buildDir}")
                 }
             }
         }
