@@ -63,7 +63,7 @@ tasks.register('buildHlsdk') {
             def buildDir = file("${hlsdkBuildDir}/${abi}")
             buildDir.mkdirs()
 
-            exec {
+            project.exec {
                 commandLine 'cmake',
                     '-DCMAKE_TOOLCHAIN_FILE=' + android.ndkDirectory.absolutePath + '/build/cmake/android.toolchain.cmake',
                     '-DANDROID_ABI=' + abi,
@@ -78,7 +78,7 @@ tasks.register('buildHlsdk') {
                 workingDir buildDir
             }
 
-            exec {
+            project.exec {
                 commandLine 'cmake', '--build', '.', '--config', 'RelWithDebInfo', '-j' + Runtime.runtime.availableProcessors()
                 workingDir buildDir
             }
