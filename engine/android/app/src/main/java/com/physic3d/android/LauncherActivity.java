@@ -103,6 +103,7 @@ public class LauncherActivity extends AppCompatActivity
 
 				SharedPreferences.Editor editor = mPref.edit();
 				editor.putString("basedir", basedir);
+				editor.putBoolean("folderask", false);
 				editor.putString("argv", s.optString("argv", "-dev 3 -log"));
 				editor.putInt("pixelformat", s.optInt("pixelformat", 0));
 				editor.putBoolean("enableResizeWorkaround", s.optBoolean("resizeWorkaround", true));
