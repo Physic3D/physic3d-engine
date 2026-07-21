@@ -6,9 +6,6 @@ import android.util.*;
 import android.view.*;
 import android.webkit.*;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.view.WindowCompat;
-import androidx.core.view.WindowInsetsCompat;
-import androidx.core.view.ViewCompat;
 import com.physic3d.fwgslib.*;
 import org.json.*;
 import java.io.*;
@@ -29,19 +26,9 @@ public class LauncherActivity extends AppCompatActivity
 
 		mPref = getSharedPreferences("engine", 0);
 
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
-		{
-			WindowMetrics metrics = getWindowManager().getCurrentWindowMetrics();
-			mEngineWidth = metrics.getBounds().width();
-			mEngineHeight = metrics.getBounds().height();
-		}
-		else
-		{
-			DisplayMetrics metrics = new DisplayMetrics();
-			getWindowManager().getDefaultDisplay().getMetrics(metrics);
-			mEngineWidth = metrics.widthPixels;
-			mEngineHeight = metrics.heightPixels;
-		}
+		WindowMetrics metrics = getWindowManager().getCurrentWindowMetrics();
+		mEngineWidth = metrics.getBounds().width();
+		mEngineHeight = metrics.getBounds().height();
 
 		if (FWGSLib.isLandscapeOrientation(this))
 		{
@@ -54,19 +41,12 @@ public class LauncherActivity extends AppCompatActivity
 		mWebView.getSettings().setJavaScriptEnabled(true);
 		mWebView.getSettings().setAllowFileAccess(true);
 		mWebView.setVerticalScrollBarEnabled(false);
-		mWebView.setBackgroundColor(0);
+		mWebView.setBackgroundColor(0xFF0F1215);
 		mWebView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
 		mWebView.addJavascriptInterface(new JSInterface(), "Android");
 		mWebView.loadUrl("file:///android_asset/launcher/index.html");
 
 		setContentView(mWebView);
-
-		WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
-		ViewCompat.setOnApplyWindowInsetsListener(mWebView, (v, insets) -> {
-			var bars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-			v.setPadding(bars.left, bars.top, bars.right, bars.bottom);
-			return WindowInsetsCompat.CONSUMED;
-		});
 	}
 
 	public class JSInterface
