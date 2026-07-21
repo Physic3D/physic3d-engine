@@ -71,6 +71,8 @@ tasks.register('buildHlsdk') {
                 '-DANDROID_PLATFORM=android-24',
                 '-DANDROID_STL=c++_static',
                 '-DCMAKE_BUILD_TYPE=RelWithDebInfo',
+                '-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' + buildDir.absolutePath,
+                '-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_RELWITHDEBINFO=' + buildDir.absolutePath,
                 '-DBUILD_CLIENT=ON',
                 '-DBUILD_SERVER=ON',
                 '-DANDROID_APK=ON',
